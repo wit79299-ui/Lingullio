@@ -9,6 +9,9 @@ import {
   Users,
   KeyRound,
   BookOpen,
+  BookOpenText,
+  Languages,
+  PenTool,
   BarChart3,
   Settings,
   ClipboardList,
@@ -16,9 +19,12 @@ import {
 
 const adminNavItems = [
   { key: 'dashboard', href: '/admin', icon: LayoutDashboard },
+  { key: 'courses', href: '/admin/content/courses', icon: BookOpen },
+  { key: 'vocabulary', href: '/admin/content/vocabulary', icon: BookOpenText },
+  { key: 'grammar', href: '/admin/content/grammar', icon: Languages },
+  { key: 'characters', href: '/admin/content/characters', icon: PenTool },
   { key: 'learners', href: '/admin/learners', icon: Users },
   { key: 'licenses', href: '/admin/licenses', icon: KeyRound },
-  { key: 'content', href: '/admin/content', icon: BookOpen },
   { key: 'analytics', href: '/admin/analytics', icon: BarChart3 },
   { key: 'logs', href: '/admin/logs', icon: ClipboardList },
   { key: 'settings', href: '/admin/settings', icon: Settings },
