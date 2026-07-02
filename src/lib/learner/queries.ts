@@ -41,6 +41,7 @@ export interface VocabWord {
   frequency_rank: number | null;
   word_type: string | null;
   theme: string | null;
+  audio_url: string | null;
   meaning: string;
   example_sentence: string | null;
   example_pinyin: string | null;
@@ -249,7 +250,7 @@ export async function fetchLearnerVocabulary(
   let query = supabase
     .from('vocabulary_items')
     .select(`
-      id, simplified, traditional, pinyin, hsk_level, frequency_rank, word_type, theme,
+      id, simplified, traditional, pinyin, hsk_level, frequency_rank, word_type, theme, audio_url,
       vocabulary_translations ( locale, meaning, example_sentence, example_pinyin, example_translation )
     `, { count: 'exact' })
     .eq('hsk_level', hskLevel)
@@ -294,6 +295,7 @@ export async function fetchLearnerVocabulary(
       frequency_rank: v.frequency_rank,
       word_type: v.word_type,
       theme: v.theme,
+      audio_url: (v as Record<string, unknown>).audio_url as string | null ?? null,
       meaning: t?.meaning ?? '',
       example_sentence: t?.example_sentence ?? null,
       example_pinyin: t?.example_pinyin ?? null,
