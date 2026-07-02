@@ -2,6 +2,23 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import type { ContentStatus } from '@/types/database';
 
 // -------------------------------------------------------------------
+// Translation fallback helper
+// -------------------------------------------------------------------
+
+/** Pick best translation: exact locale → en → fr → first available */
+function pickTranslation<T extends { locale: string }>(
+  translations: T[],
+  locale: string
+): T | undefined {
+  return (
+    translations.find((tr) => tr.locale === locale) ??
+    translations.find((tr) => tr.locale === 'en') ??
+    translations.find((tr) => tr.locale === 'fr') ??
+    translations[0]
+  );
+}
+
+// -------------------------------------------------------------------
 // Types for learner-facing data
 // -------------------------------------------------------------------
 
@@ -131,7 +148,7 @@ export async function fetchLearnerCourses(locale: string): Promise<CourseCard[]>
 
   return (courses ?? []).map((c) => {
     const translations = (c.course_translations as Array<{ locale: string; title: string; description: string | null }>) ?? [];
-    const t = translations.find((tr) => tr.locale === locale) ?? translations.find((tr) => tr.locale === 'fr') ?? translations[0];
+    const t = pickTranslation(translations, locale);
     // Extract HSK level number from slug (e.g., "hsk-1" -> "1")
     const hskLevel = c.slug.replace('hsk-', '');
 
@@ -187,7 +204,7 @@ export async function fetchCourseBySlug(slug: string, locale: string): Promise<C
   ]);
 
   const courseTranslations = (course.course_translations as Array<{ locale: string; title: string; description: string | null }>) ?? [];
-  const ct = courseTranslations.find((tr) => tr.locale === locale) ?? courseTranslations.find((tr) => tr.locale === 'fr') ?? courseTranslations[0];
+  const ct = pickTranslation(courseTranslations, locale);
 
   const modules = ((course.modules as Array<{
     id: string;
@@ -199,7 +216,7 @@ export async function fetchCourseBySlug(slug: string, locale: string): Promise<C
   }>) ?? [])
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((m) => {
-      const mt = m.module_translations?.find((tr) => tr.locale === locale) ?? m.module_translations?.find((tr) => tr.locale === 'fr') ?? m.module_translations?.[0];
+      const mt = pickTranslation(m.module_translations ?? [], locale);
       return {
         id: m.id,
         sort_order: m.sort_order,
@@ -284,7 +301,7 @@ export async function fetchLearnerVocabulary(
       example_pinyin: string | null;
       example_translation: string | null;
     }>) ?? [];
-    const t = translations.find((tr) => tr.locale === locale) ?? translations.find((tr) => tr.locale === 'fr') ?? translations[0];
+    const t = pickTranslation(translations, locale);
 
     return {
       id: v.id,
@@ -333,7 +350,7 @@ export async function fetchLearnerGrammar(
       title: string;
       explanation_html: string;
     }>) ?? [];
-    const t = translations.find((tr) => tr.locale === locale) ?? translations.find((tr) => tr.locale === 'fr') ?? translations[0];
+    const t = pickTranslation(translations, locale);
 
     return {
       id: g.id,
@@ -373,7 +390,7 @@ export async function fetchLearnerCharacters(
       meaning: string;
       mnemonic: string | null;
     }>) ?? [];
-    const t = translations.find((tr) => tr.locale === locale) ?? translations.find((tr) => tr.locale === 'fr') ?? translations[0];
+    const t = pickTranslation(translations, locale);
 
     return {
       id: c.id,
