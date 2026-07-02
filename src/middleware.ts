@@ -30,9 +30,13 @@ export async function middleware(request: NextRequest) {
   // Run intl middleware first to handle locale
   const intlResponse = intlMiddleware(request);
 
-  // DEMO MODE: skip auth checks when Supabase is not configured (placeholder URL)
+  // DEMO MODE: skip auth checks for development preview
+  // Activated when: Supabase not configured OR NEXT_PUBLIC_DEMO_MODE=true
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const isDemoMode = !supabaseUrl || supabaseUrl.includes('placeholder');
+  const isDemoMode =
+    !supabaseUrl ||
+    supabaseUrl.includes('placeholder') ||
+    process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   if (isDemoMode) {
     return intlResponse;
