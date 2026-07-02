@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
+import { signOut } from '@/lib/auth/actions';
 import {
   Home,
   BookOpen,
@@ -14,6 +16,7 @@ import {
   Library,
   Settings,
   HelpCircle,
+  LogOut,
 } from 'lucide-react';
 
 const navItems = [
@@ -33,7 +36,14 @@ const bottomItems = [
 
 export function Sidebar() {
   const t = useTranslations('nav');
+  const ta = useTranslations('auth');
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
+
+  async function handleLogout() {
+    await signOut();
+    window.location.href = '/login';
+  }
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-navy-700 text-white z-40">
@@ -46,8 +56,21 @@ export function Sidebar() {
         />
       </div>
 
+      {/* User info */}
+      {user && (
+        <div className="px-4 py-3 border-b border-white/10">
+          <p className="text-sm font-medium text-white truncate">
+            {user.display_name || user.email}
+          </p>
+          <p className="text-xs text-white/50 truncate">{user.email}</p>
+        </div>
+      )}
+
       {/* Main nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Main navigation">
+      <nav
+        className="flex-1 px-3 py-4 space-y-1 overflow-y-auto"
+        aria-label="Main navigation"
+      >
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -93,6 +116,13 @@ export function Sidebar() {
             </Link>
           );
         })}
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 text-white/70 hover:bg-white/10 hover:text-white touch-target"
+        >
+          <LogOut className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span>{ta('logout')}</span>
+        </button>
       </div>
     </aside>
   );

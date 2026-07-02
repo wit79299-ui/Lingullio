@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,33 +13,46 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { requestPasswordReset } from '@/lib/auth/actions';
+import { resetPassword } from '@/lib/auth/actions';
 
-export function ForgotPasswordForm() {
+export function ResetPasswordForm() {
   const t = useTranslations('auth');
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const [password, setPassword] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPwd) {
+      setError(t('passwordMismatch'));
+      return;
+    }
+
+    if (password.length < 8) {
+      setError(t('passwordRequirements'));
+      return;
+    }
+
     setLoading(true);
 
-    const result = await requestPasswordReset(email);
+    const code = searchParams.get('code');
+    const result = await resetPassword(password, code);
 
     setLoading(false);
 
     if (result.error) {
       setError(result.error);
-      return;
+    } else {
+      setSuccess(true);
     }
-
-    setSent(true);
   }
 
-  if (sent) {
+  if (success) {
     return (
       <Card>
         <CardContent className="pt-6 text-center">
@@ -57,10 +71,10 @@ export function ForgotPasswordForm() {
               />
             </svg>
           </div>
-          <p className="text-sm text-navy-700 mb-4">{t('emailSent')}</p>
+          <p className="text-sm text-navy-700 mb-4">{t('resetSuccess')}</p>
           <Link href="/login">
-            <Button variant="secondary" size="sm">
-              {t('login')}
+            <Button variant="primary" size="sm">
+              {t('loginButton')}
             </Button>
           </Link>
         </CardContent>
@@ -72,23 +86,32 @@ export function ForgotPasswordForm() {
     <Card>
       <CardHeader>
         <CardTitle className="text-xl text-center">
-          {t('forgotTitle')}
+          {t('resetTitle')}
         </CardTitle>
         <CardDescription className="text-center">
-          {t('forgotSubtitle')}
+          {t('resetSubtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label={t('email')}
-            type="email"
-            placeholder={t('emailPlaceholder')}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            label={t('newPassword')}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
-            autoComplete="email"
+            autoComplete="new-password"
+            minLength={8}
           />
+          <Input
+            label={t('confirmPassword')}
+            type="password"
+            value={confirmPwd}
+            onChange={(e) => setConfirmPwd(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+          <p className="text-xs text-navy-400">{t('passwordRequirements')}</p>
           {error && (
             <p className="text-sm text-error-500" role="alert">
               {error}
@@ -100,16 +123,8 @@ export function ForgotPasswordForm() {
             size="lg"
             disabled={loading}
           >
-            {loading ? t('sendResetLink') + '...' : t('sendResetLink')}
+            {loading ? t('resetButton') + '...' : t('resetButton')}
           </Button>
-          <div className="text-center pt-2">
-            <Link
-              href="/login"
-              className="text-sm text-blue-500 hover:underline"
-            >
-              {t('login')}
-            </Link>
-          </div>
         </form>
       </CardContent>
     </Card>

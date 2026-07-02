@@ -7,6 +7,8 @@ import {
   setRequestLocale,
 } from 'next-intl/server';
 import { isRtl, type Locale } from '@/i18n/config';
+import { AuthProvider } from '@/components/providers/auth-provider';
+import { getCurrentUser } from '@/lib/auth/actions';
 import '@/styles/globals.css';
 
 type Props = {
@@ -32,6 +34,13 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
   const dir = isRtl(locale as Locale) ? 'rtl' : 'ltr';
 
+  let initialUser = null;
+  try {
+    initialUser = await getCurrentUser();
+  } catch {
+    // Auth not configured yet or no session
+  }
+
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
@@ -48,7 +57,9 @@ export default async function LocaleLayout({ children, params }: Props) {
       </head>
       <body className="min-h-screen bg-cream-25 text-navy-900 antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <AuthProvider initialUser={initialUser}>
+            {children}
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

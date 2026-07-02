@@ -2,13 +2,23 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { signIn } from '@/lib/auth/actions';
 
 export function LoginForm() {
   const t = useTranslations('auth');
+  const te = useTranslations('errors');
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,10 +28,17 @@ export function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // TODO: Integrate Supabase auth
-    setTimeout(() => {
+
+    const result = await signIn(email, password);
+
+    if (result.error) {
+      setError(t('invalidCredentials'));
       setLoading(false);
-    }, 1000);
+      return;
+    }
+
+    router.push('/dashboard');
+    router.refresh();
   }
 
   return (
@@ -57,8 +74,13 @@ export function LoginForm() {
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? t('login') + '...' : t('loginButton')}
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? t('loginButton') + '...' : t('loginButton')}
           </Button>
           <div className="flex flex-col items-center gap-3 pt-2">
             <Link

@@ -2,14 +2,24 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import { verifyActivationCode, activateAccount } from '@/lib/auth/actions';
 
 type Step = 'code' | 'password';
 
 export function ActivateForm() {
   const t = useTranslations('auth');
+  const router = useRouter();
   const [step, setStep] = useState<Step>('code');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -22,25 +32,52 @@ export function ActivateForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // TODO: Verify activation code via Supabase
-    setTimeout(() => {
-      setLoading(false);
-      setStep('password');
-    }, 1000);
+
+    const result = await verifyActivationCode(email, code);
+
+    setLoading(false);
+
+    if (result.error) {
+      setError(t('invalidCode'));
+      return;
+    }
+
+    setStep('password');
   }
 
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
     if (password !== confirmPwd) {
       setError(t('passwordMismatch'));
       return;
     }
+
+    if (password.length < 8) {
+      setError(t('passwordRequirements'));
+      return;
+    }
+
     setLoading(true);
-    // TODO: Set password via Supabase, activate license
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+
+    const result = await activateAccount(email, password, code);
+
+    setLoading(false);
+
+    if (result.error) {
+      if (result.error === 'invalidCode') {
+        setError(t('invalidCode'));
+      } else if (result.error === 'emailAlreadyExists') {
+        setError(t('invalidCredentials'));
+      } else {
+        setError(result.error);
+      }
+      return;
+    }
+
+    // Account created and license activated, redirect to login
+    router.push('/login');
   }
 
   if (step === 'password') {
@@ -81,8 +118,15 @@ export function ActivateForm() {
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {t('setPasswordButton')}
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading
+                ? t('setPasswordButton') + '...'
+                : t('setPasswordButton')}
             </Button>
           </form>
         </CardContent>
@@ -126,9 +170,22 @@ export function ActivateForm() {
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {t('activateButton')}
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? t('activateButton') + '...' : t('activateButton')}
           </Button>
+          <div className="text-center pt-2">
+            <Link
+              href="/login"
+              className="text-sm text-blue-500 hover:underline"
+            >
+              {t('login')}
+            </Link>
+          </div>
         </form>
       </CardContent>
     </Card>

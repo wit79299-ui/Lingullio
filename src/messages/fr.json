@@ -64,7 +64,8 @@
     "accountExpired": "Votre acces a expire.",
     "accountRevoked": "Votre acces a ete desactive. Contactez le support.",
     "emailSent": "Un email vous a ete envoye.",
-    "passwordMismatch": "Les mots de passe ne correspondent pas."
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "emailAlreadyExists": "Un compte existe deja avec cette adresse email. Connectez-vous directement."
   },
   "nav": {
     "home": "Accueil",

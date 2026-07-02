@@ -64,7 +64,8 @@
     "accountExpired": "Your access has expired.",
     "accountRevoked": "Your access has been deactivated. Contact support.",
     "emailSent": "An email has been sent to you.",
-    "passwordMismatch": "Passwords do not match."
+    "passwordMismatch": "Passwords do not match.",
+    "emailAlreadyExists": "An account already exists with this email address. Please log in directly."
   },
   "nav": {
     "home": "Home",
