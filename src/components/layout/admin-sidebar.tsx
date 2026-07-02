@@ -15,6 +15,7 @@ import {
   BarChart3,
   Settings,
   ClipboardList,
+  Upload,
 } from 'lucide-react';
 
 const adminNavItems = [
@@ -27,6 +28,7 @@ const adminNavItems = [
   { key: 'licenses', href: '/admin/licenses', icon: KeyRound },
   { key: 'analytics', href: '/admin/analytics', icon: BarChart3 },
   { key: 'logs', href: '/admin/logs', icon: ClipboardList },
+  { key: 'import', href: '/admin/import', icon: Upload },
   { key: 'settings', href: '/admin/settings', icon: Settings },
 ] as const;
 

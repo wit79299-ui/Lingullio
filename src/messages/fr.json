@@ -192,6 +192,7 @@
     "analytics": "Analytique",
     "settings": "Parametres",
     "logs": "Journal des actions",
+    "import": "Import",
     "activeLearners": "Apprenants actifs",
     "activationRate": "Taux d'activation",
     "completionRate": "Taux de completion",
