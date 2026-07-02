@@ -1,5 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { fetchLearnerCourses } from '@/lib/learner/queries';
+import { getCefrLevel } from '@/lib/constants/exam-systems';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,7 @@ import {
   PenTool,
   ChevronRight,
   Layers,
+  Award,
 } from 'lucide-react';
 
 type Props = { params: Promise<{ locale: string }> };
@@ -86,10 +88,19 @@ export default async function CoursesPage({ params }: Props) {
                     )}
                   </div>
 
-                  {/* Title */}
+                  {/* Title + CEFR */}
                   <h2 className="text-lg font-semibold text-navy-900 mb-1 group-hover:text-teal-600 transition-colors">
                     {course.title}
                   </h2>
+                  {(() => {
+                    const cefr = getCefrLevel(course.exam_type, level);
+                    return cefr ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gold-100 text-gold-700 font-medium mb-2">
+                        <Award className="h-2.5 w-2.5" />
+                        CECRL {cefr}
+                      </span>
+                    ) : null;
+                  })()}
 
                   {/* Description */}
                   {course.description && (

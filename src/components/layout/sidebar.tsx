@@ -18,6 +18,7 @@ import {
   HelpCircle,
   LogOut,
 } from 'lucide-react';
+import { LanguageSwitcher } from './language-switcher';
 
 const navItems = [
   { key: 'home', href: '/dashboard', icon: Home },
@@ -93,6 +94,13 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Language switcher (desktop sidebar) */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <div className="[&_button]:text-white/70 [&_button:hover]:bg-white/10 [&_button]:hover:text-white [&_.absolute]:bg-navy-600 [&_.absolute]:border-white/10">
+          <LanguageSwitcher />
+        </div>
+      </div>
 
       {/* Bottom nav */}
       <div className="px-3 py-4 border-t border-white/10 space-y-1">

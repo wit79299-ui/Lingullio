@@ -1,21 +1,25 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { fetchCourseBySlug } from '@/lib/learner/queries';
-import { Link } from '@/i18n/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
-  BookOpen,
-  Languages,
-  PenTool,
-  Layers,
-  ChevronRight,
-  Clock,
+  fetchCourseBySlug,
+  fetchLearnerVocabulary,
+  fetchLearnerGrammar,
+  fetchLearnerCharacters,
+} from '@/lib/learner/queries';
+import { getCefrLevel, CEFR_DESCRIPTIONS, getLevelTargets } from '@/lib/constants/exam-systems';
+import { Link } from '@/i18n/navigation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
   ArrowLeft,
-  BookMarked,
+  BookOpen,
+  PenTool,
+  Languages,
+  Layers,
   GraduationCap,
+  Award,
 } from 'lucide-react';
+import { CourseTabs } from './course-tabs';
 
 type Props = {
   params: Promise<{ locale: string; slug: string }>;
@@ -30,17 +34,29 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!course) notFound();
 
   const level = slug.replace('hsk-', '');
+  const cefrLevel = getCefrLevel(course.exam_type, level);
+  const cefrDesc = cefrLevel
+    ? (locale === 'en' ? CEFR_DESCRIPTIONS[cefrLevel]?.en : CEFR_DESCRIPTIONS[cefrLevel]?.fr) ?? null
+    : null;
+  const targets = getLevelTargets(course.exam_type, level);
 
-  // Stats cards
+  // Fetch all tab data in parallel
+  const [vocabulary, grammar, characters] = await Promise.all([
+    fetchLearnerVocabulary(level, locale, { pageSize: 100 }),
+    fetchLearnerGrammar(level, locale),
+    fetchLearnerCharacters(level, locale),
+  ]);
+
+  // Stats for header
   const stats = [
-    { label: t('vocabularyTab'), value: course.vocabulary_count, icon: BookOpen, href: `/courses/${slug}/vocabulary`, color: 'bg-emerald-50 text-emerald-600' },
-    { label: t('grammarTab'), value: course.grammar_count, icon: PenTool, href: null, color: 'bg-violet-50 text-violet-600' },
-    { label: t('charactersTab'), value: course.character_count, icon: Languages, href: null, color: 'bg-sky-50 text-sky-600' },
-    { label: t('modulesTab'), value: course.module_count, icon: Layers, href: null, color: 'bg-amber-50 text-amber-600' },
+    { label: t('vocabularyTab'), value: course.vocabulary_count, target: targets?.vocabTarget, icon: BookOpen, color: 'bg-emerald-50 text-emerald-600' },
+    { label: t('grammarTab'), value: course.grammar_count, target: targets?.grammarTarget, icon: PenTool, color: 'bg-violet-50 text-violet-600' },
+    { label: t('charactersTab'), value: course.character_count, target: targets?.charTarget, icon: Languages, color: 'bg-sky-50 text-sky-600' },
+    { label: t('modulesTab'), value: course.module_count, target: undefined, icon: Layers, color: 'bg-amber-50 text-amber-600' },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Back link */}
       <Link
         href="/courses"
@@ -60,120 +76,65 @@ export default async function CourseDetailPage({ params }: Props) {
           {course.description && (
             <p className="text-navy-400 mt-1">{course.description}</p>
           )}
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             <Badge variant={course.vocabulary_count > 0 ? 'published' : 'draft'}>
               {course.vocabulary_count > 0 ? t('available') : t('comingSoon')}
             </Badge>
-            <span className="text-xs text-navy-400">HSK {level}</span>
+            <span className="text-xs text-navy-400 font-medium">
+              {course.exam_type} {level}
+            </span>
+            {cefrLevel && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gold-100 text-gold-700 font-medium">
+                <Award className="h-3 w-3" />
+                CECRL {cefrLevel}
+                {cefrDesc && <span className="text-gold-500 hidden sm:inline">— {cefrDesc}</span>}
+              </span>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Content Stats Grid */}
-      <section>
-        <h2 className="text-lg font-semibold text-navy-900 mb-4 flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-navy-400" />
-          {t('contentStats')}
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            const content = (
-              <Card className={`transition-all duration-200 ${stat.href && stat.value > 0 ? 'hover:shadow-md cursor-pointer group' : ''}`}>
-                <CardContent className="flex items-center gap-4 py-4">
-                  <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${stat.color} shrink-0`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-2xl font-bold text-navy-900">{stat.value}</p>
-                    <p className="text-xs text-navy-400">{stat.label}</p>
-                  </div>
-                  {stat.href && stat.value > 0 && (
-                    <ChevronRight className="h-4 w-4 text-navy-300 group-hover:text-teal-500 group-hover:translate-x-1 transition-all shrink-0" />
-                  )}
-                </CardContent>
-              </Card>
-            );
-
-            if (stat.href && stat.value > 0) {
-              return (
-                <Link key={stat.label} href={stat.href}>
-                  {content}
-                </Link>
-              );
-            }
-            return <div key={stat.label}>{content}</div>;
-          })}
-        </div>
-      </section>
-
-      {/* Quick Access Buttons */}
-      {course.vocabulary_count > 0 && (
-        <section className="flex flex-wrap gap-3">
-          <Button asChild variant="primary" size="lg">
-            <Link href={`/courses/${slug}/vocabulary`}>
-              <BookOpen className="h-4 w-4 mr-2" />
-              {t('vocabularyTab')} ({course.vocabulary_count})
-            </Link>
-          </Button>
-        </section>
-      )}
-
-      {/* Modules List */}
-      {course.modules.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold text-navy-900 mb-4 flex items-center gap-2">
-            <Layers className="h-5 w-5 text-navy-400" />
-            {t('modulesTab')}
-          </h2>
-          <div className="space-y-3">
-            {course.modules.map((mod) => (
-              <Card key={mod.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="flex items-center gap-4 py-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50 text-navy-600 font-semibold text-sm shrink-0">
-                    {mod.sort_order}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-navy-900">{mod.title}</h3>
-                    {mod.description && (
-                      <p className="text-sm text-navy-400 line-clamp-1">{mod.description}</p>
+      {/* Content Stats Grid (compact) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={stat.label} className="!py-0">
+              <CardContent className="flex items-center gap-3 py-3">
+                <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${stat.color} shrink-0`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xl font-bold text-navy-900">
+                    {stat.value}
+                    {stat.target && (
+                      <span className="text-xs font-normal text-navy-300">/{stat.target}</span>
                     )}
-                    <div className="flex items-center gap-3 mt-1.5">
-                      <span className="text-xs text-navy-400 flex items-center gap-1">
-                        <BookMarked className="h-3 w-3" />
-                        {t('lessons', { count: mod.lesson_count })}
-                      </span>
-                      {mod.estimated_duration_minutes && (
-                        <span className="text-xs text-navy-400 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {t('estimatedTime', { minutes: mod.estimated_duration_minutes })}
-                        </span>
-                      )}
-                      <Badge
-                        variant={mod.status === 'published' ? 'published' : 'draft'}
-                        className="text-[10px]"
-                      >
-                        {mod.status === 'published' ? t('available') : t('comingSoon')}
-                      </Badge>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-navy-300 shrink-0" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
+                  </p>
+                  <p className="text-[11px] text-navy-400 leading-tight">{stat.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-      {/* No Modules state */}
-      {course.modules.length === 0 && (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <Layers className="h-10 w-10 text-navy-200 mx-auto mb-3" />
-            <p className="text-navy-400">{t('noModules')}</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Tabs */}
+      <CourseTabs
+        slug={slug}
+        cefrLevel={cefrLevel}
+        cefrDescription={cefrDesc}
+        vocabulary={vocabulary}
+        grammar={grammar}
+        characters={characters}
+        modules={course.modules}
+        counts={{
+          vocabulary: course.vocabulary_count,
+          grammar: course.grammar_count,
+          characters: course.character_count,
+          modules: course.module_count,
+        }}
+      />
     </div>
   );
 }
