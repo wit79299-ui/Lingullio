@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  /* Lingullio brand colors */
+  --color-navy-900: #0D1B2A;
+  --color-navy-800: #142535;
+  --color-navy-700: #1B3A4B;
+  --color-navy-600: #254E63;
+  --color-navy-500: #2F627B;
+  --color-navy-400: #4A809A;
+  --color-navy-300: #7AAABF;
+  --color-navy-200: #A9CCDA;
+  --color-navy-100: #D4E6ED;
+  --color-navy-50: #EAF3F7;
+
+  --color-blue-500: #3E6FAE;
+  --color-blue-400: #5A87BE;
+  --color-blue-300: #85A8D1;
+  --color-blue-200: #B0C9E3;
+  --color-blue-100: #D8E4F1;
+  --color-blue-50: #ECF2F8;
+
+  --color-teal-600: #24967F;
+  --color-teal-500: #2DB39A;
+  --color-teal-400: #57C5AE;
+  --color-teal-300: #81D4C3;
+  --color-teal-200: #ABE3D7;
+  --color-teal-100: #D5F1EB;
+  --color-teal-50: #EAF8F5;
+
+  --color-cream-100: #EDE9E0;
+  --color-cream-50: #F4F1EA;
+  --color-cream-25: #FAF8F5;
+
+  --color-gold-600: #C89E3D;
+  --color-gold-500: #E6B84A;
+  --color-gold-400: #EBC86E;
+  --color-gold-300: #F0D892;
+  --color-gold-200: #F5E8B7;
+  --color-gold-100: #FAF3DB;
+  --color-gold-50: #FDFAED;
+
+  --color-error-600: #B91C1C;
+  --color-error-500: #DC2626;
+  --color-error-400: #F87171;
+  --color-error-100: #FEE2E2;
+  --color-error-50: #FEF2F2;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-chinese: 'Noto Sans SC', sans-serif;
+
+  /* Radius */
+  --radius-pill: 9999px;
+
+  /* Touch targets */
+  --size-touch: 44px;
+}
+
+/* Base styles */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-cream-25 text-navy-900 font-sans;
+  }
+
+  /* Chinese text should use Noto Sans SC */
+  [lang="zh"],
+  .font-chinese {
+    font-family: var(--font-chinese);
+  }
+
+  /* Focus visible for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+  }
+
+  /* Remove default focus outline, use focus-visible instead */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Smooth scrolling for reduced-motion respecting users */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+/* Utility layer */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .touch-target {
+    min-width: var(--size-touch);
+    min-height: var(--size-touch);
+  }
+}

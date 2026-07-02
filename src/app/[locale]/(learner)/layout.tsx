@@ -1,0 +1,28 @@
+import type { ReactNode } from 'react';
+import { setRequestLocale } from 'next-intl/server';
+import { Sidebar } from '@/components/layout/sidebar';
+import { BottomNav } from '@/components/layout/bottom-nav';
+import { TopBar } from '@/components/layout/top-bar';
+
+type Props = {
+  children: ReactNode;
+  params: Promise<{ locale: string }>;
+};
+
+export default async function LearnerLayout({ children, params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  return (
+    <div className="min-h-screen">
+      <Sidebar />
+      <TopBar />
+      <main className="lg:pl-64 pb-20 lg:pb-0">
+        <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
+          {children}
+        </div>
+      </main>
+      <BottomNav />
+    </div>
+  );
+}
