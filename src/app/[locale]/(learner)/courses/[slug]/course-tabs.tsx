@@ -103,6 +103,7 @@ export function CourseTabs(props: CourseTabsProps) {
     // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.currentTime = 0;
       audioRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -111,34 +112,32 @@ export function CourseTabs(props: CourseTabsProps) {
 
     setPlayingId(word.id);
 
-    if (word.audio_url) {
-      // Priority: use pre-generated audio file
-      const audio = new Audio(word.audio_url);
-      audioRef.current = audio;
-      audio.onended = () => setPlayingId(null);
-      audio.onerror = () => {
-        // Fallback to Web Speech API if audio file fails
-        fallbackSpeech(word.simplified);
-      };
-      audio.play().catch(() => fallbackSpeech(word.simplified));
+    // Use Web Speech API (works on all modern browsers including mobile)
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      const utterance = new SpeechSynthesisUtterance(word.simplified);
+      utterance.lang = 'zh-CN';
+      utterance.rate = 0.85;
+
+      // Try to find a Chinese voice for better quality
+      const voices = window.speechSynthesis.getVoices();
+      const zhVoice = voices.find(v => v.lang.startsWith('zh')) 
+        ?? voices.find(v => v.lang.includes('CN') || v.lang.includes('cmn'));
+      if (zhVoice) utterance.voice = zhVoice;
+
+      utterance.onend = () => setPlayingId(null);
+      utterance.onerror = () => setPlayingId(null);
+
+      // Some mobile browsers need a small delay
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 50);
+
+      // Safety timeout: reset playing state after 3s in case events don't fire
+      setTimeout(() => setPlayingId((prev) => prev === word.id ? null : prev), 3000);
     } else {
-      // Fallback: Web Speech API for words without pre-generated audio
-      fallbackSpeech(word.simplified);
+      setPlayingId(null);
     }
   }, []);
-
-  function fallbackSpeech(text: string) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      setPlayingId(null);
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.8;
-    utterance.onend = () => setPlayingId(null);
-    utterance.onerror = () => setPlayingId(null);
-    window.speechSynthesis.speak(utterance);
-  }
 
   function translateTheme(key: string): string {
     return themeMessages[key] ?? key.replace(/_/g, ' ');
@@ -238,30 +237,31 @@ export function CourseTabs(props: CourseTabsProps) {
                     key={word.id}
                     className="rounded-xl border border-cream-100 bg-white overflow-hidden transition-shadow hover:shadow-sm"
                   >
-                    <div className="flex items-center gap-1 px-4 py-3">
-                      {/* Play audio button */}
+                    <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
+                      {/* Play audio button — larger touch target on mobile */}
                       <button
                         type="button"
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           playAudio(word);
                         }}
                         className={cn(
-                          'shrink-0 p-1.5 rounded-lg transition-colors',
+                          'shrink-0 flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95',
                           playingId === word.id
-                            ? 'text-teal-600 bg-teal-50 animate-pulse'
-                            : 'text-navy-300 hover:text-teal-600 hover:bg-teal-50'
+                            ? 'text-white bg-teal-500 shadow-sm animate-pulse'
+                            : 'text-teal-500 bg-teal-50 hover:bg-teal-100 active:bg-teal-200'
                         )}
-                        title={word.audio_url ? 'Écouter (audio HD)' : 'Écouter (synthèse vocale)'}
+                        aria-label={`Écouter ${word.simplified}`}
                       >
-                        <Volume2 className="h-4 w-4" />
+                        <Volume2 className="h-4.5 w-4.5" />
                       </button>
 
                       {/* Expandable word row */}
                       <button
                         type="button"
                         onClick={() => setExpandedVocab(isExpanded ? null : word.id)}
-                        className="flex-1 flex items-center gap-3 text-left min-w-0"
+                        className="flex-1 flex items-center gap-2 sm:gap-3 text-left min-w-0"
                       >
                         <span className="text-xl font-medium text-navy-900 min-w-[3rem]">
                           {word.simplified}
