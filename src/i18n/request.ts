@@ -8,8 +8,17 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = routing.defaultLocale;
   }
 
+  // Try loading locale-specific messages, fallback to fr (default) if not found
+  let messages;
+  try {
+    messages = (await import(`../messages/${locale}.json`)).default;
+  } catch {
+    // Locale file doesn't exist yet — fallback to French
+    messages = (await import(`../messages/fr.json`)).default;
+  }
+
   return {
     locale,
-    messages: (await import(`../messages/${locale}.json`)).default,
+    messages,
   };
 });
