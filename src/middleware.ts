@@ -30,9 +30,17 @@ export async function middleware(request: NextRequest) {
   // Run intl middleware first to handle locale
   const intlResponse = intlMiddleware(request);
 
+  // DEMO MODE: skip auth checks when Supabase is not configured (placeholder URL)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const isDemoMode = !supabaseUrl || supabaseUrl.includes('placeholder');
+
+  if (isDemoMode) {
+    return intlResponse;
+  }
+
   // Create Supabase client with request/response cookies
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
@@ -99,6 +107,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next|_vercel|auth|monitoring|.*\\..*).*)',
+    '/((?!api|_next|_vercel|auth|monitoring|setup|.*\\..*).*)',
   ],
 };
