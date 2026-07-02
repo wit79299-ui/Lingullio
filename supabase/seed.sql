@@ -153,48 +153,48 @@ INSERT INTO public.character_translations (character_id, locale, meaning, mnemon
 -- ============================================================
 
 INSERT INTO public.exercises (id, lesson_id, exercise_type, difficulty, points, estimated_duration_seconds, skill_tags, hsk_level, sort_order, status) VALUES
-  ('g0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'mcq', 1, 10, 30, '{vocabulary}', '1', 1, 'published'),
-  ('g0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'mcq', 1, 10, 30, '{vocabulary}', '1', 2, 'published'),
-  ('g0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000001', 'fill_blank', 1, 15, 45, '{grammar,vocabulary}', '1', 3, 'published'),
-  ('g0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000001', 'matching', 1, 20, 60, '{vocabulary}', '1', 4, 'published'),
-  ('g0000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000001', 'character_recognition', 1, 10, 20, '{characters}', '1', 5, 'published');
+  ('a1000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'mcq', 1, 10, 30, '{vocabulary}', '1', 1, 'published'),
+  ('a1000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001', 'mcq', 1, 10, 30, '{vocabulary}', '1', 2, 'published'),
+  ('a1000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000001', 'fill_blank', 1, 15, 45, '{grammar,vocabulary}', '1', 3, 'published'),
+  ('a1000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000001', 'matching', 1, 20, 60, '{vocabulary}', '1', 4, 'published'),
+  ('a1000000-0000-0000-0000-000000000005', 'c0000000-0000-0000-0000-000000000001', 'character_recognition', 1, 10, 20, '{characters}', '1', 5, 'published');
 
 INSERT INTO public.exercise_translations (exercise_id, locale, prompt, instruction, explanation, hint) VALUES
-  ('g0000000-0000-0000-0000-000000000001', 'fr', 'Que signifie 你好 ?', 'Choisissez la bonne traduction.', '你好 (ni hao) est la salutation standard en chinois mandarin.', 'Pensez a une salutation courante.'),
-  ('g0000000-0000-0000-0000-000000000001', 'en', 'What does 你好 mean?', 'Choose the correct translation.', '你好 (ni hao) is the standard greeting in Mandarin Chinese.', 'Think of a common greeting.'),
-  ('g0000000-0000-0000-0000-000000000002', 'fr', 'Comment dit-on "je" en chinois ?', 'Choisissez le bon caractere.', '我 (wo) est le pronom de la premiere personne du singulier.', 'C''est l''un des premiers mots appris.'),
-  ('g0000000-0000-0000-0000-000000000002', 'en', 'How do you say "I" in Chinese?', 'Choose the correct character.', '我 (wo) is the first person singular pronoun.', 'It is one of the first words learned.'),
-  ('g0000000-0000-0000-0000-000000000003', 'fr', '我___学生。(Je suis etudiant.)', 'Completez avec le mot correct.', '是 (shi) est utilise pour identifier ou classifier, similaire a "etre".', 'Un verbe d''identification.'),
-  ('g0000000-0000-0000-0000-000000000003', 'en', '我___学生。(I am a student.)', 'Complete with the correct word.', '是 (shi) is used to identify or classify, similar to "to be".', 'A verb of identification.');
+  ('a1000000-0000-0000-0000-000000000001', 'fr', 'Que signifie 你好 ?', 'Choisissez la bonne traduction.', '你好 (ni hao) est la salutation standard en chinois mandarin.', 'Pensez a une salutation courante.'),
+  ('a1000000-0000-0000-0000-000000000001', 'en', 'What does 你好 mean?', 'Choose the correct translation.', '你好 (ni hao) is the standard greeting in Mandarin Chinese.', 'Think of a common greeting.'),
+  ('a1000000-0000-0000-0000-000000000002', 'fr', 'Comment dit-on "je" en chinois ?', 'Choisissez le bon caractere.', '我 (wo) est le pronom de la premiere personne du singulier.', 'C''est l''un des premiers mots appris.'),
+  ('a1000000-0000-0000-0000-000000000002', 'en', 'How do you say "I" in Chinese?', 'Choose the correct character.', '我 (wo) is the first person singular pronoun.', 'It is one of the first words learned.'),
+  ('a1000000-0000-0000-0000-000000000003', 'fr', '我___学生。(Je suis etudiant.)', 'Completez avec le mot correct.', '是 (shi) est utilise pour identifier ou classifier, similaire a "etre".', 'Un verbe d''identification.'),
+  ('a1000000-0000-0000-0000-000000000003', 'en', '我___学生。(I am a student.)', 'Complete with the correct word.', '是 (shi) is used to identify or classify, similar to "to be".', 'A verb of identification.');
 
 -- Exercise options for MCQ exercises
 INSERT INTO public.exercise_options (id, exercise_id, sort_order, is_correct) VALUES
-  ('h0000000-0000-0000-0000-000000000001', 'g0000000-0000-0000-0000-000000000001', 1, true),
-  ('h0000000-0000-0000-0000-000000000002', 'g0000000-0000-0000-0000-000000000001', 2, false),
-  ('h0000000-0000-0000-0000-000000000003', 'g0000000-0000-0000-0000-000000000001', 3, false),
-  ('h0000000-0000-0000-0000-000000000004', 'g0000000-0000-0000-0000-000000000001', 4, false),
-  ('h0000000-0000-0000-0000-000000000005', 'g0000000-0000-0000-0000-000000000002', 1, false),
-  ('h0000000-0000-0000-0000-000000000006', 'g0000000-0000-0000-0000-000000000002', 2, true),
-  ('h0000000-0000-0000-0000-000000000007', 'g0000000-0000-0000-0000-000000000002', 3, false),
-  ('h0000000-0000-0000-0000-000000000008', 'g0000000-0000-0000-0000-000000000002', 4, false);
+  ('a2000000-0000-0000-0000-000000000001', 'a1000000-0000-0000-0000-000000000001', 1, true),
+  ('a2000000-0000-0000-0000-000000000002', 'a1000000-0000-0000-0000-000000000001', 2, false),
+  ('a2000000-0000-0000-0000-000000000003', 'a1000000-0000-0000-0000-000000000001', 3, false),
+  ('a2000000-0000-0000-0000-000000000004', 'a1000000-0000-0000-0000-000000000001', 4, false),
+  ('a2000000-0000-0000-0000-000000000005', 'a1000000-0000-0000-0000-000000000002', 1, false),
+  ('a2000000-0000-0000-0000-000000000006', 'a1000000-0000-0000-0000-000000000002', 2, true),
+  ('a2000000-0000-0000-0000-000000000007', 'a1000000-0000-0000-0000-000000000002', 3, false),
+  ('a2000000-0000-0000-0000-000000000008', 'a1000000-0000-0000-0000-000000000002', 4, false);
 
 INSERT INTO public.exercise_option_translations (option_id, locale, content, error_explanation) VALUES
-  ('h0000000-0000-0000-0000-000000000001', 'fr', 'Bonjour', NULL),
-  ('h0000000-0000-0000-0000-000000000001', 'en', 'Hello', NULL),
-  ('h0000000-0000-0000-0000-000000000002', 'fr', 'Au revoir', '再见 (zaijian) signifie "au revoir", pas 你好.'),
-  ('h0000000-0000-0000-0000-000000000002', 'en', 'Goodbye', '再见 (zaijian) means "goodbye", not 你好.'),
-  ('h0000000-0000-0000-0000-000000000003', 'fr', 'Merci', '谢谢 (xiexie) signifie "merci", pas 你好.'),
-  ('h0000000-0000-0000-0000-000000000003', 'en', 'Thank you', '谢谢 (xiexie) means "thank you", not 你好.'),
-  ('h0000000-0000-0000-0000-000000000004', 'fr', 'Pardon', '对不起 (duibuqi) signifie "pardon", pas 你好.'),
-  ('h0000000-0000-0000-0000-000000000004', 'en', 'Sorry', '对不起 (duibuqi) means "sorry", not 你好.'),
-  ('h0000000-0000-0000-0000-000000000005', 'fr', '他 (ta)', '他 signifie "il/lui", pas "je".'),
-  ('h0000000-0000-0000-0000-000000000005', 'en', '他 (ta)', '他 means "he/him", not "I".'),
-  ('h0000000-0000-0000-0000-000000000006', 'fr', '我 (wo)', NULL),
-  ('h0000000-0000-0000-0000-000000000006', 'en', '我 (wo)', NULL),
-  ('h0000000-0000-0000-0000-000000000007', 'fr', '你 (ni)', '你 signifie "tu/vous", pas "je".'),
-  ('h0000000-0000-0000-0000-000000000007', 'en', '你 (ni)', '你 means "you", not "I".'),
-  ('h0000000-0000-0000-0000-000000000008', 'fr', '她 (ta)', '她 signifie "elle", pas "je".'),
-  ('h0000000-0000-0000-0000-000000000008', 'en', '她 (ta)', '她 means "she/her", not "I".');
+  ('a2000000-0000-0000-0000-000000000001', 'fr', 'Bonjour', NULL),
+  ('a2000000-0000-0000-0000-000000000001', 'en', 'Hello', NULL),
+  ('a2000000-0000-0000-0000-000000000002', 'fr', 'Au revoir', '再见 (zaijian) signifie "au revoir", pas 你好.'),
+  ('a2000000-0000-0000-0000-000000000002', 'en', 'Goodbye', '再见 (zaijian) means "goodbye", not 你好.'),
+  ('a2000000-0000-0000-0000-000000000003', 'fr', 'Merci', '谢谢 (xiexie) signifie "merci", pas 你好.'),
+  ('a2000000-0000-0000-0000-000000000003', 'en', 'Thank you', '谢谢 (xiexie) means "thank you", not 你好.'),
+  ('a2000000-0000-0000-0000-000000000004', 'fr', 'Pardon', '对不起 (duibuqi) signifie "pardon", pas 你好.'),
+  ('a2000000-0000-0000-0000-000000000004', 'en', 'Sorry', '对不起 (duibuqi) means "sorry", not 你好.'),
+  ('a2000000-0000-0000-0000-000000000005', 'fr', '他 (ta)', '他 signifie "il/lui", pas "je".'),
+  ('a2000000-0000-0000-0000-000000000005', 'en', '他 (ta)', '他 means "he/him", not "I".'),
+  ('a2000000-0000-0000-0000-000000000006', 'fr', '我 (wo)', NULL),
+  ('a2000000-0000-0000-0000-000000000006', 'en', '我 (wo)', NULL),
+  ('a2000000-0000-0000-0000-000000000007', 'fr', '你 (ni)', '你 signifie "tu/vous", pas "je".'),
+  ('a2000000-0000-0000-0000-000000000007', 'en', '你 (ni)', '你 means "you", not "I".'),
+  ('a2000000-0000-0000-0000-000000000008', 'fr', '她 (ta)', '她 signifie "elle", pas "je".'),
+  ('a2000000-0000-0000-0000-000000000008', 'en', '她 (ta)', '她 means "she/her", not "I".');
 
 -- ============================================================
 -- ADMIN USER (for development only - will be created via Supabase Auth)
@@ -211,5 +211,5 @@ INSERT INTO public.users (id, email, display_name, role, interface_language, is_
 -- ============================================================
 
 INSERT INTO public.licenses (id, email, activation_code, course_id, status, duration_months) VALUES
-  ('l0000000-0000-0000-0000-000000000001', 'test@example.com', 'TEST1234', 'a0000000-0000-0000-0000-000000000001', 'pending', 12),
-  ('l0000000-0000-0000-0000-000000000002', 'demo@example.com', 'DEMO5678', 'a0000000-0000-0000-0000-000000000001', 'pending', 12);
+  ('a3000000-0000-0000-0000-000000000001', 'test@example.com', 'TEST1234', 'a0000000-0000-0000-0000-000000000001', 'pending', 12),
+  ('a3000000-0000-0000-0000-000000000002', 'demo@example.com', 'DEMO5678', 'a0000000-0000-0000-0000-000000000001', 'pending', 12);
