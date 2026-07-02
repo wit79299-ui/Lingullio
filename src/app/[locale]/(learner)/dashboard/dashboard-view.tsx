@@ -139,9 +139,7 @@ export function DashboardView() {
               score={mockData.estimatedScore}
               maxScore={mockData.maxScore}
               label={mockData.level}
-              confidence={t('confidence', {
-                level: t(confidenceLabels[mockData.confidence]),
-              })}
+              confidence={t('confidence', { level: t(confidenceLabels[mockData.confidence]) })}
               change={mockData.scoreChange}
             />
             <p className="mt-2 text-xs text-navy-400">

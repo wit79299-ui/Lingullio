@@ -6,10 +6,8 @@ import {
   getTranslations,
   setRequestLocale,
 } from 'next-intl/server';
-import { isRtl, type Locale } from '@/i18n/config';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { getCurrentUser } from '@/lib/auth/actions';
-import '@/styles/globals.css';
 
 type Props = {
   children: ReactNode;
@@ -28,11 +26,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// Locale layout: does NOT render <html>/<body> (those are in root layout).
+// Only provides locale-specific context and providers.
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const messages = await getMessages();
-  const dir = isRtl(locale as Locale) ? 'rtl' : 'ltr';
 
   let initialUser = null;
   try {
@@ -42,26 +41,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
 
   return (
-    <html lang={locale} dir={dir} suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-screen bg-cream-25 text-navy-900 antialiased">
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider initialUser={initialUser}>
-            {children}
-          </AuthProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <AuthProvider initialUser={initialUser}>
+        {children}
+      </AuthProvider>
+    </NextIntlClientProvider>
   );
 }
