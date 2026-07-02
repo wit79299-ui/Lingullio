@@ -8,17 +8,8 @@ import {
 } from '@/lib/learner/queries';
 import { getCefrLevel, CEFR_DESCRIPTIONS, getLevelTargets } from '@/lib/constants/exam-systems';
 import { Link } from '@/i18n/navigation';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  ArrowLeft,
-  BookOpen,
-  PenTool,
-  Languages,
-  Layers,
-  GraduationCap,
-  Award,
-} from 'lucide-react';
+import { ArrowLeft, Award } from 'lucide-react';
 import { CourseTabs } from './course-tabs';
 
 type Props = {
@@ -42,17 +33,17 @@ export default async function CourseDetailPage({ params }: Props) {
 
   // Fetch all tab data in parallel
   const [vocabulary, grammar, characters] = await Promise.all([
-    fetchLearnerVocabulary(level, locale, { pageSize: 100 }),
+    fetchLearnerVocabulary(level, locale, { pageSize: 500 }),
     fetchLearnerGrammar(level, locale),
     fetchLearnerCharacters(level, locale),
   ]);
 
-  // Stats for header
-  const stats = [
-    { label: t('vocabularyTab'), value: course.vocabulary_count, target: targets?.vocabTarget, icon: BookOpen, color: 'bg-emerald-50 text-emerald-600' },
-    { label: t('grammarTab'), value: course.grammar_count, target: targets?.grammarTarget, icon: PenTool, color: 'bg-violet-50 text-violet-600' },
-    { label: t('charactersTab'), value: course.character_count, target: targets?.charTarget, icon: Languages, color: 'bg-sky-50 text-sky-600' },
-    { label: t('modulesTab'), value: course.module_count, target: undefined, icon: Layers, color: 'bg-amber-50 text-amber-600' },
+  // Stats data — passed to client CourseTabs so cards are clickable
+  const statsData = [
+    { tabId: 'vocabulary' as const, label: t('vocabularyTab'), value: course.vocabulary_count, target: targets?.vocabTarget, color: 'bg-emerald-50 text-emerald-600' },
+    { tabId: 'grammar' as const, label: t('grammarTab'), value: course.grammar_count, target: targets?.grammarTarget, color: 'bg-violet-50 text-violet-600' },
+    { tabId: 'characters' as const, label: t('charactersTab'), value: course.character_count, target: targets?.charTarget, color: 'bg-sky-50 text-sky-600' },
+    { tabId: 'modules' as const, label: t('modulesTab'), value: course.module_count, target: undefined, color: 'bg-amber-50 text-amber-600' },
   ];
 
   return (
@@ -94,33 +85,9 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Content Stats Grid (compact) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label} className="!py-0">
-              <CardContent className="flex items-center gap-3 py-3">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${stat.color} shrink-0`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xl font-bold text-navy-900">
-                    {stat.value}
-                    {stat.target && (
-                      <span className="text-xs font-normal text-navy-300">/{stat.target}</span>
-                    )}
-                  </p>
-                  <p className="text-[11px] text-navy-400 leading-tight">{stat.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Tabs */}
+      {/* Stats grid + Tabs — all in client component for interactivity */}
       <CourseTabs
+        statsData={statsData}
         slug={slug}
         cefrLevel={cefrLevel}
         cefrDescription={cefrDesc}

@@ -331,6 +331,11 @@
     "noGrammar": "Les points de grammaire de ce niveau ne sont pas encore disponibles.",
     "noCharacters": "Les caracteres de ce niveau ne sont pas encore disponibles.",
     "noModules": "Les modules de ce niveau ne sont pas encore disponibles.",
+    "characterBreakdown": "Décomposition en caractères",
+    "searchCharPlaceholder": "Rechercher un caractère, pinyin...",
+    "charactersShowing": "caractères",
+    "mnemonicLabel": "Astuce mémorisation",
+    "audioUnavailable": "Audio non disponible sur cet appareil",
     "wordTypes": {
       "noun": "Nom",
       "verb": "Verbe",

@@ -1,10 +1,10 @@
 'use client';
 
 import { useTranslations, useMessages } from 'next-intl';
-import { useState, useCallback, useRef } from 'react';
-import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, ChevronLeft, ChevronRight, Volume2 } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useRouter, usePathname } from '@/i18n/navigation';
+import { Card, CardContent } from '@/components/ui/card';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -55,7 +55,18 @@ interface ModuleCard {
   lesson_count: number;
 }
 
+type TabId = 'vocabulary' | 'grammar' | 'characters' | 'modules';
+
+interface StatData {
+  tabId: TabId;
+  label: string;
+  value: number;
+  target?: number;
+  color: string;
+}
+
 export interface CourseTabsProps {
+  statsData: StatData[];
   slug: string;
   cefrLevel: string | null;
   cefrDescription: string | null;
@@ -72,8 +83,6 @@ export interface CourseTabsProps {
 }
 
 // ─── Tab definitions ────────────────────────────────────────────────────────
-
-type TabId = 'vocabulary' | 'grammar' | 'characters' | 'modules';
 
 const TAB_CONFIG: { id: TabId; icon: typeof BookOpen; countKey: keyof CourseTabsProps['counts'] }[] = [
   { id: 'vocabulary', icon: BookOpen, countKey: 'vocabulary' },
@@ -94,12 +103,52 @@ export function CourseTabs(props: CourseTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('vocabulary');
   const [expandedVocab, setExpandedVocab] = useState<string | null>(null);
   const [expandedGrammar, setExpandedGrammar] = useState<string | null>(null);
+  const [expandedChar, setExpandedChar] = useState<string | null>(null);
   const [vocabSearch, setVocabSearch] = useState('');
   const [grammarSearch, setGrammarSearch] = useState('');
+  const [charSearch, setCharSearch] = useState('');
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [voicesReady, setVoicesReady] = useState(false);
+  const [hasZhVoice, setHasZhVoice] = useState(true); // optimistic
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
 
-  const playAudio = useCallback((word: VocabWord) => {
+  // ─── Preload TTS voices ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      setHasZhVoice(false);
+      return;
+    }
+
+    const checkVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const zhVoice = voices.find(v => v.lang.startsWith('zh') || v.lang.includes('CN') || v.lang.includes('cmn'));
+        setHasZhVoice(!!zhVoice);
+        setVoicesReady(true);
+      }
+    };
+
+    // Check immediately (Chrome loads voices sync)
+    checkVoices();
+
+    // Also listen for async loading (Safari, Firefox, some Android)
+    window.speechSynthesis.onvoiceschanged = checkVoices;
+
+    // Fallback: retry a few times for stubborn browsers
+    const retries = [100, 500, 1500, 3000];
+    const timers = retries.map(ms => setTimeout(checkVoices, ms));
+
+    return () => {
+      timers.forEach(clearTimeout);
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
+  // ─── Play audio ───────────────────────────────────────────────────────────
+  const playAudio = useCallback((text: string, itemId: string) => {
     // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -110,30 +159,30 @@ export function CourseTabs(props: CourseTabsProps) {
       window.speechSynthesis.cancel();
     }
 
-    setPlayingId(word.id);
+    setPlayingId(itemId);
 
-    // Use Web Speech API (works on all modern browsers including mobile)
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(word.simplified);
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-CN';
       utterance.rate = 0.85;
 
-      // Try to find a Chinese voice for better quality
+      // Find best Chinese voice
       const voices = window.speechSynthesis.getVoices();
-      const zhVoice = voices.find(v => v.lang.startsWith('zh')) 
+      const zhVoice = voices.find(v => v.lang === 'zh-CN')
+        ?? voices.find(v => v.lang.startsWith('zh'))
         ?? voices.find(v => v.lang.includes('CN') || v.lang.includes('cmn'));
       if (zhVoice) utterance.voice = zhVoice;
 
       utterance.onend = () => setPlayingId(null);
       utterance.onerror = () => setPlayingId(null);
 
-      // Some mobile browsers need a small delay
+      // Small delay for mobile browsers
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
       }, 50);
 
-      // Safety timeout: reset playing state after 3s in case events don't fire
-      setTimeout(() => setPlayingId((prev) => prev === word.id ? null : prev), 3000);
+      // Safety timeout
+      setTimeout(() => setPlayingId((prev) => prev === itemId ? null : prev), 5000);
     } else {
       setPlayingId(null);
     }
@@ -153,7 +202,22 @@ export function CourseTabs(props: CourseTabsProps) {
     modules: t('modulesTab'),
   };
 
-  // Filter vocab client-side for quick search within loaded page
+  // Handle stat card click — switch tab and scroll
+  const handleStatClick = (tabId: TabId) => {
+    setActiveTab(tabId);
+    // Scroll to tabs section smoothly
+    setTimeout(() => {
+      tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
+  // ─── Build character lookup for vocab enrichment ──────────────────────────
+  const charMap = new Map<string, CharacterCard>();
+  for (const c of props.characters) {
+    charMap.set(c.character, c);
+  }
+
+  // Filter vocab client-side
   const filteredVocab = vocabSearch
     ? props.vocabulary.words.filter(
         (w) =>
@@ -172,10 +236,96 @@ export function CourseTabs(props: CourseTabsProps) {
       )
     : props.grammar;
 
+  // Filter characters client-side
+  const filteredChars = charSearch
+    ? props.characters.filter(
+        (c) =>
+          c.character.includes(charSearch) ||
+          c.pinyin.toLowerCase().includes(charSearch.toLowerCase()) ||
+          c.meaning.toLowerCase().includes(charSearch.toLowerCase())
+      )
+    : props.characters;
+
+  // ─── Audio play button component ──────────────────────────────────────────
+  const PlayButton = ({ text, itemId, size = 'sm' }: { text: string; itemId: string; size?: 'sm' | 'md' }) => {
+    const isPlaying = playingId === itemId;
+    const sizeClasses = size === 'md' ? 'w-10 h-10' : 'w-8 h-8';
+    const iconSize = size === 'md' ? 'h-5 w-5' : 'h-4 w-4';
+
+    if (!hasZhVoice && voicesReady) {
+      return (
+        <div
+          className={cn('shrink-0 flex items-center justify-center rounded-full text-navy-300 bg-cream-50 cursor-not-allowed', sizeClasses)}
+          title={t('audioUnavailable') ?? 'Audio non disponible sur cet appareil'}
+        >
+          <VolumeX className={iconSize} />
+        </div>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          playAudio(text, itemId);
+        }}
+        className={cn(
+          'shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95',
+          sizeClasses,
+          isPlaying
+            ? 'text-white bg-teal-500 shadow-sm animate-pulse'
+            : 'text-teal-500 bg-teal-50 hover:bg-teal-100 active:bg-teal-200'
+        )}
+        aria-label={`Écouter ${text}`}
+      >
+        <Volume2 className={iconSize} />
+      </button>
+    );
+  };
+
   return (
     <div>
-      {/* Tab bar */}
-      <div className="flex border-b border-cream-100 overflow-x-auto -mx-1 scrollbar-hide">
+      {/* ── Clickable Stats Grid ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {props.statsData.map((stat) => {
+          const tabCfg = TAB_CONFIG.find(tc => tc.id === stat.tabId);
+          const Icon = tabCfg?.icon ?? BookOpen;
+          const isActive = activeTab === stat.tabId;
+          return (
+            <button
+              key={stat.tabId}
+              type="button"
+              onClick={() => handleStatClick(stat.tabId)}
+              className="text-left w-full"
+            >
+              <Card className={cn(
+                '!py-0 transition-all cursor-pointer hover:shadow-md',
+                isActive && 'ring-2 ring-teal-400 shadow-md'
+              )}>
+                <CardContent className="flex items-center gap-3 py-3">
+                  <div className={cn('flex items-center justify-center w-10 h-10 rounded-xl shrink-0', stat.color)}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xl font-bold text-navy-900">
+                      {stat.value}
+                      {stat.target && (
+                        <span className="text-xs font-normal text-navy-300">/{stat.target}</span>
+                      )}
+                    </p>
+                    <p className="text-[11px] text-navy-400 leading-tight">{stat.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Tab bar ── */}
+      <div ref={tabsRef} className="flex border-b border-cream-100 overflow-x-auto -mx-1 scrollbar-hide">
         {TAB_CONFIG.map(({ id, icon: Icon, countKey }) => {
           const count = props.counts[countKey];
           const isActive = activeTab === id;
@@ -206,7 +356,7 @@ export function CourseTabs(props: CourseTabsProps) {
         })}
       </div>
 
-      {/* Tab content */}
+      {/* ── Tab content ── */}
       <div className="mt-6">
         {/* ── Vocabulary Tab ── */}
         {activeTab === 'vocabulary' && (
@@ -232,30 +382,16 @@ export function CourseTabs(props: CourseTabsProps) {
             <div className="space-y-2">
               {filteredVocab.map((word) => {
                 const isExpanded = expandedVocab === word.id;
+                // Find matching characters for this word
+                const wordChars = word.simplified.split('').map(ch => charMap.get(ch)).filter(Boolean) as CharacterCard[];
                 return (
                   <div
                     key={word.id}
                     className="rounded-xl border border-cream-100 bg-white overflow-hidden transition-shadow hover:shadow-sm"
                   >
                     <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
-                      {/* Play audio button — larger touch target on mobile */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          playAudio(word);
-                        }}
-                        className={cn(
-                          'shrink-0 flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-95',
-                          playingId === word.id
-                            ? 'text-white bg-teal-500 shadow-sm animate-pulse'
-                            : 'text-teal-500 bg-teal-50 hover:bg-teal-100 active:bg-teal-200'
-                        )}
-                        aria-label={`Écouter ${word.simplified}`}
-                      >
-                        <Volume2 className="h-4.5 w-4.5" />
-                      </button>
+                      {/* Play audio button */}
+                      <PlayButton text={word.simplified} itemId={word.id} />
 
                       {/* Expandable word row */}
                       <button
@@ -276,7 +412,7 @@ export function CourseTabs(props: CourseTabsProps) {
                       </button>
                     </div>
                     {isExpanded && (
-                      <div className="px-4 pb-4 border-t border-cream-50 pt-3 space-y-2">
+                      <div className="px-4 pb-4 border-t border-cream-50 pt-3 space-y-3">
                         {word.traditional && (
                           <p className="text-sm text-navy-400">
                             <span className="font-medium">{t('traditional')} :</span> {word.traditional}
@@ -293,7 +429,7 @@ export function CourseTabs(props: CourseTabsProps) {
                           </p>
                         )}
                         {word.example_sentence && (
-                          <div className="bg-cream-25 rounded-lg p-3 mt-2">
+                          <div className="bg-cream-25 rounded-lg p-3">
                             <p className="text-base text-navy-900">{word.example_sentence}</p>
                             {word.example_pinyin && (
                               <p className="text-sm text-teal-600 font-mono mt-1">{word.example_pinyin}</p>
@@ -301,6 +437,31 @@ export function CourseTabs(props: CourseTabsProps) {
                             {word.example_translation && (
                               <p className="text-sm text-navy-500 mt-1">{word.example_translation}</p>
                             )}
+                          </div>
+                        )}
+
+                        {/* Character breakdown — integrated from Characters data */}
+                        {wordChars.length > 0 && (
+                          <div className="border-t border-cream-100 pt-3">
+                            <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-2">
+                              {t('characterBreakdown') ?? 'Décomposition en caractères'}
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {wordChars.map((ch) => (
+                                <div
+                                  key={ch.id}
+                                  className="flex items-center gap-2 bg-sky-50/70 rounded-lg px-3 py-2 text-sm"
+                                >
+                                  <PlayButton text={ch.character} itemId={`char-${ch.id}`} size="sm" />
+                                  <span className="text-lg font-medium text-navy-900">{ch.character}</span>
+                                  <span className="text-teal-600 font-mono text-xs">{ch.pinyin}</span>
+                                  <span className="text-navy-500 text-xs">{ch.meaning}</span>
+                                  {ch.radical && (
+                                    <span className="text-navy-400 text-[10px]">部 {ch.radical}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -364,7 +525,7 @@ export function CourseTabs(props: CourseTabsProps) {
                           'text-xs px-2 py-0.5 rounded-full',
                           g.difficulty <= 1 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
                         )}>
-                          {g.difficulty <= 1 ? '★' : '★★'}
+                          {g.difficulty <= 1 ? '\u2605' : '\u2605\u2605'}
                         </span>
                         {isExpanded ? (
                           <ChevronUp className="h-4 w-4 text-navy-300" />
@@ -410,31 +571,95 @@ export function CourseTabs(props: CourseTabsProps) {
           </div>
         )}
 
-        {/* ── Characters Tab ── */}
+        {/* ── Characters Tab (full detail view with search) ── */}
         {activeTab === 'characters' && (
           <div className="space-y-4">
-            {props.characters.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {props.characters.map((c) => (
-                  <div
-                    key={c.id}
-                    className="flex flex-col items-center p-4 rounded-xl border border-cream-100 bg-white hover:shadow-sm transition-shadow"
-                  >
-                    <span className="text-3xl font-medium text-navy-900 mb-1">{c.character}</span>
-                    <span className="text-sm text-teal-600 font-mono">{c.pinyin}</span>
-                    <span className="text-xs text-navy-500 text-center mt-1 line-clamp-2">{c.meaning}</span>
-                    <div className="flex items-center gap-2 mt-2 text-[10px] text-navy-400">
-                      {c.radical && <span>部 {c.radical}</span>}
-                      <span>{c.stroke_count} traits</span>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-300" />
+              <input
+                type="text"
+                placeholder={t('searchCharPlaceholder') ?? 'Rechercher un caractère, pinyin...'}
+                value={charSearch}
+                onChange={(e) => setCharSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm text-navy-900 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+              />
+            </div>
+
+            <p className="text-xs text-navy-400">
+              {filteredChars.length} {t('charactersShowing') ?? 'caractères'}
+            </p>
+
+            {filteredChars.length > 0 ? (
+              <div className="space-y-2">
+                {filteredChars.map((c) => {
+                  const isExpanded = expandedChar === c.id;
+                  return (
+                    <div
+                      key={c.id}
+                      className="rounded-xl border border-cream-100 bg-white overflow-hidden transition-shadow hover:shadow-sm"
+                    >
+                      <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
+                        {/* Play audio */}
+                        <PlayButton text={c.character} itemId={`ctab-${c.id}`} />
+
+                        {/* Expandable character row */}
+                        <button
+                          type="button"
+                          onClick={() => setExpandedChar(isExpanded ? null : c.id)}
+                          className="flex-1 flex items-center gap-2 sm:gap-3 text-left min-w-0"
+                        >
+                          <span className="text-2xl font-medium text-navy-900 min-w-[2.5rem] text-center">
+                            {c.character}
+                          </span>
+                          <span className="text-sm text-teal-600 font-mono">{c.pinyin}</span>
+                          <span className="flex-1 text-sm text-navy-600 truncate">{c.meaning}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {c.radical && (
+                              <span className="text-[10px] text-navy-400 bg-cream-50 px-1.5 py-0.5 rounded">部 {c.radical}</span>
+                            )}
+                            <span className="text-[10px] text-navy-400 bg-cream-50 px-1.5 py-0.5 rounded">{c.stroke_count}画</span>
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4 text-navy-300" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-navy-300" />
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                      {isExpanded && (
+                        <div className="px-4 pb-4 border-t border-cream-50 pt-3 space-y-2">
+                          {c.radical && (
+                            <p className="text-sm text-navy-400">
+                              <span className="font-medium">{t('radical') ?? 'Radical'} :</span> {c.radical}
+                            </p>
+                          )}
+                          <p className="text-sm text-navy-400">
+                            <span className="font-medium">{t('strokes', { count: c.stroke_count }) ?? `${c.stroke_count} traits`}</span>
+                          </p>
+                          {c.frequency_rank && (
+                            <p className="text-sm text-navy-400">
+                              <span className="font-medium">{t('frequency', { rank: c.frequency_rank }) ?? `Fréquence #${c.frequency_rank}`}</span>
+                            </p>
+                          )}
+                          {c.mnemonic && (
+                            <div className="bg-amber-50/60 rounded-lg p-3 mt-2">
+                              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
+                                {t('mnemonicLabel') ?? 'Astuce mémorisation'}
+                              </p>
+                              <p className="text-sm text-navy-700">{c.mnemonic}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-10 text-navy-400">
                 <Languages className="h-8 w-8 mx-auto mb-2 text-navy-200" />
-                <p>{t('noContent')}</p>
-                <p className="text-xs mt-1">{t('comingSoon')}</p>
+                <p>{charSearch ? t('noResults') : t('noContent')}</p>
               </div>
             )}
           </div>
