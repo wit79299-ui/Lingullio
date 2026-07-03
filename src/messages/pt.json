@@ -392,7 +392,9 @@
       "shopping": "Shopping",
       "time_dates": "Time & dates",
       "transport": "Transport"
-    }
+    },
+    "exerciseCount": "exercises",
+    "noLessonsYet": "Lessons coming soon..."
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
@@ -429,5 +431,18 @@
     "previous": "Previous",
     "noCharacters": "No characters available for this level yet.",
     "practiceWriting": "Practice Writing"
+  },
+  "lessons": {
+    "modulePrefix": "Module {number}",
+    "exercises": "exercises",
+    "lessonType_standard": "Lesson",
+    "lessonType_review": "Review",
+    "lessonType_practice": "Practice",
+    "lessonType_assessment": "Assessment",
+    "noContent": "Content not available yet",
+    "contentComingSoon": "This lesson's content is being prepared.",
+    "previousLesson": "Previous",
+    "nextLesson": "Next Lesson",
+    "backToCourse": "Back to Course"
   }
 }

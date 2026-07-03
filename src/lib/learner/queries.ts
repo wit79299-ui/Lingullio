@@ -39,6 +39,17 @@ export interface CourseDetail extends CourseCard {
   modules: ModuleCard[];
 }
 
+export interface LessonCard {
+  id: string;
+  sort_order: number;
+  status: ContentStatus;
+  lesson_type: string;
+  estimated_duration_minutes: number | null;
+  title: string;
+  description: string | null;
+  exercise_count: number;
+}
+
 export interface ModuleCard {
   id: string;
   sort_order: number;
@@ -47,6 +58,7 @@ export interface ModuleCard {
   title: string;
   description: string | null;
   lesson_count: number;
+  lessons: LessonCard[];
 }
 
 export interface VocabWord {
@@ -183,7 +195,11 @@ export async function fetchCourseBySlug(slug: string, locale: string): Promise<C
       modules (
         id, sort_order, status, estimated_duration_minutes,
         module_translations ( locale, title, description ),
-        lessons ( id )
+        lessons (
+          id, sort_order, status, lesson_type, estimated_duration_minutes,
+          lesson_translations ( locale, title, description ),
+          exercises ( id )
+        )
       )
     `)
     .eq('slug', slug)
@@ -213,11 +229,34 @@ export async function fetchCourseBySlug(slug: string, locale: string): Promise<C
     status: string;
     estimated_duration_minutes: number | null;
     module_translations: Array<{ locale: string; title: string; description: string | null }>;
-    lessons: Array<{ id: string }>;
+    lessons: Array<{
+      id: string;
+      sort_order: number;
+      status: string;
+      lesson_type: string;
+      estimated_duration_minutes: number | null;
+      lesson_translations: Array<{ locale: string; title: string; description: string | null }>;
+      exercises: Array<{ id: string }>;
+    }>;
   }>) ?? [])
     .sort((a, b) => a.sort_order - b.sort_order)
     .map((m) => {
       const mt = pickTranslation(m.module_translations ?? [], locale);
+      const lessons: LessonCard[] = (m.lessons ?? [])
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((l) => {
+          const lt = pickTranslation(l.lesson_translations ?? [], locale);
+          return {
+            id: l.id,
+            sort_order: l.sort_order,
+            status: l.status as ContentStatus,
+            lesson_type: l.lesson_type,
+            estimated_duration_minutes: l.estimated_duration_minutes,
+            title: lt?.title ?? `Lesson ${l.sort_order}`,
+            description: lt?.description ?? null,
+            exercise_count: (l.exercises as unknown[])?.length ?? 0,
+          };
+        });
       return {
         id: m.id,
         sort_order: m.sort_order,
@@ -225,7 +264,8 @@ export async function fetchCourseBySlug(slug: string, locale: string): Promise<C
         estimated_duration_minutes: m.estimated_duration_minutes,
         title: mt?.title ?? `Module ${m.sort_order}`,
         description: mt?.description ?? null,
-        lesson_count: (m.lessons as unknown[])?.length ?? 0,
+        lesson_count: lessons.length,
+        lessons,
       };
     });
 
@@ -456,6 +496,98 @@ export async function fetchPracticeCharacters(
       meaning: t?.meaning ?? '',
     };
   });
+}
+
+// -------------------------------------------------------------------
+// SINGLE LESSON DETAIL (for /courses/[slug]/lessons/[lessonId])
+// -------------------------------------------------------------------
+
+export interface LessonDetail {
+  id: string;
+  sort_order: number;
+  status: ContentStatus;
+  lesson_type: string;
+  estimated_duration_minutes: number | null;
+  title: string;
+  description: string | null;
+  content_html: string;
+  module_id: string;
+  module_title: string;
+  module_sort_order: number;
+  exercise_count: number;
+  /** IDs of prev/next lessons within same module, if any */
+  prev_lesson_id: string | null;
+  next_lesson_id: string | null;
+}
+
+export async function fetchLessonById(
+  lessonId: string,
+  locale: string
+): Promise<LessonDetail | null> {
+  const supabase = createServiceRoleClient();
+
+  // Fetch lesson with its translations, module info, and exercise count
+  const { data: lesson, error } = await supabase
+    .from('lessons')
+    .select(`
+      id, sort_order, status, lesson_type, estimated_duration_minutes, module_id,
+      lesson_translations ( locale, title, description, content_html ),
+      exercises ( id )
+    `)
+    .eq('id', lessonId)
+    .single();
+
+  if (error || !lesson) return null;
+
+  // Get module info
+  const { data: mod } = await supabase
+    .from('modules')
+    .select(`
+      id, sort_order,
+      module_translations ( locale, title )
+    `)
+    .eq('id', lesson.module_id)
+    .single();
+
+  const modTranslations = (mod?.module_translations as Array<{ locale: string; title: string }>) ?? [];
+  const modT = pickTranslation(modTranslations, locale);
+
+  // Get sibling lessons for prev/next navigation
+  const { data: siblings } = await supabase
+    .from('lessons')
+    .select('id, sort_order')
+    .eq('module_id', lesson.module_id)
+    .order('sort_order');
+
+  const siblingList = (siblings ?? []).sort((a, b) => a.sort_order - b.sort_order);
+  const currentIdx = siblingList.findIndex((s) => s.id === lessonId);
+  const prevLesson = currentIdx > 0 ? siblingList[currentIdx - 1] : null;
+  const nextLesson = currentIdx < siblingList.length - 1 ? siblingList[currentIdx + 1] : null;
+
+  const translations = (lesson.lesson_translations as Array<{
+    locale: string;
+    title: string;
+    description: string | null;
+    content_html: string;
+  }>) ?? [];
+  const t = pickTranslation(translations, locale);
+
+  return {
+    id: lesson.id,
+    sort_order: lesson.sort_order,
+    status: lesson.status as ContentStatus,
+    lesson_type: lesson.lesson_type,
+    estimated_duration_minutes: lesson.estimated_duration_minutes,
+    title: t?.title ?? `Lesson ${lesson.sort_order}`,
+    description: t?.description ?? null,
+    content_html: t?.content_html ?? '',
+    module_id: lesson.module_id,
+    module_title: modT?.title ?? `Module ${mod?.sort_order ?? '?'}`,
+    module_sort_order: mod?.sort_order ?? 0,
+    exercise_count: (lesson.exercises as unknown[])?.length ?? 0,
+    prev_lesson_id: prevLesson?.id ?? null,
+    next_lesson_id: nextLesson?.id ?? null,
+  };
 }
 
 // -------------------------------------------------------------------

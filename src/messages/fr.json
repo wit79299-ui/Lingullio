@@ -393,7 +393,9 @@
       "time_dates": "Temps et dates",
       "transport": "Transport"
     },
-    "practiceWriting": "Pratique d'écriture"
+    "practiceWriting": "Pratique d'écriture",
+    "exerciseCount": "exercices",
+    "noLessonsYet": "Leçons bientôt disponibles..."
   },
   "errors": {
     "generic": "Une erreur est survenue. Veuillez reessayer.",
@@ -430,5 +432,18 @@
     "previous": "Précédent",
     "noCharacters": "Aucun caractère disponible pour ce niveau.",
     "practiceWriting": "Pratique d'écriture"
+  },
+  "lessons": {
+    "modulePrefix": "Module {number}",
+    "exercises": "exercices",
+    "lessonType_standard": "Leçon",
+    "lessonType_review": "Révision",
+    "lessonType_practice": "Pratique",
+    "lessonType_assessment": "Évaluation",
+    "noContent": "Contenu pas encore disponible",
+    "contentComingSoon": "Le contenu de cette leçon est en préparation.",
+    "previousLesson": "Précédent",
+    "nextLesson": "Leçon suivante",
+    "backToCourse": "Retour au cours"
   }
 }

@@ -2,10 +2,11 @@
 
 import { useTranslations, useMessages } from 'next-intl';
 import { useState, useRef } from 'react';
-import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2 } from 'lucide-react';
+import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2, Play, Clock, Dumbbell, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
+import { useRouter } from '@/i18n/navigation';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,17 @@ interface CharacterCard {
   mnemonic: string | null;
 }
 
+interface LessonCard {
+  id: string;
+  sort_order: number;
+  status: string;
+  lesson_type: string;
+  estimated_duration_minutes: number | null;
+  title: string;
+  description: string | null;
+  exercise_count: number;
+}
+
 interface ModuleCard {
   id: string;
   sort_order: number;
@@ -55,6 +67,7 @@ interface ModuleCard {
   title: string;
   description: string | null;
   lesson_count: number;
+  lessons: LessonCard[];
 }
 
 type TabId = 'vocabulary' | 'grammar' | 'characters' | 'modules';
@@ -106,6 +119,8 @@ export function CourseTabs(props: CourseTabsProps) {
   const [expandedVocab, setExpandedVocab] = useState<string | null>(null);
   const [expandedGrammar, setExpandedGrammar] = useState<string | null>(null);
   const [expandedChar, setExpandedChar] = useState<string | null>(null);
+  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+  const router = useRouter();
   const [vocabSearch, setVocabSearch] = useState('');
   const [grammarSearch, setGrammarSearch] = useState('');
   const [charSearch, setCharSearch] = useState('');
@@ -582,34 +597,114 @@ export function CourseTabs(props: CourseTabsProps) {
         {activeTab === 'modules' && (
           <div className="space-y-3">
             {props.modules.length > 0 ? (
-              props.modules.map((mod) => (
-                <div
-                  key={mod.id}
-                  className="flex items-center gap-4 px-4 py-4 rounded-xl border border-cream-100 bg-white hover:shadow-sm transition-shadow"
-                >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50 text-navy-600 font-semibold text-sm shrink-0">
-                    {mod.sort_order}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-navy-900">{mod.title}</h3>
-                    {mod.description && (
-                      <p className="text-sm text-navy-400 line-clamp-1">{mod.description}</p>
+              props.modules.map((mod) => {
+                const isExpanded = expandedModule === mod.id;
+                return (
+                  <div
+                    key={mod.id}
+                    className="rounded-xl border border-cream-100 bg-white overflow-hidden transition-shadow hover:shadow-sm"
+                  >
+                    {/* Module header — clickable accordion */}
+                    <button
+                      type="button"
+                      onClick={() => setExpandedModule(isExpanded ? null : mod.id)}
+                      className="w-full flex items-center gap-4 px-4 py-4 text-left"
+                    >
+                      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50 text-navy-600 font-semibold text-sm shrink-0">
+                        {mod.sort_order}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-navy-900">{mod.title}</h3>
+                        {mod.description && (
+                          <p className="text-sm text-navy-400 line-clamp-1">{mod.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-1.5 text-xs text-navy-400">
+                          <span>{t('lessons', { count: mod.lesson_count })}</span>
+                          {mod.estimated_duration_minutes && (
+                            <span>{t('estimatedTime', { minutes: mod.estimated_duration_minutes })}</span>
+                          )}
+                          <span className={cn(
+                            'px-1.5 py-0.5 rounded-full text-[10px]',
+                            mod.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-cream-100 text-navy-400'
+                          )}>
+                            {mod.status === 'published' ? t('available') : t('comingSoon')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-navy-300" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-navy-300" />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Lessons list — expandable */}
+                    {isExpanded && mod.lessons.length > 0 && (
+                      <div className="border-t border-cream-100 bg-cream-25/50">
+                        {mod.lessons.map((lesson, idx) => (
+                          <button
+                            key={lesson.id}
+                            type="button"
+                            onClick={() => router.push(`/courses/${props.slug}/lessons/${lesson.id}`)}
+                            className={cn(
+                              'w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-teal-50/50',
+                              idx < mod.lessons.length - 1 && 'border-b border-cream-100/50'
+                            )}
+                          >
+                            {/* Lesson number */}
+                            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-teal-50 text-teal-600 text-xs font-semibold shrink-0">
+                              {lesson.sort_order}
+                            </div>
+
+                            {/* Lesson info */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-navy-800 truncate">{lesson.title}</p>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-navy-400">
+                                {lesson.estimated_duration_minutes && (
+                                  <span className="inline-flex items-center gap-0.5">
+                                    <Clock className="h-3 w-3" />
+                                    {lesson.estimated_duration_minutes} min
+                                  </span>
+                                )}
+                                {lesson.exercise_count > 0 && (
+                                  <span className="inline-flex items-center gap-0.5">
+                                    <Dumbbell className="h-3 w-3" />
+                                    {lesson.exercise_count} {t('exerciseCount') ?? 'exercises'}
+                                  </span>
+                                )}
+                                {lesson.lesson_type && lesson.lesson_type !== 'standard' && (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-500">
+                                    <FileText className="h-3 w-3" />
+                                    {lesson.lesson_type}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Status + arrow */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className={cn(
+                                'w-2 h-2 rounded-full',
+                                lesson.status === 'published' ? 'bg-emerald-400' : 'bg-cream-300'
+                              )} />
+                              <Play className="h-4 w-4 text-teal-500" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     )}
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-navy-400">
-                      <span>{t('lessons', { count: mod.lesson_count })}</span>
-                      {mod.estimated_duration_minutes && (
-                        <span>{t('estimatedTime', { minutes: mod.estimated_duration_minutes })}</span>
-                      )}
-                      <span className={cn(
-                        'px-1.5 py-0.5 rounded-full text-[10px]',
-                        mod.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-cream-100 text-navy-400'
-                      )}>
-                        {mod.status === 'published' ? t('available') : t('comingSoon')}
-                      </span>
-                    </div>
+
+                    {/* Empty lessons state */}
+                    {isExpanded && mod.lessons.length === 0 && (
+                      <div className="border-t border-cream-100 px-4 py-6 text-center text-sm text-navy-400">
+                        {t('noLessonsYet') ?? 'Lessons coming soon...'}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-10 text-navy-400">
                 <Layers className="h-8 w-8 mx-auto mb-2 text-navy-200" />
