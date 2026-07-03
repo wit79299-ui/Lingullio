@@ -2,7 +2,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { fetchLessonById } from '@/lib/learner/queries';
 import { Link } from '@/i18n/navigation';
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Dumbbell, BookOpen } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Dumbbell, BookOpen, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 type Props = {
@@ -104,6 +104,32 @@ export default async function LessonPage({ params }: Props) {
           <BookOpen className="h-10 w-10 mx-auto mb-3 text-navy-200" />
           <p className="text-lg font-medium">{t('noContent')}</p>
           <p className="text-sm mt-1">{t('contentComingSoon')}</p>
+        </div>
+      )}
+
+      {/* Start exercises CTA */}
+      {lesson.exercise_count > 0 && (
+        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-100 p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0">
+              <Zap className="h-7 w-7" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="text-lg font-bold text-navy-900">
+                Testez vos connaissances
+              </h3>
+              <p className="text-sm text-navy-500 mt-1">
+                {lesson.exercise_count} exercices interactifs &mdash; QCM, dictee, traduction, associations et plus.
+                Score calcule sur le bareme HSK officiel (120/200 pour valider).
+              </p>
+            </div>
+            <Link href={`/courses/${slug}/lessons/${lessonId}/exercises`}>
+              <Button variant="teal" size="lg" className="whitespace-nowrap">
+                <Zap className="h-5 w-5" />
+                Lancer les exercices
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 

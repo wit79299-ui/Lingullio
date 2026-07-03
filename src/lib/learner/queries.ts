@@ -591,6 +591,70 @@ export async function fetchLessonById(
 }
 
 // -------------------------------------------------------------------
+// EXERCISES for a specific lesson (for /courses/[slug]/lessons/[lessonId]/exercises)
+// -------------------------------------------------------------------
+
+export interface ExerciseItem {
+  id: string;
+  exercise_type: string;
+  difficulty: number;
+  points: number;
+  sort_order: number;
+  audio_url: string | null;
+  metadata: Record<string, unknown>;
+  prompt: string;
+  instruction: string;
+  explanation: string;
+  hint: string | null;
+}
+
+export async function fetchLessonExercises(
+  lessonId: string,
+  locale: string
+): Promise<ExerciseItem[]> {
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from('exercises')
+    .select(`
+      id, exercise_type, difficulty, points, sort_order, audio_url, metadata, status,
+      exercise_translations ( locale, prompt, instruction, explanation, hint )
+    `)
+    .eq('lesson_id', lessonId)
+    .eq('status', 'published')
+    .order('sort_order');
+
+  if (error) throw new Error(`fetchLessonExercises: ${error.message}`);
+
+  return (data ?? []).map((e) => {
+    const translations = (e.exercise_translations as Array<{
+      locale: string;
+      prompt: string;
+      instruction: string;
+      explanation: string;
+      hint: string | null;
+    }>) ?? [];
+    const t = pickTranslation(translations, locale);
+    const meta = (e.metadata as Record<string, unknown>) ?? {};
+
+    return {
+      id: e.id,
+      exercise_type: e.exercise_type,
+      difficulty: e.difficulty,
+      points: e.points,
+      sort_order: e.sort_order,
+      audio_url: (e as Record<string, unknown>).audio_url as string | null ?? null,
+      metadata: meta,
+      // Prefer translation table, fall back to metadata fields
+      prompt: t?.prompt || (meta.prompt as string) || '',
+      instruction: t?.instruction || (meta.instruction as string) || '',
+      explanation: t?.explanation || (meta.explanation as string) || '',
+      hint: t?.hint || (meta.hint as string) || null,
+    };
+  });
+}
+
+// -------------------------------------------------------------------
 // DASHBOARD STATS
 // -------------------------------------------------------------------
 
