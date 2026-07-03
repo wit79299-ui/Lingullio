@@ -9,7 +9,8 @@ import {
 import { getCefrLevel, CEFR_DESCRIPTIONS, getLevelTargets } from '@/lib/constants/exam-systems';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Award } from 'lucide-react';
+import { ArrowLeft, Award, Pencil } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { CourseTabs } from './course-tabs';
 
 type Props = {
@@ -84,6 +85,18 @@ export default async function CourseDetailPage({ params }: Props) {
           </div>
         </div>
       </header>
+
+      {/* Quick actions */}
+      {course.character_count > 0 && (
+        <div className="flex flex-wrap gap-3">
+          <Link href={`/courses/${slug}/practice`}>
+            <Button variant="teal" size="md">
+              <Pencil className="h-4 w-4" />
+              {t('practiceWriting') ?? 'Practice Writing'}
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Stats grid + Tabs — all in client component for interactivity */}
       <CourseTabs

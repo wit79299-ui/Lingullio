@@ -407,6 +407,56 @@ export async function fetchLearnerCharacters(
 }
 
 // -------------------------------------------------------------------
+// CHARACTERS for writing practice (includes audio_url)
+// -------------------------------------------------------------------
+
+export interface PracticeCharacter {
+  id: string;
+  character: string;
+  pinyin: string;
+  stroke_count: number;
+  hsk_level: string;
+  audio_url: string | null;
+  meaning: string;
+}
+
+export async function fetchPracticeCharacters(
+  hskLevel: string,
+  locale: string
+): Promise<PracticeCharacter[]> {
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from('characters')
+    .select(`
+      id, character, pinyin, stroke_count, hsk_level, audio_url,
+      character_translations ( locale, meaning )
+    `)
+    .eq('hsk_level', hskLevel)
+    .order('frequency_rank', { ascending: true, nullsFirst: false });
+
+  if (error) throw new Error(`fetchPracticeCharacters: ${error.message}`);
+
+  return (data ?? []).map((c) => {
+    const translations = (c.character_translations as Array<{
+      locale: string;
+      meaning: string;
+    }>) ?? [];
+    const t = pickTranslation(translations, locale);
+
+    return {
+      id: c.id,
+      character: c.character,
+      pinyin: c.pinyin,
+      stroke_count: c.stroke_count,
+      hsk_level: c.hsk_level,
+      audio_url: (c as Record<string, unknown>).audio_url as string | null ?? null,
+      meaning: t?.meaning ?? '',
+    };
+  });
+}
+
+// -------------------------------------------------------------------
 // DASHBOARD STATS
 // -------------------------------------------------------------------
 

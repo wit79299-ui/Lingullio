@@ -321,7 +321,6 @@
     "filtered": "filtre",
     "total": "total",
     "noContent": "Contenu pas encore disponible.",
-    "noResults": "Aucun resultat",
     "searchGrammarPlaceholder": "Rechercher un point de grammaire...",
     "grammarPointsShowing": "points de grammaire",
     "traditional": "Traditionnel",
@@ -393,7 +392,8 @@
       "shopping": "Achats",
       "time_dates": "Temps et dates",
       "transport": "Transport"
-    }
+    },
+    "practiceWriting": "Pratique d'écriture"
   },
   "errors": {
     "generic": "Une erreur est survenue. Veuillez reessayer.",
@@ -401,5 +401,34 @@
     "notFound": "Page non trouvee.",
     "unauthorized": "Acces non autorise.",
     "sessionExpired": "Votre session a expire. Veuillez vous reconnecter."
+  },
+  "practice": {
+    "title": "Pratique d'Écriture",
+    "subtitle": "Entraînez-vous à écrire les caractères de {course}",
+    "characterProgress": "Caractère {current} sur {total}",
+    "avgScore": "Moy: {score}%",
+    "learnMode": "Apprendre",
+    "quizMode": "Écrire",
+    "freeMode": "Dessin libre",
+    "learnTip": "Observez attentivement l'animation de l'ordre des traits. Notez la direction et l'ordre de chaque trait.",
+    "quizTip": "Dessinez le caractère trait par trait. Après 3 erreurs sur un trait, un indice apparaîtra.",
+    "freeTip": "Entraînez-vous librement sans notation. Dessinez le caractère autant de fois que vous le souhaitez.",
+    "replay": "Rejouer",
+    "reset": "Recommencer",
+    "startQuiz": "Commencer le quiz",
+    "playAudio": "Écouter la prononciation",
+    "strokes": "{count} traits",
+    "perfect": "Parfait !",
+    "excellent": "Excellent !",
+    "good": "Bien joué !",
+    "keepPracticing": "Continue à t'entraîner !",
+    "tryAgain": "Réessaie !",
+    "correctStrokes": "corrects",
+    "mistakes": "erreurs",
+    "retry": "Réessayer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "noCharacters": "Aucun caractère disponible pour ce niveau.",
+    "practiceWriting": "Pratique d'écriture"
   }
 }
