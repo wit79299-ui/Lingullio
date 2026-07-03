@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { VocabWord } from '@/lib/learner/queries';
+import { useAudioPlayer } from '@/hooks/use-audio-player';
 import {
   Search,
   BookOpen,
@@ -52,6 +53,7 @@ export function VocabularyExplorer({
   const router = useRouter();
   const pathname = usePathname();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { playingId, play: playAudio } = useAudioPlayer();
 
   // Safe translation helpers that fallback to raw key
   const courseMessages = (messages?.courses ?? {}) as Record<string, unknown>;
@@ -272,7 +274,22 @@ export function VocabularyExplorer({
                           <p className="text-xs font-medium text-navy-400 uppercase mb-1">{t('pinyin')}</p>
                           <p className="text-sm text-navy-700 flex items-center gap-2">
                             {word.pinyin}
-                            <Volume2 className="h-4 w-4 text-teal-500 cursor-pointer hover:text-teal-600" />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                playAudio(`vocab-exp-${word.id}`, word.audio_url, word.simplified);
+                              }}
+                              className={`shrink-0 p-1 rounded-full transition-all active:scale-95 ${
+                                playingId === `vocab-exp-${word.id}`
+                                  ? 'text-white bg-teal-500 animate-pulse'
+                                  : 'text-teal-500 hover:text-teal-600 hover:bg-teal-50'
+                              }`}
+                              aria-label={`Écouter ${word.simplified}`}
+                            >
+                              <Volume2 className="h-4 w-4" />
+                            </button>
                           </p>
                         </div>
 

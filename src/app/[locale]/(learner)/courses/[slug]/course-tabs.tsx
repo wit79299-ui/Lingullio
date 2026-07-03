@@ -1,10 +1,11 @@
 'use client';
 
 import { useTranslations, useMessages } from 'next-intl';
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2, VolumeX } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAudioPlayer } from '@/hooks/use-audio-player';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ interface CharacterCard {
   stroke_count: number;
   hsk_level: string;
   frequency_rank: number | null;
+  audio_url: string | null;
   meaning: string;
   mnemonic: string | null;
 }
@@ -107,86 +109,8 @@ export function CourseTabs(props: CourseTabsProps) {
   const [vocabSearch, setVocabSearch] = useState('');
   const [grammarSearch, setGrammarSearch] = useState('');
   const [charSearch, setCharSearch] = useState('');
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [voicesReady, setVoicesReady] = useState(false);
-  const [hasZhVoice, setHasZhVoice] = useState(true); // optimistic
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { playingId, play: playAudio } = useAudioPlayer();
   const tabsRef = useRef<HTMLDivElement>(null);
-
-  // ─── Preload TTS voices ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) {
-      setHasZhVoice(false);
-      return;
-    }
-
-    const checkVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        const zhVoice = voices.find(v => v.lang.startsWith('zh') || v.lang.includes('CN') || v.lang.includes('cmn'));
-        setHasZhVoice(!!zhVoice);
-        setVoicesReady(true);
-      }
-    };
-
-    // Check immediately (Chrome loads voices sync)
-    checkVoices();
-
-    // Also listen for async loading (Safari, Firefox, some Android)
-    window.speechSynthesis.onvoiceschanged = checkVoices;
-
-    // Fallback: retry a few times for stubborn browsers
-    const retries = [100, 500, 1500, 3000];
-    const timers = retries.map(ms => setTimeout(checkVoices, ms));
-
-    return () => {
-      timers.forEach(clearTimeout);
-      if (window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = null;
-      }
-    };
-  }, []);
-
-  // ─── Play audio ───────────────────────────────────────────────────────────
-  const playAudio = useCallback((text: string, itemId: string) => {
-    // Stop any currently playing audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-
-    setPlayingId(itemId);
-
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN';
-      utterance.rate = 0.85;
-
-      // Find best Chinese voice
-      const voices = window.speechSynthesis.getVoices();
-      const zhVoice = voices.find(v => v.lang === 'zh-CN')
-        ?? voices.find(v => v.lang.startsWith('zh'))
-        ?? voices.find(v => v.lang.includes('CN') || v.lang.includes('cmn'));
-      if (zhVoice) utterance.voice = zhVoice;
-
-      utterance.onend = () => setPlayingId(null);
-      utterance.onerror = () => setPlayingId(null);
-
-      // Small delay for mobile browsers
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 50);
-
-      // Safety timeout
-      setTimeout(() => setPlayingId((prev) => prev === itemId ? null : prev), 5000);
-    } else {
-      setPlayingId(null);
-    }
-  }, []);
 
   function translateTheme(key: string): string {
     return themeMessages[key] ?? key.replace(/_/g, ' ');
@@ -247,21 +171,10 @@ export function CourseTabs(props: CourseTabsProps) {
     : props.characters;
 
   // ─── Audio play button component ──────────────────────────────────────────
-  const PlayButton = ({ text, itemId, size = 'sm' }: { text: string; itemId: string; size?: 'sm' | 'md' }) => {
+  const PlayButton = ({ text, itemId, audioUrl, size = 'sm' }: { text: string; itemId: string; audioUrl?: string | null; size?: 'sm' | 'md' }) => {
     const isPlaying = playingId === itemId;
     const sizeClasses = size === 'md' ? 'w-10 h-10' : 'w-8 h-8';
     const iconSize = size === 'md' ? 'h-5 w-5' : 'h-4 w-4';
-
-    if (!hasZhVoice && voicesReady) {
-      return (
-        <div
-          className={cn('shrink-0 flex items-center justify-center rounded-full text-navy-300 bg-cream-50 cursor-not-allowed', sizeClasses)}
-          title={t('audioUnavailable') ?? 'Audio non disponible sur cet appareil'}
-        >
-          <VolumeX className={iconSize} />
-        </div>
-      );
-    }
 
     return (
       <button
@@ -269,7 +182,7 @@ export function CourseTabs(props: CourseTabsProps) {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          playAudio(text, itemId);
+          playAudio(itemId, audioUrl ?? null, text);
         }}
         className={cn(
           'shrink-0 flex items-center justify-center rounded-full transition-all active:scale-95',
@@ -391,7 +304,7 @@ export function CourseTabs(props: CourseTabsProps) {
                   >
                     <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
                       {/* Play audio button */}
-                      <PlayButton text={word.simplified} itemId={word.id} />
+                      <PlayButton text={word.simplified} itemId={word.id} audioUrl={word.audio_url} />
 
                       {/* Expandable word row */}
                       <button
@@ -452,7 +365,7 @@ export function CourseTabs(props: CourseTabsProps) {
                                   key={ch.id}
                                   className="flex items-center gap-2 bg-sky-50/70 rounded-lg px-3 py-2 text-sm"
                                 >
-                                  <PlayButton text={ch.character} itemId={`char-${ch.id}`} size="sm" />
+                                  <PlayButton text={ch.character} itemId={`char-${ch.id}`} audioUrl={ch.audio_url} size="sm" />
                                   <span className="text-lg font-medium text-navy-900">{ch.character}</span>
                                   <span className="text-teal-600 font-mono text-xs">{ch.pinyin}</span>
                                   <span className="text-navy-500 text-xs">{ch.meaning}</span>
@@ -601,7 +514,7 @@ export function CourseTabs(props: CourseTabsProps) {
                     >
                       <div className="flex items-center gap-2 px-3 py-3 sm:px-4">
                         {/* Play audio */}
-                        <PlayButton text={c.character} itemId={`ctab-${c.id}`} />
+                        <PlayButton text={c.character} itemId={`ctab-${c.id}`} audioUrl={c.audio_url} />
 
                         {/* Expandable character row */}
                         <button

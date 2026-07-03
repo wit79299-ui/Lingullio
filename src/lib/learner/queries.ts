@@ -82,6 +82,7 @@ export interface CharacterCard {
   stroke_count: number;
   hsk_level: string;
   frequency_rank: number | null;
+  audio_url: string | null;
   meaning: string;
   mnemonic: string | null;
 }
@@ -376,7 +377,7 @@ export async function fetchLearnerCharacters(
   const { data, error } = await supabase
     .from('characters')
     .select(`
-      id, character, pinyin, radical, stroke_count, hsk_level, frequency_rank,
+      id, character, pinyin, radical, stroke_count, hsk_level, frequency_rank, audio_url,
       character_translations ( locale, meaning, mnemonic )
     `)
     .eq('hsk_level', hskLevel)
@@ -400,6 +401,7 @@ export async function fetchLearnerCharacters(
       stroke_count: c.stroke_count,
       hsk_level: c.hsk_level,
       frequency_rank: c.frequency_rank,
+      audio_url: (c as Record<string, unknown>).audio_url as string | null ?? null,
       meaning: t?.meaning ?? '',
       mnemonic: t?.mnemonic ?? null,
     };
