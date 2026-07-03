@@ -26,9 +26,7 @@ const levelConfig: Record<string, { gradient: string; iconBg: string; ring: stri
   '4': { gradient: 'from-amber-50 to-orange-50', iconBg: 'bg-amber-100 text-amber-600', ring: 'ring-amber-200' },
   '5': { gradient: 'from-rose-50 to-pink-50', iconBg: 'bg-rose-100 text-rose-600', ring: 'ring-rose-200' },
   '6': { gradient: 'from-indigo-50 to-blue-50', iconBg: 'bg-indigo-100 text-indigo-600', ring: 'ring-indigo-200' },
-  '7': { gradient: 'from-teal-50 to-cyan-50', iconBg: 'bg-teal-100 text-teal-600', ring: 'ring-teal-200' },
-  '8': { gradient: 'from-fuchsia-50 to-purple-50', iconBg: 'bg-fuchsia-100 text-fuchsia-600', ring: 'ring-fuchsia-200' },
-  '9': { gradient: 'from-red-50 to-orange-50', iconBg: 'bg-red-100 text-red-600', ring: 'ring-red-200' },
+  '7-9': { gradient: 'from-rose-50 via-purple-50 to-indigo-50', iconBg: 'bg-gradient-to-br from-rose-100 to-indigo-100 text-indigo-700', ring: 'ring-indigo-200' },
 };
 
 function getLevel(slug: string): string {

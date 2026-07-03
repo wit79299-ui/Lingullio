@@ -45,9 +45,7 @@ export const HSK: ExamSystem = {
     { level: '4', cefr: 'B2',  vocabTarget: 2500, charTarget: 1000, grammarTarget: 200 },
     { level: '5', cefr: 'C1',  vocabTarget: 4500, charTarget: 1500, grammarTarget: 300 },
     { level: '6', cefr: 'C2',  vocabTarget: 7500, charTarget: 2000, grammarTarget: 400 },
-    { level: '7', cefr: 'C2+', vocabTarget: 9000, charTarget: 2500, grammarTarget: 450 },
-    { level: '8', cefr: 'C2+', vocabTarget: 10500, charTarget: 3000, grammarTarget: 500 },
-    { level: '9', cefr: 'C2+', vocabTarget: 11092, charTarget: 3500, grammarTarget: 550 },
+    { level: '7-9', cefr: 'C1~C2+', vocabTarget: 11092, charTarget: 3500, grammarTarget: 550 },
   ],
 };
 

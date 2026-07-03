@@ -58,7 +58,7 @@ const PLACEMENT_TO_COURSE: Record<string, string> = {
   hsk4_ready: 'hsk-4',
   hsk5_ready: 'hsk-5',
   hsk6_ready: 'hsk-6',
-  advanced_diagnostic_recommended: 'hsk-6',
+  advanced_diagnostic_recommended: 'hsk-7-9',
 };
 
 const BAND_LABELS: Record<string, string> = {
