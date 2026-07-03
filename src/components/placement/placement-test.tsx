@@ -104,6 +104,9 @@ export function PlacementTest() {
   // Results
   const [result, setResult] = useState<PlacementResult | null>(null);
 
+  // Router for skip-to-beginner
+  const router = useRouter();
+
   // Timer
   const [startTime, setStartTime] = useState(0);
   const [elapsed, setElapsed] = useState(0);
@@ -264,6 +267,31 @@ export function PlacementTest() {
           <WelcomeScreen
             testDesign={testData.test_design}
             onStart={() => setPhase('profile')}
+            onSkipBeginner={() => {
+              // Store a beginner placement result and go straight to HSK1
+              try {
+                localStorage.setItem(
+                  'lingullio_placement_result',
+                  JSON.stringify({
+                    placementId: 'pre_hsk',
+                    estimatedHsk: 'Pre-HSK',
+                    estimatedCefr: 'A0',
+                    recommendedStart: 'HSK 1 – Module 1',
+                    trainingLevel: 'Fondations chinoises puis HSK 1',
+                    totalPercent: 0,
+                    profileTags: ['beginner_skip'],
+                    planIntensity: 'standard',
+                    strengths: [],
+                    weaknesses: [],
+                    completedAt: new Date().toISOString(),
+                    skipped: true,
+                  })
+                );
+              } catch {
+                // localStorage might be unavailable
+              }
+              router.push('/courses/hsk-1');
+            }}
           />
         )}
 
@@ -363,10 +391,14 @@ function ProgressBar({
 function WelcomeScreen({
   testDesign,
   onStart,
+  onSkipBeginner,
 }: {
   testDesign: PlacementTestData['test_design'];
   onStart: () => void;
+  onSkipBeginner: () => void;
 }) {
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+
   return (
     <div className="flex flex-col items-center text-center animate-fade-in">
       {/* Hero icon */}
@@ -408,6 +440,42 @@ function WelcomeScreen({
         Commencer le test
         <ArrowRight className="w-5 h-5 ml-1" />
       </Button>
+
+      {/* Skip for total beginners */}
+      <div className="mt-6 w-full">
+        {!showSkipConfirm ? (
+          <button
+            onClick={() => setShowSkipConfirm(true)}
+            className="text-sm text-navy-400 hover:text-navy-600 transition-colors underline underline-offset-4 decoration-dashed"
+          >
+            Je suis totalement débutant en chinois
+          </button>
+        ) : (
+          <div className="p-5 rounded-xl bg-cream-50 border border-cream-200 animate-fade-in max-w-md mx-auto">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+              </div>
+              <p className="text-sm text-navy-700 text-left">
+                Pas de souci ! Tu commenceras directement par les <strong>fondations</strong> du chinois, puis le <strong>HSK 1</strong>.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="primary" size="sm" onClick={onSkipBeginner}>
+                Commencer depuis zéro
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSkipConfirm(false)}
+              >
+                Annuler
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -764,6 +832,20 @@ function AudioButton({
   const maxPlays = audio?.repeat_allowed ?? 2;
   const isPlaying = playingId === questionId;
 
+  // Auto-play audio once when the listening question appears
+  const autoPlayedRef = useRef(false);
+  useEffect(() => {
+    if (!autoPlayedRef.current && audio?.script_zh) {
+      autoPlayedRef.current = true;
+      // Small delay to ensure SpeechSynthesis voices are loaded
+      const timer = setTimeout(() => {
+        setPlayCount(1);
+        onPlay(questionId, null, audio.script_zh);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [questionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handlePlay = () => {
     if (playCount >= maxPlays && !isPlaying) return;
     if (!isPlaying) setPlayCount((c) => c + 1);
@@ -773,30 +855,42 @@ function AudioButton({
   const remaining = maxPlays - playCount;
 
   return (
-    <div className="mb-6 flex items-center gap-4">
-      <button
-        onClick={handlePlay}
-        disabled={remaining <= 0 && !isPlaying}
-        className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 transition-all ${
-          isPlaying
-            ? 'border-teal-400 bg-teal-50 text-teal-700'
-            : remaining > 0
-              ? 'border-cream-200 bg-white hover:border-teal-300 text-navy-700'
-              : 'border-cream-100 bg-cream-50 text-navy-300 cursor-not-allowed'
-        }`}
-      >
-        {isPlaying ? (
-          <VolumeX className="w-5 h-5 animate-pulse" />
-        ) : (
-          <Volume2 className="w-5 h-5" />
-        )}
-        <span className="text-sm font-medium">
-          {isPlaying ? 'Écoute en cours…' : 'Écouter l\'audio'}
+    <div className="mb-6">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={handlePlay}
+          disabled={remaining <= 0 && !isPlaying}
+          className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 transition-all ${
+            isPlaying
+              ? 'border-teal-400 bg-teal-50 text-teal-700 shadow-sm shadow-teal-100'
+              : remaining > 0
+                ? 'border-cream-200 bg-white hover:border-teal-300 hover:shadow-sm text-navy-700'
+                : 'border-cream-100 bg-cream-50 text-navy-300 cursor-not-allowed'
+          }`}
+        >
+          {isPlaying ? (
+            <span className="relative flex h-5 w-5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-300 opacity-75" />
+              <Volume2 className="relative w-5 h-5 text-teal-600" />
+            </span>
+          ) : (
+            <Volume2 className="w-5 h-5" />
+          )}
+          <span className="text-sm font-medium">
+            {isPlaying ? 'Écoute en cours…' : remaining > 0 ? 'Réécouter' : 'Écoutes épuisées'}
+          </span>
+        </button>
+        <span className="text-xs text-navy-400">
+          {remaining > 0
+            ? `${remaining} écoute${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}`
+            : ''}
         </span>
-      </button>
-      <span className="text-xs text-navy-400">
-        {remaining > 0 ? `${remaining} écoute${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}` : 'Écoutes épuisées'}
-      </span>
+      </div>
+      {/* Hint for listening questions */}
+      <p className="mt-2 text-xs text-navy-400 flex items-center gap-1.5">
+        <Headphones className="w-3.5 h-3.5" />
+        Écoute attentivement puis choisis la bonne réponse
+      </p>
     </div>
   );
 }
