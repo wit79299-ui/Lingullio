@@ -12,6 +12,8 @@ import {
   ChevronRight,
   Layers,
   Award,
+  Target,
+  ArrowRight,
 } from 'lucide-react';
 
 type Props = { params: Promise<{ locale: string }> };
@@ -57,6 +59,29 @@ export default async function CoursesPage({ params }: Props) {
         </h1>
         <p className="text-navy-400 mt-2 ml-[52px]">{t('subtitle')}</p>
       </header>
+
+      {/* Placement Test CTA */}
+      <Link href="/placement" className="block group">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-teal-500 via-teal-600 to-emerald-600 p-6 sm:p-8 text-white shadow-lg shadow-teal-200/30 hover:shadow-xl hover:shadow-teal-200/40 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          <div className="relative flex items-center gap-5">
+            <div className="w-14 h-14 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
+              <Target className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold mb-1">Découvre ton niveau de chinois</h2>
+              <p className="text-sm text-white/80">
+                Test de positionnement adaptatif · ~16 min · Plan personnalisé offert
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-1 text-sm font-medium text-white/90 group-hover:text-white shrink-0">
+              Passer le test
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </div>
+      </Link>
 
       {/* Course Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
