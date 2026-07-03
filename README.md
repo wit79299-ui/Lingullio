@@ -20,6 +20,46 @@
 - **Dev sandbox** : https://3000-ic66lt2l6yurckegrav5c-b237eb32.sandbox.novita.ai
 - **Production** : (pas encore deploye)
 
+## Etat de la base de donnees Supabase (3 juillet 2026)
+
+### Contenu ingere
+
+| Table | Count | Details |
+|-------|-------|---------|
+| courses | 9 | HSK 1-9 (1-4 published, 5-9 draft) |
+| modules | 27 | 10 HSK1 + 6 HSK2 + 7 HSK3 + 4 HSK4 |
+| lessons | 158 | 51 HSK1 + 31 HSK2 + 63 HSK3 + 19 HSK4 |
+| vocabulary_items | 1079 | 319 HSK1 + 200 HSK2 + 500 HSK3 + 60 HSK4 |
+| grammar_points | 66 | 35 HSK1 + 9 HSK2 + 11 HSK3 + 11 HSK4 |
+| characters | 655 | Avec deduplication inter-niveaux |
+| stroke_order_data | 655 | 100% coverage SVG (source: MakeMeAHanzi) |
+| exercises | 205 | HSK1 seulement (10 types differents) |
+| exercise_options | 456 | Options MCQ pour 112 exercices |
+| lesson_vocabulary_items | 1042 | Mappings lesson-vocab |
+| lesson_grammar_points | 51 | Mappings lesson-grammar |
+| lesson_characters | 1434 | Mappings lesson-characters |
+| audio_files | 0 | TTS non encore genere |
+
+### Traductions FR+EN
+- vocabulary_translations: 1078/1079 FR + 1078/1079 EN (100%)
+- grammar_point_translations: 66/66 FR + 66/66 EN (100%)
+- character_translations: 5664 records (couvre 20 locales pour HSK1, FR+EN pour HSK2-3)
+- lesson_translations: 316 (158 lecons x 2 locales)
+
+### Couverture HSK 3.0 officiel (mots additionnels par niveau)
+- HSK1: 319/~300 mots (107%) -- complet
+- HSK2: 200/~200 mots (100%) -- complet
+- HSK3: 500/~500 mots (100%) -- complet
+- HSK4: 60/~500 mots (12%) -- source DOCX partielle, necessite enrichissement
+
+### Scripts d'ingestion (dans `/scripts/`)
+- `ingest-hsk1.py` — Phase 1 : modules, lecons, grammaire, vocab enrichi
+- `ingest-hsk1-phase2.py` — Phase 2 : content_html, mnemoniques, exercices, strokes
+- `fix-exercise-options-v2.py` — Correction UUID pour options d'exercices
+- `ingest-hsk234.py` — Ingestion HSK2-4 : vocab HTML, grammaire DOCX, characters
+- `fix-hsk234-characters.py` — Deduplication caracteres entre niveaux
+- `populate-junctions.py` — Tables de jonction lesson<->contenu
+
 ## Fonctionnalites terminees
 
 ### Phase 0 : Pre-build
@@ -95,21 +135,26 @@ supabase/
 
 ## Phases restantes
 
-### Phase 2 (Back office contenu) - Partiellement commence
-- Pages admin CRUD pour cours, modules, lecons, vocabulaire, grammaire, caracteres
-- Editeur d'exercices (18 types)
-- Systeme d'import/export de contenu
-- Workflow de preview et publication
+### Priorite 1 : Enrichissement contenu
+- [ ] HSK4 vocabulaire complet (~440 mots manquants)
+- [ ] Exercices HSK2/3/4 (actuellement HSK1 seulement)
+- [ ] Generation audio TTS pour vocabulaire (53/1079 ont audio_url)
+- [ ] Traductions EN de qualite pour HSK2/3 (actuellement generees par mapping FR→EN basique)
 
-### Phase 3 : Import du premier contenu HSK 1 et 2
-### Phase 4 : Front apprenant complet (onboarding 9 etapes, dashboard donnees reelles)
-### Phase 5 : Moteur d'exercices (18 types), progression, scoring
-### Phase 6 : Examens blancs, integration audio/TTS
-### Phase 7 : Pedagogie IA (GPT-4o corrections, Whisper oral, conversation)
-### Phase 8 : Moteur d'ecriture manuscrite (Canvas, Make Me a Hanzi)
-### Phase 9 : Analytique admin
-### Phase 10 : QA, accessibilite, tests mobile
-### Phase 11 : Preparation lancement production
+### Priorite 2 : Front apprenant
+- [ ] Onboarding 9 etapes
+- [ ] Dashboard avec donnees reelles Supabase
+- [ ] Moteur d'exercices (10 types implementes, 18 prevus)
+- [ ] Progression et scoring
+
+### Priorite 3 : Admin et production
+- [ ] Pages admin CRUD pour cours, modules, lecons, vocabulaire, grammaire, caracteres
+- [ ] Examens blancs (donnees presentes dans DOCX mais pas encore ingerees)
+- [ ] Integration audio/TTS
+- [ ] Pedagogie IA (GPT-4o corrections, Whisper oral)
+- [ ] Moteur d'ecriture manuscrite (Canvas, Make Me a Hanzi, strokes SVG deja en DB)
+- [ ] QA, accessibilite, tests mobile
+- [ ] Preparation lancement production (Vercel)
 
 ## Licences de test (dev)
 - `test@example.com` / code `TEST1234` (HSK 1)
@@ -119,4 +164,4 @@ supabase/
 Voir `.env.local.example` pour la liste complete.
 
 ## Derniere mise a jour
-2 juillet 2026
+3 juillet 2026
