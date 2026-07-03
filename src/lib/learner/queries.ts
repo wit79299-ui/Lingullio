@@ -680,3 +680,294 @@ export async function fetchDashboardStats(locale: string): Promise<CourseStats> 
     totalCharacters: totalCharacters ?? 0,
   };
 }
+
+// -------------------------------------------------------------------
+// MOCK EXAMS
+// -------------------------------------------------------------------
+
+export interface MockExamCard {
+  id: string;
+  course_id: string;
+  course_slug: string;
+  course_title: string;
+  status: string;
+  total_points: number;
+  total_duration_minutes: number;
+  sort_order: number;
+  title: string;
+  description: string | null;
+  section_count: number;
+  question_count: number;
+}
+
+export interface MockExamSection {
+  id: string;
+  section_type: string;
+  sort_order: number;
+  total_points: number;
+  duration_minutes: number | null;
+  title: string;
+  instructions: string | null;
+}
+
+export interface MockExamQuestion {
+  id: string;
+  sort_order: number;
+  points: number;
+  exercise_id: string;
+  exercise_type: string;
+  difficulty: number;
+  audio_url: string | null;
+  image_url: string | null;
+  metadata: Record<string, unknown>;
+  prompt: string;
+  instruction: string;
+  explanation: string;
+  hint: string | null;
+  options: MockExamOption[];
+}
+
+export interface MockExamOption {
+  id: string;
+  sort_order: number;
+  is_correct: boolean;
+  content: string;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface MockExamDetail {
+  id: string;
+  course_id: string;
+  course_slug: string;
+  course_title: string;
+  status: string;
+  total_points: number;
+  total_duration_minutes: number;
+  title: string;
+  description: string | null;
+  sections: (MockExamSection & { questions: MockExamQuestion[] })[];
+  scoring: {
+    total_points: number;
+    pass_threshold: number;
+    points_per_item: number;
+    listening_points: number;
+    reading_points: number;
+  };
+}
+
+/** Fetch all available mock exams for the listing page */
+export async function fetchMockExams(locale: string): Promise<MockExamCard[]> {
+  const supabase = createServiceRoleClient();
+
+  const { data: exams, error } = await supabase
+    .from('mock_exams')
+    .select(`
+      id, course_id, status, total_points, total_duration_minutes, sort_order,
+      mock_exam_translations ( locale, title, description ),
+      courses!inner ( slug, course_translations ( locale, title ) ),
+      mock_exam_sections ( id ),
+      mock_exam_questions:mock_exam_sections ( mock_exam_questions ( id ) )
+    `)
+    .eq('status', 'published')
+    .order('sort_order');
+
+  if (error || !exams) {
+    console.error('fetchMockExams error:', error);
+    return [];
+  }
+
+  return exams.map((exam: Record<string, unknown>) => {
+    const translations = (exam.mock_exam_translations as Array<{
+      locale: string; title: string; description: string | null;
+    }>) ?? [];
+    const tr = pickTranslation(translations, locale);
+
+    const course = exam.courses as Record<string, unknown>;
+    const courseTrs = (course?.course_translations as Array<{
+      locale: string; title: string;
+    }>) ?? [];
+    const courseTr = pickTranslation(courseTrs, locale);
+
+    const sections = (exam.mock_exam_sections as Array<{ id: string }>) ?? [];
+
+    // Count questions across all sections
+    const sectionQuestions = (exam.mock_exam_questions as Array<{
+      mock_exam_questions: Array<{ id: string }>;
+    }>) ?? [];
+    const questionCount = sectionQuestions.reduce(
+      (sum, s) => sum + (s.mock_exam_questions?.length ?? 0), 0
+    );
+
+    return {
+      id: exam.id as string,
+      course_id: exam.course_id as string,
+      course_slug: (course?.slug as string) ?? '',
+      course_title: courseTr?.title ?? '',
+      status: exam.status as string,
+      total_points: exam.total_points as number,
+      total_duration_minutes: exam.total_duration_minutes as number,
+      sort_order: exam.sort_order as number,
+      title: tr?.title ?? '',
+      description: tr?.description ?? null,
+      section_count: sections.length,
+      question_count: questionCount,
+    };
+  });
+}
+
+/** Fetch a single mock exam with all sections, questions, and options for the exam runner */
+export async function fetchMockExamDetail(
+  examId: string,
+  locale: string
+): Promise<MockExamDetail | null> {
+  const supabase = createServiceRoleClient();
+
+  // Fetch the exam
+  const { data: exam, error } = await supabase
+    .from('mock_exams')
+    .select(`
+      id, course_id, status, total_points, total_duration_minutes,
+      mock_exam_translations ( locale, title, description ),
+      courses!inner ( slug, course_translations ( locale, title ) )
+    `)
+    .eq('id', examId)
+    .single();
+
+  if (error || !exam) {
+    console.error('fetchMockExamDetail error:', error);
+    return null;
+  }
+
+  const translations = (exam.mock_exam_translations as Array<{
+    locale: string; title: string; description: string | null;
+  }>) ?? [];
+  const tr = pickTranslation(translations, locale);
+
+  const course = exam.courses as unknown as Record<string, unknown>;
+  const courseTrs = (course?.course_translations as Array<{
+    locale: string; title: string;
+  }>) ?? [];
+  const courseTr = pickTranslation(courseTrs, locale);
+
+  // Fetch sections
+  const { data: sections } = await supabase
+    .from('mock_exam_sections')
+    .select(`
+      id, section_type, sort_order, total_points, duration_minutes,
+      mock_exam_section_translations ( locale, title, instructions )
+    `)
+    .eq('mock_exam_id', examId)
+    .order('sort_order');
+
+  // Fetch all questions for this exam
+  const sectionIds = (sections ?? []).map((s: Record<string, unknown>) => s.id as string);
+  const { data: questions } = await supabase
+    .from('mock_exam_questions')
+    .select(`
+      id, sort_order, points, section_id,
+      exercises!inner (
+        id, exercise_type, difficulty, audio_url, image_url, metadata,
+        exercise_translations ( locale, prompt, instruction, explanation, hint ),
+        exercise_options (
+          id, sort_order, is_correct, metadata,
+          exercise_option_translations ( locale, content, error_explanation )
+        )
+      )
+    `)
+    .in('section_id', sectionIds)
+    .order('sort_order');
+
+  // Build section + questions map
+  const questionsBySection = new Map<string, MockExamQuestion[]>();
+  for (const q of (questions ?? [])) {
+    const sectionId = (q as Record<string, unknown>).section_id as string;
+    if (!questionsBySection.has(sectionId)) {
+      questionsBySection.set(sectionId, []);
+    }
+
+    const exercise = (q as Record<string, unknown>).exercises as Record<string, unknown>;
+    const exTrs = (exercise?.exercise_translations as Array<{
+      locale: string; prompt: string; instruction: string; explanation: string; hint: string | null;
+    }>) ?? [];
+    const exTr = pickTranslation(exTrs, locale);
+
+    const rawOptions = (exercise?.exercise_options as Array<{
+      id: string; sort_order: number; is_correct: boolean; metadata: Record<string, unknown> | null;
+      exercise_option_translations: Array<{
+        locale: string; content: string; error_explanation: string | null;
+      }>;
+    }>) ?? [];
+
+    const options: MockExamOption[] = rawOptions
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((opt) => {
+        const optTr = pickTranslation(opt.exercise_option_translations ?? [], locale);
+        return {
+          id: opt.id,
+          sort_order: opt.sort_order,
+          is_correct: opt.is_correct,
+          content: optTr?.content ?? '',
+          metadata: opt.metadata,
+        };
+      });
+
+    const meta = (exercise?.metadata as Record<string, unknown>) ?? {};
+
+    questionsBySection.get(sectionId)!.push({
+      id: (q as Record<string, unknown>).id as string,
+      sort_order: (q as Record<string, unknown>).sort_order as number,
+      points: (q as Record<string, unknown>).points as number,
+      exercise_id: exercise?.id as string,
+      exercise_type: exercise?.exercise_type as string,
+      difficulty: exercise?.difficulty as number,
+      audio_url: (exercise?.audio_url as string) ?? null,
+      image_url: (exercise?.image_url as string) ?? null,
+      metadata: meta,
+      prompt: exTr?.prompt ?? (meta.prompt as string) ?? '',
+      instruction: exTr?.instruction ?? (meta.instruction as string) ?? '',
+      explanation: exTr?.explanation ?? (meta.explanation as string) ?? '',
+      hint: exTr?.hint ?? (meta.hint as string) ?? null,
+      options,
+    });
+  }
+
+  const builtSections = (sections ?? []).map((s: Record<string, unknown>) => {
+    const secTrs = (s.mock_exam_section_translations as Array<{
+      locale: string; title: string; instructions: string | null;
+    }>) ?? [];
+    const secTr = pickTranslation(secTrs, locale);
+
+    return {
+      id: s.id as string,
+      section_type: s.section_type as string,
+      sort_order: s.sort_order as number,
+      total_points: s.total_points as number,
+      duration_minutes: s.duration_minutes as number | null,
+      title: secTr?.title ?? '',
+      instructions: secTr?.instructions ?? null,
+      questions: (questionsBySection.get(s.id as string) ?? []).sort(
+        (a, b) => a.sort_order - b.sort_order
+      ),
+    };
+  });
+
+  return {
+    id: exam.id as string,
+    course_id: exam.course_id as string,
+    course_slug: (course?.slug as string) ?? '',
+    course_title: courseTr?.title ?? '',
+    status: exam.status as string,
+    total_points: exam.total_points as number,
+    total_duration_minutes: exam.total_duration_minutes as number,
+    title: tr?.title ?? '',
+    description: tr?.description ?? null,
+    sections: builtSections,
+    scoring: {
+      total_points: exam.total_points as number,
+      pass_threshold: 120,
+      points_per_item: 5,
+      listening_points: 100,
+      reading_points: 100,
+    },
+  };
+}
