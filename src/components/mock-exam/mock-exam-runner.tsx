@@ -27,7 +27,9 @@ import {
   BarChart3,
   FileText,
   Loader2,
+  ImageIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -89,6 +91,68 @@ function formatTime(seconds: number): string {
   const s = seconds % 60;
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
+
+// ─── Image path helpers ─────────────────────────────────────────────────
+
+const IMG_BASE = '/static/mock-exam/hsk1';
+
+/**
+ * Returns the image path for a question-level image (Q1-5 listening P1, Q21-25 reading P1).
+ * File naming: q01.webp, q02.webp, ..., q25.webp
+ */
+function getQuestionImagePath(questionNumber: number): string {
+  return `${IMG_BASE}/q${questionNumber.toString().padStart(2, '0')}.webp`;
+}
+
+/**
+ * Returns the image path for an option-level image (Q6-15: A/B/C image choices).
+ * File naming: q06_a.webp, q06_b.webp, q06_c.webp, etc.
+ */
+function getOptionImagePath(questionNumber: number, optionLabel: string): string {
+  return `${IMG_BASE}/q${questionNumber.toString().padStart(2, '0')}_${optionLabel.toLowerCase()}.webp`;
+}
+
+/**
+ * Returns the image path for a shared image bank image (Q26-30 reading P2).
+ * File naming: r2_bank_a.webp ... r2_bank_e.webp
+ */
+function getSharedBankImagePath(letter: string): string {
+  return `${IMG_BASE}/r2_bank_${letter.toLowerCase()}.webp`;
+}
+
+/**
+ * Determine the question_number from the sort_order and section info.
+ * Questions are sorted globally: listening Q1-20, reading Q21-40.
+ */
+function getQuestionNumber(question: MockExamQuestion, sectionType: string, allSections: MockExamDetail['sections']): number {
+  // Find the global position based on section type and sort_order within section
+  const meta = question.metadata;
+  // The metadata has 'part' number - we can use sort_order directly
+  // Listening section: questions 1-20, Reading section: questions 21-40
+  if (sectionType === 'listening') {
+    return question.sort_order;
+  } else {
+    // Reading questions start at 21
+    return 20 + question.sort_order;
+  }
+}
+
+/**
+ * Check if a question type needs images.
+ */
+function needsQuestionImage(examType: string): boolean {
+  return examType === 'audio_picture_true_false' || examType === 'picture_sentence_true_false';
+}
+
+function needsOptionImages(examType: string): boolean {
+  return examType === 'audio_choose_picture';
+}
+
+function needsSharedImageBank(examType: string): boolean {
+  return examType === 'sentence_picture_matching';
+}
+
+const SHARED_BANK_LETTERS = ['A', 'B', 'C', 'D', 'E'] as const;
 
 // ─── Main Component ─────────────────────────────────────────────────────
 
@@ -300,6 +364,10 @@ export function MockExamRunner({ exam, locale }: Props) {
   const questionData = meta.question as { hanzi?: string; pinyin?: string } | undefined;
   const sectionType = (meta.section as string) || currentSection?.section_type;
   const partNumber = meta.part as number | undefined;
+  const examType = (meta.mock_exam_type as string) || '';
+  const questionNumber = currentQuestion
+    ? getQuestionNumber(currentQuestion, sectionType, exam.sections)
+    : 0;
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
@@ -363,6 +431,50 @@ export function MockExamRunner({ exam, locale }: Props) {
               <p className="text-xs text-navy-400 mb-3 italic">
                 {currentQuestion.instruction}
               </p>
+            )}
+
+            {/* Question-level image (Q1-5 listening P1, Q21-25 reading P1) */}
+            {currentQuestion && needsQuestionImage(examType) && (
+              <div className="mb-4 flex justify-center">
+                <div className="relative w-full max-w-sm aspect-[4/3] rounded-xl overflow-hidden border-2 border-cream-200 bg-cream-50">
+                  <Image
+                    src={getQuestionImagePath(questionNumber)}
+                    alt={`Question ${questionNumber}`}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 640px) 100vw, 384px"
+                    priority
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Shared image bank for sentence-picture matching (Q26-30) */}
+            {currentQuestion && needsSharedImageBank(examType) && (
+              <div className="mb-4">
+                <p className="text-xs font-medium text-navy-500 mb-2 flex items-center gap-1.5">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Banque d&apos;images — associez chaque phrase à une image
+                </p>
+                <div className="grid grid-cols-5 gap-2">
+                  {SHARED_BANK_LETTERS.map((letter) => (
+                    <div key={letter} className="flex flex-col items-center gap-1">
+                      <div className="relative w-full aspect-square rounded-lg overflow-hidden border-2 border-cream-200 bg-cream-50">
+                        <Image
+                          src={getSharedBankImagePath(letter)}
+                          alt={`Image ${letter}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 20vw, 80px"
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-navy-600 bg-cream-100 px-2 py-0.5 rounded-full">
+                        {letter}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Audio button for listening questions */}
@@ -467,74 +579,145 @@ export function MockExamRunner({ exam, locale }: Props) {
             )}
 
             {/* Options */}
-            <div className="space-y-2.5">
-              {currentQuestion.options.map((option) => {
-                const isSelected = answer?.selectedOptionId === option.id;
-                const isCorrect = option.is_correct;
-                const showResult = isReview;
+            {needsOptionImages(examType) ? (
+              /* ─── Image-based options (Q6-15): grid of image cards ─── */
+              <div className="grid grid-cols-3 gap-3">
+                {currentQuestion.options.map((option) => {
+                  const isSelected = answer?.selectedOptionId === option.id;
+                  const isCorrect = option.is_correct;
+                  const showResult = isReview;
+                  const optLabel = String.fromCharCode(64 + option.sort_order);
 
-                let optionClass =
-                  'border-cream-200 bg-white hover:border-teal-300 hover:bg-teal-50/30';
-                if (isSelected && !showResult) {
-                  optionClass = 'border-teal-400 bg-teal-50 ring-1 ring-teal-200';
-                }
-                if (showResult && isCorrect) {
-                  optionClass = 'border-emerald-400 bg-emerald-50';
-                }
-                if (showResult && isSelected && !isCorrect) {
-                  optionClass = 'border-red-400 bg-red-50';
-                }
+                  let cardClass =
+                    'border-cream-200 bg-white hover:border-teal-300 hover:shadow-md';
+                  if (isSelected && !showResult) {
+                    cardClass = 'border-teal-400 bg-teal-50 ring-2 ring-teal-200 shadow-md';
+                  }
+                  if (showResult && isCorrect) {
+                    cardClass = 'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200';
+                  }
+                  if (showResult && isSelected && !isCorrect) {
+                    cardClass = 'border-red-400 bg-red-50 ring-2 ring-red-200';
+                  }
 
-                return (
-                  <button
-                    key={option.id}
-                    onClick={() => selectAnswer(currentQuestion.id, option.id)}
-                    disabled={isReview}
-                    className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center gap-3 ${optionClass} ${
-                      isReview ? 'cursor-default' : 'cursor-pointer'
-                    }`}
-                  >
-                    {/* Option label */}
-                    <span
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
-                        isSelected && !showResult
-                          ? 'bg-teal-500 text-white'
-                          : showResult && isCorrect
-                          ? 'bg-emerald-500 text-white'
-                          : showResult && isSelected && !isCorrect
-                          ? 'bg-red-500 text-white'
-                          : 'bg-cream-100 text-navy-600'
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => selectAnswer(currentQuestion.id, option.id)}
+                      disabled={isReview}
+                      className={`relative flex flex-col items-center rounded-xl border-2 transition-all overflow-hidden ${cardClass} ${
+                        isReview ? 'cursor-default' : 'cursor-pointer'
                       }`}
                     >
-                      {showResult ? (
-                        isCorrect ? (
-                          <CheckCircle2 className="h-4 w-4" />
-                        ) : isSelected ? (
-                          <XCircle className="h-4 w-4" />
+                      {/* Image */}
+                      <div className="relative w-full aspect-square bg-cream-50">
+                        <Image
+                          src={getOptionImagePath(questionNumber, optLabel)}
+                          alt={`Option ${optLabel}`}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 33vw, 200px"
+                        />
+                      </div>
+                      {/* Label badge */}
+                      <div
+                        className={`absolute top-2 left-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-sm ${
+                          isSelected && !showResult
+                            ? 'bg-teal-500 text-white'
+                            : showResult && isCorrect
+                            ? 'bg-emerald-500 text-white'
+                            : showResult && isSelected && !isCorrect
+                            ? 'bg-red-500 text-white'
+                            : 'bg-white/90 text-navy-700 border border-cream-200'
+                        }`}
+                      >
+                        {showResult ? (
+                          isCorrect ? (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          ) : isSelected ? (
+                            <XCircle className="h-3.5 w-3.5" />
+                          ) : (
+                            optLabel
+                          )
+                        ) : (
+                          optLabel
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* ─── Text-based options (default) ─── */
+              <div className="space-y-2.5">
+                {currentQuestion.options.map((option) => {
+                  const isSelected = answer?.selectedOptionId === option.id;
+                  const isCorrect = option.is_correct;
+                  const showResult = isReview;
+
+                  let optionClass =
+                    'border-cream-200 bg-white hover:border-teal-300 hover:bg-teal-50/30';
+                  if (isSelected && !showResult) {
+                    optionClass = 'border-teal-400 bg-teal-50 ring-1 ring-teal-200';
+                  }
+                  if (showResult && isCorrect) {
+                    optionClass = 'border-emerald-400 bg-emerald-50';
+                  }
+                  if (showResult && isSelected && !isCorrect) {
+                    optionClass = 'border-red-400 bg-red-50';
+                  }
+
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => selectAnswer(currentQuestion.id, option.id)}
+                      disabled={isReview}
+                      className={`w-full text-left p-3.5 rounded-xl border-2 transition-all flex items-center gap-3 ${optionClass} ${
+                        isReview ? 'cursor-default' : 'cursor-pointer'
+                      }`}
+                    >
+                      {/* Option label */}
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 ${
+                          isSelected && !showResult
+                            ? 'bg-teal-500 text-white'
+                            : showResult && isCorrect
+                            ? 'bg-emerald-500 text-white'
+                            : showResult && isSelected && !isCorrect
+                            ? 'bg-red-500 text-white'
+                            : 'bg-cream-100 text-navy-600'
+                        }`}
+                      >
+                        {showResult ? (
+                          isCorrect ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : isSelected ? (
+                            <XCircle className="h-4 w-4" />
+                          ) : (
+                            String.fromCharCode(64 + option.sort_order)
+                          )
                         ) : (
                           String.fromCharCode(64 + option.sort_order)
-                        )
-                      ) : (
-                        String.fromCharCode(64 + option.sort_order)
-                      )}
-                    </span>
+                        )}
+                      </span>
 
-                    {/* Option content */}
-                    <span
-                      className={`text-sm ${
-                        showResult && isCorrect
-                          ? 'text-emerald-800 font-medium'
-                          : showResult && isSelected && !isCorrect
-                          ? 'text-red-800'
-                          : 'text-navy-700'
-                      }`}
-                    >
-                      {option.content}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      {/* Option content */}
+                      <span
+                        className={`text-sm ${
+                          showResult && isCorrect
+                            ? 'text-emerald-800 font-medium'
+                            : showResult && isSelected && !isCorrect
+                            ? 'text-red-800'
+                            : 'text-navy-700'
+                        }`}
+                      >
+                        {option.content}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Explanation in review mode */}
             {isReview && (
