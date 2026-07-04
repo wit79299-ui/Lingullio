@@ -2,141 +2,173 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Link } from '@/i18n/navigation';
 import {
-  HelpCircle, ChevronDown, ChevronUp, BookOpen, Brain,
-  Zap, Trophy, Calendar, RefreshCw, Target, Flame,
-  Settings, PenTool, Headphones, MessageCircle,
+  HelpCircle, ChevronRight, ChevronDown, Search,
+  BookOpen, Brain, Trophy, Flame, Target, RotateCcw,
+  Settings, Star, Zap, Volume2, PenTool, Headphones,
+  Clock, Award, Sparkles, ArrowRight, MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ─── Data ───────────────────────────────────────────────────────────────
+// ─── FAQ Data ───────────────────────────────────────────────────────────
 
-interface FAQItem {
+interface FaqItem {
+  id: string;
   question: string;
   answer: string;
   category: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
-const FAQ_ITEMS: FAQItem[] = [
-  // Getting started
+const FAQ_ITEMS: FaqItem[] = [
+  // General
   {
-    category: 'Demarrage',
-    question: 'Comment commencer a apprendre le chinois sur Lingullio ?',
-    answer: 'Passez d\'abord le test de placement pour evaluer votre niveau. Lingullio vous recommandera le cours HSK adapte. Suivez ensuite les lecons dans l\'ordre, faites les exercices et revisez quotidiennement avec le SRS.',
+    id: 'what-is',
+    question: 'Qu\'est-ce que Lingullio ?',
+    answer: 'Lingullio est une plateforme d\'apprentissage du chinois mandarin specialisee dans la preparation aux examens HSK (niveaux 1 a 6). Elle combine des cours structures, des exercices interactifs, un systeme de repetition espacee (SRS) et de la gamification pour optimiser votre apprentissage.',
+    category: 'general',
+    icon: BookOpen,
   },
   {
-    category: 'Demarrage',
-    question: 'Qu\'est-ce que le test de placement ?',
-    answer: 'Le test de placement est un questionnaire adaptatif de 30 questions qui evalue votre niveau en vocabulaire, grammaire, lecture et ecoute. Il determine votre niveau HSK estime et vous recommande le cours adapte.',
+    id: 'demo-mode',
+    question: 'Le mode demo, c\'est quoi ?',
+    answer: 'En mode demo, vos donnees sont sauvegardees localement dans votre navigateur (localStorage). Aucun compte n\'est necessaire. Attention : si vous videz le cache de votre navigateur, vos donnees seront perdues. Utilisez les Parametres pour exporter vos donnees si besoin.',
+    category: 'general',
+    icon: Settings,
   },
   {
-    category: 'Demarrage',
-    question: 'Mes donnees sont-elles sauvegardees ?',
-    answer: 'En mode demo, toutes vos donnees (progression, XP, Memoire Vivante) sont sauvegardees dans le stockage local de votre navigateur. Elles persistent tant que vous ne videz pas le cache du navigateur.',
+    id: 'data-loss',
+    question: 'Comment eviter de perdre mes donnees ?',
+    answer: 'En mode demo, vos donnees sont dans le navigateur. Evitez de vider le cache, d\'utiliser la navigation privee, ou de changer de navigateur. Toutes vos progressions (XP, badges, Memoire Vivante, resultats d\'examens) sont dans le meme navigateur.',
+    category: 'general',
+    icon: HelpCircle,
   },
   // Knowledge Map
   {
-    category: 'Memoire Vivante',
+    id: 'km-what',
     question: 'Qu\'est-ce que la Memoire Vivante ?',
-    answer: 'La Memoire Vivante (Knowledge Map) est le systeme qui trace tous les mots, caracteres et points de grammaire que vous avez rencontres. Chaque item a un niveau de maitrise (vu, en cours, familier, maitrise) et un calendrier de revision SRS.',
+    answer: 'La Memoire Vivante (Knowledge Map) est le systeme central qui trace chaque mot, caractere et point de grammaire que vous rencontrez. Elle utilise l\'algorithme SM-2 de repetition espacee pour planifier vos revisions au moment optimal, juste avant que vous oubliiez.',
+    category: 'knowledge',
+    icon: Brain,
   },
   {
-    category: 'Memoire Vivante',
-    question: 'Comment fonctionne le systeme de revision SRS ?',
-    answer: 'Le SRS (Spaced Repetition System) utilise l\'algorithme SM-2 pour planifier les revisions. Un mot bien retenu est revise de moins en moins souvent (1j, 3j, 7j, 14j...). Un mot oublie est re-presente rapidement. Consultez la page Revisions pour voir votre file d\'attente.',
+    id: 'km-levels',
+    question: 'Que signifient les niveaux de maitrise ?',
+    answer: 'Chaque mot progresse a travers 5 niveaux : Inconnu (jamais vu), Vu (rencontre une fois), En apprentissage (2+ rencontres), Familier (interval SRS >= 7 jours, 70%+ de precision), Maitrise (interval SRS long, 80%+ de precision). Le systeme met a jour automatiquement selon vos performances.',
+    category: 'knowledge',
+    icon: Star,
   },
   {
-    category: 'Memoire Vivante',
-    question: 'Comment un mot passe-t-il de "vu" a "maitrise" ?',
-    answer: 'Le niveau de maitrise evolue automatiquement : Vu (1ere rencontre) > En cours (2+ interactions) > Familier (interval SRS ≥ 7 jours et ≥ 70% de reussite) > Maitrise (interval SRS ≥ 21 jours et ≥ 80% de reussite).',
+    id: 'km-srs',
+    question: 'Comment fonctionne la repetition espacee (SRS) ?',
+    answer: 'L\'algorithme SM-2 calcule le moment ideal pour reviser chaque mot. Si vous repondez correctement, l\'intervalle augmente (1j -> 3j -> 7j -> 14j -> 30j...). Si vous faites une erreur, l\'intervalle se reduit. Rendez-vous dans l\'onglet Revisions pour voir vos cartes a reviser.',
+    category: 'knowledge',
+    icon: RotateCcw,
   },
   // Gamification
   {
-    category: 'XP et Progression',
-    question: 'Comment gagne-t-on de l\'XP ?',
-    answer: 'Vous gagnez de l\'XP en completant des exercices (10-25 XP par bonne reponse selon la difficulte), en finissant des sessions, en maintenant votre serie de jours, et en relevant le defi quotidien. L\'XP permet de monter de niveau.',
+    id: 'xp-system',
+    question: 'Comment fonctionne le systeme XP ?',
+    answer: 'Vous gagnez de l\'XP en completant des exercices (10-15 XP par exercice correct), des defis quotidiens (50 XP bonus), et des sessions parfaites (25 XP bonus). Les niveaux suivent une courbe exponentielle (100 * 1.4^(niveau-2)), jusqu\'au niveau 50 maximum.',
+    category: 'gamification',
+    icon: Zap,
   },
   {
-    category: 'XP et Progression',
-    question: 'Comment fonctionnent les niveaux ?',
-    answer: 'Il y a 50 niveaux avec une courbe exponentielle (100 XP pour le niveau 2, puis +40% par niveau). Chaque niveau debloque un titre : Debutant curieux (1-4), Apprenti sinophone (5-9), Explorateur HSK (10-14), etc.',
+    id: 'streak',
+    question: 'Comment maintenir ma serie ?',
+    answer: 'Completez au moins un exercice par jour pour maintenir votre serie. La serie se reinitialise a 0 si vous manquez un jour. Plus votre serie est longue, plus vous debloquez de badges (7 jours, 14 jours, 30 jours...).',
+    category: 'gamification',
+    icon: Flame,
   },
   {
-    category: 'XP et Progression',
+    id: 'badges',
     question: 'Comment debloquer des badges ?',
-    answer: 'Les badges sont debloques automatiquement quand vous atteignez certains objectifs : premiers exercices, series de jours, nombre de mots maitrises, examens blancs reussis, etc. Il y a 25+ badges repartis en 4 niveaux de rarete.',
+    answer: 'Il y a 25+ badges repartis en 4 niveaux de rarete (Commun, Rare, Epique, Legendaire). Ils se debloquent automatiquement en atteignant certains jalons : nombre d\'exercices, precision, serie de jours, mots maitrises, etc. Consultez la page Progression pour les voir tous.',
+    category: 'gamification',
+    icon: Award,
   },
-  // Exams
+  // Features
   {
-    category: 'Examens',
-    question: 'Que contient un examen blanc ?',
-    answer: 'Les examens blancs reproduisent le format officiel HSK 2026 : duree chronometree, sections ecoute + lecture, score calcule sur le meme bareme. A la fin, vous obtenez une analyse detaillee de vos performances.',
-  },
-  {
-    category: 'Examens',
-    question: 'Comment se prepare-t-on a l\'examen HSK ?',
-    answer: 'Definissez votre objectif dans la page Objectifs, suivez le plan genere, faites les lecons et revisions quotidiennes, puis testez-vous avec les examens blancs regulierement pour mesurer vos progres.',
-  },
-  // Training modes
-  {
-    category: 'Modes d\'entrainement',
-    question: 'Qu\'est-ce que le Parcours Inverse ?',
-    answer: 'Le Parcours Inverse est un mode d\'entrainement accelere qui part des mots difficiles pour remonter vers les plus simples. Ideal pour les apprenants qui veulent se concentrer sur leurs lacunes.',
+    id: 'placement-test',
+    question: 'A quoi sert le test de placement ?',
+    answer: 'Le test de placement evalue votre niveau actuel en chinois a travers des questions adaptatives couvrant vocabulaire, grammaire, lecture et ecoute. Il determine votre niveau HSK estime et recommande un point de depart optimal pour votre apprentissage. Il alimente aussi votre Memoire Vivante.',
+    category: 'features',
+    icon: Target,
   },
   {
-    category: 'Modes d\'entrainement',
+    id: 'mock-exams',
+    question: 'Comment fonctionnent les examens blancs ?',
+    answer: 'Les examens blancs reproduisent le format officiel HSK : meme duree, memes types de questions (ecoute + lecture), meme bareme. Vous recevez une analyse detaillee de vos resultats par section. Vos reponses sont aussi enregistrees dans la Memoire Vivante.',
+    category: 'features',
+    icon: Trophy,
+  },
+  {
+    id: 'daily-challenge',
+    question: 'Qu\'est-ce que le defi quotidien ?',
+    answer: 'Le defi quotidien genere automatiquement 10 questions adaptatives basees sur votre Memoire Vivante : mots a reviser, points faibles, et revisions aleatoires. Il offre des bonus XP et aide a maintenir votre serie. Si votre Memoire Vivante a moins de 8 mots, des questions generiques sont utilisees.',
+    category: 'features',
+    icon: Sparkles,
+  },
+  {
+    id: 'coach-autonome',
     question: 'Qu\'est-ce que le Coach Autonome ?',
-    answer: 'Le Coach Autonome s\'active automatiquement apres 15 jours d\'inactivite. Il analyse les mots que vous etes en train d\'oublier (courbe d\'Ebbinghaus) et vous propose un programme de revision cible.',
+    answer: 'Le Coach Autonome s\'active automatiquement si vous etes inactif pendant 15+ jours. Il analyse votre courbe d\'oubli (formule d\'Ebbinghaus) et vous propose un plan de revision d\'urgence pour recuperer les mots en danger d\'etre oublies.',
+    category: 'features',
+    icon: Brain,
   },
   {
-    category: 'Modes d\'entrainement',
-    question: 'Qu\'est-ce que le Defi Quotidien ?',
-    answer: 'Chaque jour, 10 questions sont generees depuis votre Memoire Vivante : mots a reviser, points faibles, et quelques decouvertes. Completez le defi pour gagner des XP bonus et maintenir votre serie.',
+    id: 'parcours-inverse',
+    question: 'Qu\'est-ce que le Parcours Inverse ?',
+    answer: 'Le Parcours Inverse est un mode d\'entrainement qui part de votre objectif (ex: HSK 4 dans 3 mois) et construit un plan de travail a rebours. Il calcule le nombre de mots a apprendre par semaine et vous guide etape par etape.',
+    category: 'features',
+    icon: ArrowRight,
   },
-  // Technical
+  // Audio
   {
-    category: 'Technique',
-    question: 'L\'audio des mots chinois ne fonctionne pas',
-    answer: 'L\'audio utilise Edge-TTS. Verifiez que votre navigateur autorise la lecture audio. Sur mobile, touchez une fois l\'icone son — certains navigateurs bloquent la lecture auto.',
-  },
-  {
-    category: 'Technique',
-    question: 'Comment reinitialiser mes donnees ?',
-    answer: 'Allez dans Parametres > Donnees et reinitialisation. Vous pouvez reinitialiser separement la Memoire Vivante, les XP/badges, les modes d\'entrainement, ou tout d\'un coup.',
+    id: 'audio-tts',
+    question: 'Comment fonctionne l\'audio ?',
+    answer: 'L\'audio est genere par Edge-TTS avec la voix zh-CN-XiaoxiaoNeural. Cliquez sur l\'icone haut-parleur a cote de n\'importe quel mot ou phrase chinoise pour ecouter la prononciation. La lecture automatique peut etre activee/desactivee dans les Parametres.',
+    category: 'features',
+    icon: Volume2,
   },
 ];
 
-const CATEGORIES = [...new Set(FAQ_ITEMS.map(item => item.category))];
+const CATEGORIES = [
+  { id: 'all', label: 'Toutes', count: FAQ_ITEMS.length },
+  { id: 'general', label: 'General', count: FAQ_ITEMS.filter(f => f.category === 'general').length },
+  { id: 'knowledge', label: 'Memoire Vivante', count: FAQ_ITEMS.filter(f => f.category === 'knowledge').length },
+  { id: 'gamification', label: 'XP & Badges', count: FAQ_ITEMS.filter(f => f.category === 'gamification').length },
+  { id: 'features', label: 'Fonctionnalites', count: FAQ_ITEMS.filter(f => f.category === 'features').length },
+];
 
-const GUIDES = [
-  { title: 'Suivre les cours HSK', icon: BookOpen, description: 'Lecons structurees du HSK 1 au HSK 6 avec vocabulaire, grammaire, caracteres et exercices interactifs.', link: '/courses' },
-  { title: 'Revisions espacees (SRS)', icon: RefreshCw, description: 'Revisez les mots au moment optimal avec l\'algorithme SM-2 pour une memorisation durable.', link: '/revisions' },
-  { title: 'Defi quotidien', icon: Zap, description: '10 questions par jour personnalisees depuis votre Memoire Vivante.', link: '/daily-challenge' },
-  { title: 'Examens blancs', icon: Trophy, description: 'Simulez l\'examen HSK dans les conditions reelles.', link: '/mock-exams' },
-  { title: 'Objectifs', icon: Target, description: 'Definissez votre examen cible et suivez un plan d\'action personnalise.', link: '/objectives' },
-  { title: 'Parametres', icon: Settings, description: 'Gerez vos preferences et reinitialiser vos donnees.', link: '/settings' },
+// ─── Quick Links ────────────────────────────────────────────────────────
+
+const QUICK_LINKS = [
+  { title: 'Commencer les cours', href: '/courses', icon: BookOpen, color: 'bg-teal-50 text-teal-600' },
+  { title: 'Revisions SRS', href: '/revisions', icon: RotateCcw, color: 'bg-blue-50 text-blue-600' },
+  { title: 'Defi quotidien', href: '/daily-challenge', icon: Sparkles, color: 'bg-amber-50 text-amber-600' },
+  { title: 'Parametres', href: '/settings', icon: Settings, color: 'bg-navy-50 text-navy-600' },
 ];
 
 // ─── Main Component ─────────────────────────────────────────────────────
 
 export function HelpView() {
-  const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0]);
-  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
-  const toggleItem = (index: number) => {
-    setExpandedItems(prev => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
-    });
-  };
-
-  const filteredFAQ = FAQ_ITEMS.filter(item => item.category === activeCategory);
+  const filtered = FAQ_ITEMS.filter(faq => {
+    if (activeCategory !== 'all' && faq.category !== activeCategory) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return faq.question.toLowerCase().includes(q) || faq.answer.toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6 max-w-2xl mx-auto">
       <header>
         <h1 className="text-2xl font-bold text-navy-900 flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50">
@@ -145,107 +177,116 @@ export function HelpView() {
           Aide
         </h1>
         <p className="text-navy-400 mt-2 ml-[52px]">
-          FAQ, guides d&apos;utilisation et fonctionnalites
+          FAQ et guide d&apos;utilisation de Lingullio
         </p>
       </header>
 
-      {/* Quick Guide */}
-      <section>
-        <h2 className="text-lg font-semibold text-navy-900 mb-4 flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-teal-500" />
-          Guide rapide
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {GUIDES.map((guide) => (
-            <a key={guide.title} href={guide.link} className="block group">
-              <Card className="h-full transition-all hover:shadow-md hover:border-teal-200">
-                <CardContent className="py-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-50 shrink-0">
-                      <guide.icon className="h-4 w-4 text-teal-600" />
+      {/* Quick links */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {QUICK_LINKS.map(link => (
+          <Link key={link.href} href={link.href}>
+            <Card className="!py-0 hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="py-3 flex flex-col items-center text-center gap-1.5">
+                <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center', link.color)}>
+                  <link.icon className="h-4 w-4" />
+                </div>
+                <span className="text-xs font-medium text-navy-700">{link.title}</span>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-300" />
+        <input
+          type="text"
+          placeholder="Rechercher dans la FAQ..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm text-navy-900 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+        />
+      </div>
+
+      {/* Category filter */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => setActiveCategory(cat.id)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border',
+              activeCategory === cat.id
+                ? 'bg-teal-500 text-white border-teal-500'
+                : 'bg-white text-navy-500 border-cream-200 hover:border-teal-300'
+            )}
+          >
+            {cat.label}
+            <span className={cn(
+              'text-[10px] px-1.5 py-0.5 rounded-full',
+              activeCategory === cat.id ? 'bg-white/20' : 'bg-cream-100'
+            )}>
+              {cat.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* FAQ items */}
+      <div className="space-y-2">
+        {filtered.map(faq => {
+          const isExpanded = expandedFaq === faq.id;
+          return (
+            <Card key={faq.id} className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setExpandedFaq(isExpanded ? null : faq.id)}
+                className="w-full text-left"
+              >
+                <CardContent className="py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cream-50 shrink-0">
+                      <faq.icon className="h-4 w-4 text-navy-500" />
                     </div>
-                    <h3 className="text-sm font-semibold text-navy-900 group-hover:text-teal-600 transition-colors">
-                      {guide.title}
-                    </h3>
+                    <p className="flex-1 text-sm font-medium text-navy-900">{faq.question}</p>
+                    <ChevronDown className={cn(
+                      'h-4 w-4 text-navy-300 shrink-0 transition-transform',
+                      isExpanded && 'rotate-180'
+                    )} />
                   </div>
-                  <p className="text-xs text-navy-400 pl-12">{guide.description}</p>
                 </CardContent>
-              </Card>
-            </a>
-          ))}
-        </div>
-      </section>
+              </button>
 
-      {/* FAQ */}
-      <section>
-        <h2 className="text-lg font-semibold text-navy-900 mb-4 flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-teal-500" />
-          Questions frequentes
-        </h2>
-
-        {/* Category tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-3 -mx-1 px-1 scrollbar-hide">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => { setActiveCategory(cat); setExpandedItems(new Set()); }}
-              className={cn(
-                'px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all',
-                activeCategory === cat
-                  ? 'bg-teal-500 text-white'
-                  : 'bg-cream-50 text-navy-500 hover:bg-cream-100'
-              )}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* FAQ items */}
-        <div className="space-y-2">
-          {filteredFAQ.map((item, globalIndex) => {
-            const index = FAQ_ITEMS.indexOf(item);
-            const isExpanded = expandedItems.has(index);
-            return (
-              <div key={index} className="rounded-xl border border-cream-100 bg-white overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => toggleItem(index)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-cream-25 transition-colors"
-                >
-                  <HelpCircle className="h-4 w-4 text-teal-500 shrink-0" />
-                  <span className="flex-1 text-sm font-medium text-navy-900">{item.question}</span>
-                  {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-navy-300 shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-navy-300 shrink-0" />
-                  )}
-                </button>
-                {isExpanded && (
-                  <div className="px-4 pb-4 pt-0">
-                    <div className="pl-7 text-sm text-navy-600 leading-relaxed">
-                      {item.answer}
-                    </div>
+              {isExpanded && (
+                <div className="px-5 pb-4 pt-0">
+                  <div className="ml-11 text-sm text-navy-600 leading-relaxed border-t border-cream-50 pt-3">
+                    {faq.answer}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
 
-      {/* Support */}
-      <Card>
-        <CardContent className="py-6 text-center">
-          <MessageCircle className="h-8 w-8 text-teal-400 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-navy-900 mb-1">Vous n&apos;avez pas trouve votre reponse ?</h3>
-          <p className="text-xs text-navy-400 max-w-sm mx-auto">
-            Lingullio est en version demo. De nouvelles fonctionnalites et un support
-            complet seront disponibles lors du lancement officiel.
-          </p>
-        </CardContent>
-      </Card>
+      {filtered.length === 0 && (
+        <div className="text-center py-12">
+          <Search className="h-8 w-8 text-navy-200 mx-auto mb-3" />
+          <p className="text-navy-400">Aucun resultat pour &quot;{search}&quot;</p>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="text-center pt-4 pb-8">
+        <p className="text-sm text-navy-400">
+          Vous ne trouvez pas la reponse a votre question ?
+        </p>
+        <p className="text-xs text-navy-300 mt-1">
+          Lingullio est en version beta — de nouvelles fonctionnalites arrivent regulierement
+        </p>
+      </div>
     </div>
   );
 }

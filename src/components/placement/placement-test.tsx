@@ -1393,6 +1393,8 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
+  // E10: Knowledge Map is fed in ResultCTA when user clicks "Commencer"
+
   return (
     <div className="animate-fade-in space-y-6">
       {/* Hero result */}

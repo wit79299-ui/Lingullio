@@ -70,7 +70,7 @@ export default async function MockExamsPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Exam History (client component) */}
+      {/* Exam History */}
       <MockExamHistory />
 
       {/* Exam Cards */}

@@ -8,441 +8,416 @@ import { useGamificationStore } from '@/stores/gamification-store';
 import { HSK_VOCAB_COUNTS } from '@/stores/training-mode-store';
 import { Link } from '@/i18n/navigation';
 import {
-  Target, Calendar, Trophy, TrendingUp, ChevronRight,
-  Check, Clock, Flame, BookOpen, Brain, Zap, Edit3,
-  Award,
+  Target, Calendar, TrendingUp, ChevronRight, Check,
+  Clock, BookOpen, Brain, Flame, Award, Zap, AlertCircle,
+  ArrowRight, Trophy, Star, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
-interface ObjectivesData {
-  targetExam: string;         // "hsk1" .. "hsk6"
-  targetDate: string;         // ISO date
-  dailyMinutes: number;       // 15 | 30 | 45 | 60
-  priority: 'listening' | 'reading' | 'vocabulary' | 'balanced';
+interface ObjectiveData {
+  targetExam: string;       // "hsk-1" ... "hsk-6"
+  targetDate: string;       // ISO date
+  targetScore: number;      // 0-100
+  weeklyHours: number;      // 1-20
   createdAt: string;
 }
 
 const STORAGE_KEY = 'lingullio_objectives';
 
-const HSK_LEVELS = [
-  { id: 'hsk1', label: 'HSK 1', vocab: 150, description: '150 mots — Debutant' },
-  { id: 'hsk2', label: 'HSK 2', vocab: 300, description: '300 mots — Elementaire' },
-  { id: 'hsk3', label: 'HSK 3', vocab: 600, description: '600 mots — Intermediaire' },
-  { id: 'hsk4', label: 'HSK 4', vocab: 1200, description: '1200 mots — Intermediaire+' },
-  { id: 'hsk5', label: 'HSK 5', vocab: 2500, description: '2500 mots — Avance' },
-  { id: 'hsk6', label: 'HSK 6', vocab: 5000, description: '5000 mots — Superieur' },
-];
+const HSK_LABELS: Record<string, string> = {
+  'hsk-1': 'HSK 1', 'hsk-2': 'HSK 2', 'hsk-3': 'HSK 3',
+  'hsk-4': 'HSK 4', 'hsk-5': 'HSK 5', 'hsk-6': 'HSK 6',
+};
 
-const PRIORITIES = [
-  { id: 'balanced', label: 'Equilibre', icon: Target },
-  { id: 'vocabulary', label: 'Vocabulaire', icon: BookOpen },
-  { id: 'listening', label: 'Ecoute', icon: Clock },
-  { id: 'reading', label: 'Lecture', icon: BookOpen },
-] as const;
+const HSK_OPTIONS = ['hsk-1', 'hsk-2', 'hsk-3', 'hsk-4', 'hsk-5', 'hsk-6'];
 
 // ─── Main Component ─────────────────────────────────────────────────────
 
 export function ObjectivesView() {
-  const [objectives, setObjectives] = useState<ObjectivesData | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [objective, setObjective] = useState<ObjectiveData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Form state
+  const [formExam, setFormExam] = useState('hsk-2');
+  const [formDate, setFormDate] = useState('');
+  const [formScore, setFormScore] = useState(70);
+  const [formHours, setFormHours] = useState(5);
+
+  // Stores
+  const knowledgeStats = useUserKnowledgeStore(s => s.getStats());
+  const gamification = useGamificationStore();
 
   // Load from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setObjectives(JSON.parse(saved));
+      if (saved) {
+        const data = JSON.parse(saved) as ObjectiveData;
+        setObjective(data);
+        setFormExam(data.targetExam);
+        setFormDate(data.targetDate);
+        setFormScore(data.targetScore);
+        setFormHours(data.weeklyHours);
+      }
     } catch {}
-    setLoaded(true);
   }, []);
 
-  const save = (data: ObjectivesData) => {
-    setObjectives(data);
+  // Default date: 3 months from now
+  useEffect(() => {
+    if (!formDate) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + 3);
+      setFormDate(d.toISOString().split('T')[0]);
+    }
+  }, [formDate]);
+
+  const handleSave = () => {
+    const data: ObjectiveData = {
+      targetExam: formExam,
+      targetDate: formDate,
+      targetScore: formScore,
+      weeklyHours: formHours,
+      createdAt: objective?.createdAt ?? new Date().toISOString(),
+    };
+    setObjective(data);
+    setIsEditing(false);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
-    setEditing(false);
   };
 
-  if (!loaded) return null;
+  // ── Computed stats
+  const analysis = useMemo(() => {
+    if (!objective) return null;
+    const hskNum = parseInt(objective.targetExam.replace('hsk-', ''));
+    const targetVocab = Object.entries(HSK_VOCAB_COUNTS)
+      .filter(([k]) => parseInt(k) <= hskNum)
+      .reduce((sum, [, v]) => sum + v, 0);
 
-  if (!objectives || editing) {
-    return <ObjectivesSetup initial={objectives} onSave={save} onCancel={objectives ? () => setEditing(false) : undefined} />;
+    const masteredCount = knowledgeStats.mastered_count;
+    const totalKnown = knowledgeStats.total_items;
+    const vocabProgress = targetVocab > 0 ? Math.min(100, Math.round((masteredCount / targetVocab) * 100)) : 0;
+    const vocabRemaining = Math.max(0, targetVocab - masteredCount);
+
+    const now = new Date();
+    const target = new Date(objective.targetDate);
+    const daysLeft = Math.max(0, Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const weeksLeft = Math.max(1, Math.ceil(daysLeft / 7));
+
+    const wordsPerWeek = vocabRemaining > 0 ? Math.ceil(vocabRemaining / weeksLeft) : 0;
+    const minutesPerDay = Math.round((objective.weeklyHours * 60) / 7);
+
+    // Readiness score (simplified)
+    const readiness = Math.min(100, Math.round(
+      (vocabProgress * 0.5) +
+      (Math.min(100, (gamification.total_exercises / Math.max(1, targetVocab * 2)) * 100) * 0.3) +
+      (Math.min(100, (gamification.total_study_minutes / Math.max(1, daysLeft * minutesPerDay)) * 100) * 0.2)
+    ));
+
+    return {
+      targetVocab, masteredCount, totalKnown, vocabProgress, vocabRemaining,
+      daysLeft, weeksLeft, wordsPerWeek, minutesPerDay, readiness, hskNum,
+    };
+  }, [objective, knowledgeStats, gamification]);
+
+  // ── Editing / Setup form
+  if (!objective || isEditing) {
+    return (
+      <div className="space-y-8 max-w-2xl mx-auto">
+        <header>
+          <h1 className="text-2xl font-bold text-navy-900 flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50">
+              <Target className="h-5 w-5 text-navy-700" />
+            </div>
+            {objective ? 'Modifier mon objectif' : 'Definir mon objectif'}
+          </h1>
+          <p className="text-navy-400 mt-2 ml-[52px]">
+            {objective ? 'Ajustez votre plan de preparation' : 'Definissez votre examen cible et Lingullio adaptera votre parcours'}
+          </p>
+        </header>
+
+        <Card>
+          <CardContent className="py-6 space-y-6">
+            {/* Target exam */}
+            <div>
+              <label className="text-sm font-medium text-navy-900 mb-2 block">Examen cible</label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {HSK_OPTIONS.map(hsk => (
+                  <button
+                    key={hsk}
+                    type="button"
+                    onClick={() => setFormExam(hsk)}
+                    className={cn(
+                      'px-3 py-3 rounded-xl text-sm font-bold transition-all border',
+                      formExam === hsk
+                        ? 'bg-teal-500 text-white border-teal-500 shadow-md'
+                        : 'bg-cream-25 text-navy-600 border-cream-200 hover:border-teal-300'
+                    )}
+                  >
+                    {HSK_LABELS[hsk]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Target date */}
+            <div>
+              <label className="text-sm font-medium text-navy-900 mb-2 block">Date d&apos;examen prevue</label>
+              <input
+                type="date"
+                value={formDate}
+                onChange={(e) => setFormDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm text-navy-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+              />
+            </div>
+
+            {/* Target score */}
+            <div>
+              <label className="text-sm font-medium text-navy-900 mb-2 block">
+                Score vise : <span className="text-teal-600">{formScore}%</span>
+              </label>
+              <input
+                type="range"
+                min={50}
+                max={100}
+                step={5}
+                value={formScore}
+                onChange={(e) => setFormScore(Number(e.target.value))}
+                className="w-full accent-teal-500"
+              />
+              <div className="flex justify-between text-[10px] text-navy-400 mt-1">
+                <span>50% (passer)</span>
+                <span>70% (bien)</span>
+                <span>100% (parfait)</span>
+              </div>
+            </div>
+
+            {/* Weekly hours */}
+            <div>
+              <label className="text-sm font-medium text-navy-900 mb-2 block">
+                Temps d&apos;etude hebdomadaire : <span className="text-teal-600">{formHours}h/semaine</span>
+              </label>
+              <input
+                type="range"
+                min={1}
+                max={20}
+                step={1}
+                value={formHours}
+                onChange={(e) => setFormHours(Number(e.target.value))}
+                className="w-full accent-teal-500"
+              />
+              <div className="flex justify-between text-[10px] text-navy-400 mt-1">
+                <span>1h (leger)</span>
+                <span>7h (regulier)</span>
+                <span>20h (intensif)</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              {objective && (
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => setIsEditing(false)}>
+                  Annuler
+                </Button>
+              )}
+              <Button variant="teal" size="sm" className="flex-1" onClick={handleSave}>
+                <Check className="h-4 w-4 mr-1" />
+                {objective ? 'Enregistrer' : 'Definir mon objectif'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
-  return <ObjectivesDashboard objectives={objectives} onEdit={() => setEditing(true)} />;
-}
-
-// ─── Setup Form ─────────────────────────────────────────────────────────
-
-function ObjectivesSetup({ initial, onSave, onCancel }: {
-  initial: ObjectivesData | null;
-  onSave: (data: ObjectivesData) => void;
-  onCancel?: () => void;
-}) {
-  const [step, setStep] = useState(0);
-  const [targetExam, setTargetExam] = useState(initial?.targetExam ?? 'hsk1');
-  const [targetDate, setTargetDate] = useState(initial?.targetDate ?? getDefaultDate());
-  const [dailyMinutes, setDailyMinutes] = useState(initial?.dailyMinutes ?? 30);
-  const [priority, setPriority] = useState<ObjectivesData['priority']>(initial?.priority ?? 'balanced');
-
-  function getDefaultDate() {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 3);
-    return d.toISOString().split('T')[0];
-  }
-
-  const steps = [
-    // Step 0: Choose exam
-    <div key="exam" className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy-900">Quel examen preparez-vous ?</h2>
-      <div className="grid grid-cols-2 gap-3">
-        {HSK_LEVELS.map(level => (
-          <button
-            key={level.id}
-            type="button"
-            onClick={() => setTargetExam(level.id)}
-            className={cn(
-              'p-4 rounded-xl border-2 text-left transition-all',
-              targetExam === level.id
-                ? 'border-teal-500 bg-teal-50 shadow-sm'
-                : 'border-cream-200 bg-white hover:border-cream-300'
-            )}
-          >
-            <p className="font-bold text-navy-900">{level.label}</p>
-            <p className="text-xs text-navy-400 mt-1">{level.description}</p>
-          </button>
-        ))}
-      </div>
-    </div>,
-
-    // Step 1: Choose date
-    <div key="date" className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy-900">Quand passez-vous l&apos;examen ?</h2>
-      <input
-        type="date"
-        value={targetDate}
-        min={new Date().toISOString().split('T')[0]}
-        onChange={(e) => setTargetDate(e.target.value)}
-        className="w-full p-3 rounded-xl border border-cream-200 text-navy-900 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
-      />
-      <DaysRemaining targetDate={targetDate} />
-    </div>,
-
-    // Step 2: Daily time
-    <div key="time" className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy-900">Temps quotidien disponible ?</h2>
-      <div className="grid grid-cols-2 gap-3">
-        {[15, 30, 45, 60].map(mins => (
-          <button
-            key={mins}
-            type="button"
-            onClick={() => setDailyMinutes(mins)}
-            className={cn(
-              'p-4 rounded-xl border-2 text-center transition-all',
-              dailyMinutes === mins
-                ? 'border-teal-500 bg-teal-50 shadow-sm'
-                : 'border-cream-200 bg-white hover:border-cream-300'
-            )}
-          >
-            <p className="text-2xl font-bold text-navy-900">{mins}</p>
-            <p className="text-xs text-navy-400">min / jour</p>
-          </button>
-        ))}
-      </div>
-    </div>,
-
-    // Step 3: Priority
-    <div key="priority" className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy-900">Sur quoi voulez-vous insister ?</h2>
-      <div className="grid grid-cols-2 gap-3">
-        {PRIORITIES.map(p => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setPriority(p.id as ObjectivesData['priority'])}
-            className={cn(
-              'p-4 rounded-xl border-2 text-left transition-all',
-              priority === p.id
-                ? 'border-teal-500 bg-teal-50 shadow-sm'
-                : 'border-cream-200 bg-white hover:border-cream-300'
-            )}
-          >
-            <p.icon className="h-5 w-5 text-teal-500 mb-2" />
-            <p className="font-medium text-navy-900">{p.label}</p>
-          </button>
-        ))}
-      </div>
-    </div>,
-  ];
-
+  // ── Dashboard with objective set
   return (
-    <div className="max-w-lg mx-auto space-y-6">
-      <header className="text-center">
-        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-50 mx-auto mb-4">
-          <Target className="h-7 w-7 text-teal-500" />
-        </div>
-        <h1 className="text-2xl font-bold text-navy-900">
-          {initial ? 'Modifier mes objectifs' : 'Definir mes objectifs'}
-        </h1>
-        <p className="text-sm text-navy-400 mt-2">Etape {step + 1} sur {steps.length}</p>
-      </header>
-
-      {/* Progress bar */}
-      <div className="flex gap-1.5">
-        {steps.map((_, i) => (
-          <div key={i} className={cn('h-1 flex-1 rounded-full transition-colors', i <= step ? 'bg-teal-500' : 'bg-cream-200')} />
-        ))}
-      </div>
-
-      {steps[step]}
-
-      <div className="flex gap-3">
-        {step > 0 ? (
-          <Button variant="secondary" onClick={() => setStep(s => s - 1)} className="flex-1">
-            Retour
-          </Button>
-        ) : onCancel ? (
-          <Button variant="secondary" onClick={onCancel} className="flex-1">
-            Annuler
-          </Button>
-        ) : null}
-        {step < steps.length - 1 ? (
-          <Button variant="teal" onClick={() => setStep(s => s + 1)} className="flex-1">
-            Suivant <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        ) : (
-          <Button
-            variant="teal"
-            onClick={() => onSave({ targetExam, targetDate, dailyMinutes, priority, createdAt: new Date().toISOString() })}
-            className="flex-1"
-          >
-            <Check className="h-4 w-4 mr-1" /> Valider
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Dashboard ──────────────────────────────────────────────────────────
-
-function ObjectivesDashboard({ objectives, onEdit }: {
-  objectives: ObjectivesData;
-  onEdit: () => void;
-}) {
-  const stats = useUserKnowledgeStore(s => s.getStats());
-  const gamification = useGamificationStore();
-
-  const hskInfo = HSK_LEVELS.find(l => l.id === objectives.targetExam) ?? HSK_LEVELS[0];
-  const hskNum = objectives.targetExam.replace('hsk', '');
-
-  // Calculate progress
-  const hskLevelStats = stats.by_hsk[hskNum] ?? { total: 0, mastered: 0, learning: 0, unknown: 0 };
-  const masteredForLevel = hskLevelStats.mastered;
-  const vocabTarget = hskInfo.vocab;
-  const vocabProgress = Math.min(100, Math.round((masteredForLevel / vocabTarget) * 100));
-
-  // Days remaining
-  const daysRemaining = Math.max(0, Math.ceil((new Date(objectives.targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-  const weeksRemaining = Math.ceil(daysRemaining / 7);
-
-  // Estimated pace needed
-  const vocabRemaining = Math.max(0, vocabTarget - masteredForLevel);
-  const wordsPerDay = daysRemaining > 0 ? Math.ceil(vocabRemaining / daysRemaining) : vocabRemaining;
-
-  // Study plan
-  const studyPlan = useMemo(() => generateStudyPlan(objectives, daysRemaining, vocabRemaining), [objectives, daysRemaining, vocabRemaining]);
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 max-w-2xl mx-auto">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-navy-900 flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50">
               <Target className="h-5 w-5 text-navy-700" />
             </div>
-            Mes objectifs
+            Mon objectif
           </h1>
-          <p className="text-navy-400 mt-2 ml-[52px]">
-            Preparation {hskInfo.label}
-          </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={onEdit}>
-          <Edit3 className="h-4 w-4 mr-1" /> Modifier
+        <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
+          Modifier
         </Button>
       </header>
 
-      {/* Key metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard icon={Trophy} label="Objectif" value={hskInfo.label} color="bg-gold-50 text-gold-600" />
-        <MetricCard icon={Calendar} label="Jours restants" value={String(daysRemaining)} color="bg-blue-50 text-blue-600" />
-        <MetricCard icon={Brain} label="Mots maitrises" value={`${masteredForLevel}/${vocabTarget}`} color="bg-emerald-50 text-emerald-600" />
-        <MetricCard icon={Zap} label="Rythme necessaire" value={`${wordsPerDay} mots/j`} color="bg-amber-50 text-amber-600" />
-      </div>
-
-      {/* Progress Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-teal-500" />
-            Progression vers {hskInfo.label}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Vocab bar */}
-          <div>
-            <div className="flex justify-between text-sm mb-1.5">
-              <span className="text-navy-500">Vocabulaire maitrise</span>
-              <span className="font-bold text-navy-900">{vocabProgress}%</span>
+      {/* Hero card */}
+      <Card className="!py-0 overflow-hidden">
+        <div className="bg-gradient-to-br from-navy-800 to-navy-900 px-6 py-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-white/60 text-xs uppercase tracking-wider">Examen cible</p>
+              <p className="text-3xl font-black">{HSK_LABELS[objective.targetExam]}</p>
             </div>
-            <div className="h-3 bg-cream-100 rounded-full overflow-hidden">
+            <div className="text-right">
+              <p className="text-white/60 text-xs uppercase tracking-wider">Jour J</p>
+              <p className="text-2xl font-bold">{analysis!.daysLeft}<span className="text-sm font-normal text-white/60"> jours</span></p>
+            </div>
+          </div>
+
+          {/* Readiness gauge */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[11px] text-white/60">
+              <span>Pret a {objective.targetScore}%</span>
+              <span>{analysis!.readiness}%</span>
+            </div>
+            <div className="h-3 bg-white/10 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full transition-all duration-1000"
-                style={{ width: `${vocabProgress}%` }}
+                className={cn(
+                  'h-full rounded-full transition-all duration-1000',
+                  analysis!.readiness >= 70 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' :
+                  analysis!.readiness >= 40 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                  'bg-gradient-to-r from-red-400 to-red-500'
+                )}
+                style={{ width: `${analysis!.readiness}%` }}
               />
             </div>
-            <p className="text-xs text-navy-400 mt-1">
-              {masteredForLevel} mots maitrises sur {vocabTarget} requis
-            </p>
           </div>
-
-          {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-cream-100">
-            <div className="text-center">
-              <p className="text-lg font-bold text-navy-900">{gamification.total_study_minutes}</p>
-              <p className="text-[10px] text-navy-400">minutes etudiees</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-navy-900">{gamification.streak_days}</p>
-              <p className="text-[10px] text-navy-400">jours de serie</p>
-            </div>
-            <div className="text-center">
-              <p className="text-lg font-bold text-navy-900">{stats.total_items}</p>
-              <p className="text-[10px] text-navy-400">mots rencontres</p>
-            </div>
-          </div>
-        </CardContent>
+        </div>
       </Card>
 
-      {/* Study Plan */}
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard icon={BookOpen} label="Vocabulaire" value={`${analysis!.masteredCount}/${analysis!.targetVocab}`} sub={`${analysis!.vocabProgress}%`} color="teal" />
+        <StatCard icon={Calendar} label="Semaines restantes" value={String(analysis!.weeksLeft)} sub={`${analysis!.daysLeft}j`} color="blue" />
+        <StatCard icon={TrendingUp} label="Mots/semaine" value={String(analysis!.wordsPerWeek)} sub="rythme necessaire" color="amber" />
+        <StatCard icon={Clock} label="Minutes/jour" value={String(analysis!.minutesPerDay)} sub={`${objective.weeklyHours}h/sem`} color="purple" />
+      </div>
+
+      {/* Vocabulary progress */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Calendar className="h-4 w-4 text-teal-500" />
-            Plan d&apos;action ({weeksRemaining} semaines)
+            <Brain className="h-4 w-4 text-teal-500" />
+            Progression vocabulaire {HSK_LABELS[objective.targetExam]}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {studyPlan.map((phase, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
-                    i === 0 ? 'bg-teal-500 text-white' : 'bg-cream-100 text-navy-500'
-                  )}>
-                    {i + 1}
+          <div className="space-y-3">
+            {Array.from({ length: analysis!.hskNum }, (_, i) => {
+              const level = String(i + 1);
+              const target = HSK_VOCAB_COUNTS[i + 1] ?? 0;
+              const hskData = knowledgeStats.by_hsk[level];
+              const mastered = hskData?.mastered ?? 0;
+              const learning = hskData?.learning ?? 0;
+              const pct = target > 0 ? Math.round((mastered / target) * 100) : 0;
+              return (
+                <div key={level}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-medium text-navy-700">HSK {level}</span>
+                    <span className="text-navy-400">{mastered}/{target} maitrises ({pct}%)</span>
                   </div>
-                  {i < studyPlan.length - 1 && <div className="w-0.5 flex-1 bg-cream-200 mt-1" />}
+                  <div className="flex h-2 rounded-full overflow-hidden bg-cream-100">
+                    {mastered > 0 && <div className="bg-emerald-400" style={{ width: `${(mastered / target) * 100}%` }} />}
+                    {learning > 0 && <div className="bg-amber-300" style={{ width: `${(learning / target) * 100}%` }} />}
+                  </div>
                 </div>
-                <div className="pb-4 flex-1">
-                  <p className="text-sm font-medium text-navy-900">{phase.title}</p>
-                  <p className="text-xs text-navy-400 mt-1">{phase.description}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Quick links */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/courses">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center gap-3 py-4">
-              <BookOpen className="h-5 w-5 text-teal-500" />
-              <span className="text-sm font-medium text-navy-900">Continuer les cours</span>
-              <ChevronRight className="h-4 w-4 text-navy-300 ml-auto" />
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/revisions">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="flex items-center gap-3 py-4">
-              <Brain className="h-5 w-5 text-blue-500" />
-              <span className="text-sm font-medium text-navy-900">Revisions SRS</span>
-              <ChevronRight className="h-4 w-4 text-navy-300 ml-auto" />
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+      {/* Action plan */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-teal-500" />
+            Plan d&apos;action
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <PlanItem
+            icon={BookOpen}
+            title="Etudier le vocabulaire"
+            description={`Apprendre ${analysis!.wordsPerWeek} nouveaux mots par semaine`}
+            href="/courses"
+            urgent={analysis!.vocabProgress < 50}
+          />
+          <PlanItem
+            icon={Brain}
+            title="Revisions SRS quotidiennes"
+            description={`${knowledgeStats.due_for_review} mots a reviser maintenant`}
+            href="/revisions"
+            urgent={knowledgeStats.due_for_review > 10}
+          />
+          <PlanItem
+            icon={Trophy}
+            title="Examens blancs"
+            description="Tester ses connaissances en conditions reelles"
+            href="/mock-exams"
+            urgent={false}
+          />
+          <PlanItem
+            icon={Flame}
+            title="Maintenir la serie"
+            description={`Serie actuelle : ${gamification.streak_days} jours`}
+            href="/daily-challenge"
+            urgent={gamification.streak_days === 0}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────
+// ─── Reusable Components ────────────────────────────────────────────────
 
-function MetricCard({ icon: Icon, label, value, color }: {
+function StatCard({ icon: Icon, label, value, sub, color }: {
   icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  color: string;
+  label: string; value: string; sub: string;
+  color: 'teal' | 'blue' | 'amber' | 'purple';
 }) {
+  const colors = {
+    teal: 'bg-teal-50 text-teal-600',
+    blue: 'bg-blue-50 text-blue-600',
+    amber: 'bg-amber-50 text-amber-600',
+    purple: 'bg-purple-50 text-purple-600',
+  };
   return (
     <Card className="!py-0">
-      <CardContent className="flex items-center gap-3 py-3">
-        <div className={cn('flex items-center justify-center w-10 h-10 rounded-xl shrink-0', color)}>
-          <Icon className="h-5 w-5" />
+      <CardContent className="py-3 text-center">
+        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-1', colors[color])}>
+          <Icon className="h-4 w-4" />
         </div>
-        <div>
-          <p className="text-lg font-bold text-navy-900">{value}</p>
-          <p className="text-[10px] text-navy-400">{label}</p>
-        </div>
+        <p className="text-lg font-bold text-navy-900">{value}</p>
+        <p className="text-[10px] text-navy-400">{label}</p>
+        <p className="text-[10px] text-navy-300">{sub}</p>
       </CardContent>
     </Card>
   );
 }
 
-function DaysRemaining({ targetDate }: { targetDate: string }) {
-  const days = Math.max(0, Math.ceil((new Date(targetDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+function PlanItem({ icon: Icon, title, description, href, urgent }: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string; description: string; href: string; urgent: boolean;
+}) {
   return (
-    <p className="text-sm text-navy-500">
-      {days > 0 ? (
-        <>Il reste <span className="font-bold text-teal-600">{days} jours</span> ({Math.ceil(days / 7)} semaines)</>
-      ) : (
-        <span className="text-red-500 font-medium">Date passee — choisissez une date future</span>
-      )}
-    </p>
+    <Link href={href}>
+      <div className={cn(
+        'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:shadow-sm',
+        urgent ? 'border-amber-200 bg-amber-50/50' : 'border-cream-100 bg-white hover:bg-cream-25'
+      )}>
+        <div className={cn(
+          'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
+          urgent ? 'bg-amber-100' : 'bg-teal-50'
+        )}>
+          <Icon className={cn('h-5 w-5', urgent ? 'text-amber-600' : 'text-teal-600')} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-navy-900">{title}</p>
+          <p className="text-xs text-navy-400">{description}</p>
+        </div>
+        {urgent && <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />}
+        <ChevronRight className="h-4 w-4 text-navy-300 shrink-0" />
+      </div>
+    </Link>
   );
-}
-
-function generateStudyPlan(objectives: ObjectivesData, daysRemaining: number, vocabRemaining: number) {
-  const weeks = Math.ceil(daysRemaining / 7);
-  const phases = [];
-
-  if (weeks <= 2) {
-    phases.push(
-      { title: 'Revision intensive', description: `Revoir les ${vocabRemaining} mots restants. Priorite aux exercices types et examens blancs.` },
-      { title: 'Simulation d\'examen', description: 'Faire 1 examen blanc par jour les derniers jours. Analyser les erreurs.' },
-    );
-  } else if (weeks <= 8) {
-    const half = Math.ceil(weeks / 2);
-    phases.push(
-      { title: `Semaines 1-${half} : Apprentissage`, description: `Apprendre ${Math.ceil(vocabRemaining / 2)} nouveaux mots. ${objectives.dailyMinutes} min/jour de cours + exercices.` },
-      { title: `Semaines ${half + 1}-${weeks - 1} : Consolidation`, description: 'Revisions SRS quotidiennes + exercices de grammaire. Commencer les examens blancs.' },
-      { title: `Semaine ${weeks} : Sprint final`, description: 'Examens blancs quotidiens + revision des points faibles identifies.' },
-    );
-  } else {
-    const third = Math.ceil(weeks / 3);
-    phases.push(
-      { title: `Semaines 1-${third} : Fondations`, description: `Apprendre les bases : ${Math.ceil(vocabRemaining * 0.4)} mots. Grammaire essentielle et caracteres.` },
-      { title: `Semaines ${third + 1}-${third * 2} : Approfondissement`, description: `${Math.ceil(vocabRemaining * 0.4)} mots supplementaires. Exercices d'ecoute et lecture.` },
-      { title: `Semaines ${third * 2 + 1}-${weeks - 2} : Maitrise`, description: 'Consolider tout le vocabulaire. Revisions SRS intensives.' },
-      { title: `2 dernieres semaines : Preparation finale`, description: 'Examens blancs quotidiens. Revoir les erreurs. Se concentrer sur les faiblesses.' },
-    );
-  }
-
-  return phases;
 }

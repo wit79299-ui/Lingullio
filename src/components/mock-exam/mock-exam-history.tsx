@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Clock, Trophy, ChevronDown, ChevronUp, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Trophy, Clock, Target, TrendingUp, ChevronDown, ChevronUp,
+  Check, X, Calendar, BarChart3, Award,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -31,177 +34,199 @@ interface ExamHistoryEntry {
 
 const STORAGE_KEY = 'lingullio_mock_exam_history';
 
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-// ─── Component ──────────────────────────────────────────────────────────
+// ─── Main Component ─────────────────────────────────────────────────────
 
 export function MockExamHistory() {
   const [history, setHistory] = useState<ExamHistoryEntry[]>([]);
-  const [expanded, setExpanded] = useState<number | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [expandedEntry, setExpandedEntry] = useState<number | null>(null);
 
   useEffect(() => {
     try {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-      setHistory(data.reverse()); // most recent first
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved) as ExamHistoryEntry[];
+        setHistory(data.reverse()); // Most recent first
+      }
     } catch {}
-    setLoaded(true);
   }, []);
 
-  if (!loaded || history.length === 0) return null;
+  const stats = useMemo(() => {
+    if (history.length === 0) return null;
+    const totalAttempts = history.length;
+    const passCount = history.filter(h => h.passed).length;
+    const avgPercent = Math.round(history.reduce((s, h) => s + h.percent, 0) / totalAttempts);
+    const bestScore = Math.max(...history.map(h => h.percent));
+    const totalXp = history.reduce((s, h) => s + (h.xpEarned ?? 0), 0);
+    // Trend: compare last 3 vs first 3
+    const recent = history.slice(0, Math.min(3, history.length));
+    const older = history.slice(Math.max(0, history.length - 3));
+    const recentAvg = recent.reduce((s, h) => s + h.percent, 0) / recent.length;
+    const olderAvg = older.reduce((s, h) => s + h.percent, 0) / older.length;
+    const trend = history.length >= 2 ? recentAvg - olderAvg : 0;
+    return { totalAttempts, passCount, avgPercent, bestScore, totalXp, trend };
+  }, [history]);
 
-  // Stats summary
-  const totalExams = history.length;
-  const passedExams = history.filter(h => h.passed).length;
-  const avgPercent = Math.round(history.reduce((s, h) => s + h.percent, 0) / totalExams);
-  const bestPercent = Math.max(...history.map(h => h.percent));
-  const totalXp = history.reduce((s, h) => s + (h.xpEarned ?? 0), 0);
-
-  // Trend: last 3 vs previous 3
-  const recent3 = history.slice(0, 3);
-  const prev3 = history.slice(3, 6);
-  const recentAvg = recent3.length > 0 ? Math.round(recent3.reduce((s, h) => s + h.percent, 0) / recent3.length) : 0;
-  const prevAvg = prev3.length > 0 ? Math.round(prev3.reduce((s, h) => s + h.percent, 0) / prev3.length) : 0;
-  const trend = prev3.length > 0 ? recentAvg - prevAvg : 0;
+  if (history.length === 0) return null;
 
   return (
     <div className="space-y-4">
-      {/* Summary banner */}
-      <Card className="!py-0 overflow-hidden">
-        <div className="bg-gradient-to-r from-navy-50 via-cream-50 to-teal-50 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-teal-600" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-navy-900">Historique des examens blancs</h2>
-              <p className="text-xs text-navy-400">{totalExams} examen{totalExams > 1 ? 's' : ''} passe{totalExams > 1 ? 's' : ''}</p>
-            </div>
-          </div>
+      <h2 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
+        <BarChart3 className="h-5 w-5 text-teal-500" />
+        Historique des examens
+      </h2>
 
-          <div className="grid grid-cols-4 gap-3">
-            <div className="text-center">
-              <p className="text-xl font-bold text-navy-900">{passedExams}/{totalExams}</p>
-              <p className="text-[10px] text-navy-400">reussis</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-navy-900">{avgPercent}%</p>
-              <p className="text-[10px] text-navy-400">moyenne</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-emerald-600">{bestPercent}%</p>
-              <p className="text-[10px] text-navy-400">meilleur</p>
-            </div>
-            <div className="text-center">
-              <p className={cn('text-xl font-bold', trend > 0 ? 'text-emerald-600' : trend < 0 ? 'text-red-500' : 'text-navy-500')}>
-                {trend > 0 ? '+' : ''}{trend}%
-              </p>
-              <p className="text-[10px] text-navy-400">tendance</p>
-            </div>
-          </div>
+      {/* Global stats */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <MiniStat
+            icon={Trophy}
+            value={`${stats.passCount}/${stats.totalAttempts}`}
+            label="Reussis"
+            color={stats.passCount > 0 ? 'text-emerald-600' : 'text-navy-600'}
+          />
+          <MiniStat
+            icon={Target}
+            value={`${stats.avgPercent}%`}
+            label="Score moyen"
+            color="text-navy-600"
+          />
+          <MiniStat
+            icon={Award}
+            value={`${stats.bestScore}%`}
+            label="Meilleur score"
+            color="text-teal-600"
+          />
+          <MiniStat
+            icon={TrendingUp}
+            value={`${stats.trend >= 0 ? '+' : ''}${Math.round(stats.trend)}%`}
+            label="Tendance"
+            color={stats.trend >= 0 ? 'text-emerald-600' : 'text-red-500'}
+          />
         </div>
-      </Card>
+      )}
 
       {/* History entries */}
       <div className="space-y-2">
-        {history.map((entry, i) => {
-          const isExpanded = expanded === i;
+        {history.map((entry, idx) => {
+          const isExpanded = expandedEntry === idx;
           const date = new Date(entry.completedAt);
           const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
           const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-          const level = entry.courseSlug?.replace('hsk-', '').toUpperCase() ?? '?';
+          const level = entry.courseSlug.replace('hsk-', '').toUpperCase();
 
           return (
-            <div key={i} className="rounded-xl border border-cream-100 bg-white overflow-hidden">
+            <Card key={idx} className="overflow-hidden">
               <button
                 type="button"
-                onClick={() => setExpanded(isExpanded ? null : i)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-cream-25 transition-colors"
+                onClick={() => setExpandedEntry(isExpanded ? null : idx)}
+                className="w-full text-left"
               >
-                {/* Pass/fail indicator */}
-                {entry.passed ? (
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-400 shrink-0" />
-                )}
+                <CardContent className="py-3">
+                  <div className="flex items-center gap-3">
+                    {/* Status icon */}
+                    <div className={cn(
+                      'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
+                      entry.passed ? 'bg-emerald-50' : 'bg-red-50'
+                    )}>
+                      {entry.passed ? (
+                        <Check className="h-5 w-5 text-emerald-500" />
+                      ) : (
+                        <X className="h-5 w-5 text-red-400" />
+                      )}
+                    </div>
 
-                {/* Level badge */}
-                <span className="text-xs font-bold px-2 py-1 rounded-lg bg-navy-50 text-navy-700 shrink-0">
-                  HSK {level}
-                </span>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">{level}</span>
+                        <span className="text-sm font-medium text-navy-900 truncate">{entry.examTitle}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-navy-400 mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {dateStr} {timeStr}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {Math.floor(entry.timeSpent / 60)}min
+                        </span>
+                      </div>
+                    </div>
 
-                {/* Score */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-navy-900 truncate">{entry.examTitle}</p>
-                  <p className="text-xs text-navy-400">{dateStr} a {timeStr}</p>
-                </div>
+                    {/* Score */}
+                    <div className="text-right shrink-0">
+                      <p className={cn(
+                        'text-lg font-bold',
+                        entry.passed ? 'text-emerald-600' : 'text-red-500'
+                      )}>
+                        {entry.percent}%
+                      </p>
+                      <p className="text-[10px] text-navy-400">
+                        {entry.totalEarned}/{entry.totalPoints}
+                      </p>
+                    </div>
 
-                {/* Score percent */}
-                <span className={cn(
-                  'text-lg font-bold shrink-0',
-                  entry.percent >= 60 ? 'text-emerald-600' : entry.percent >= 40 ? 'text-amber-600' : 'text-red-500'
-                )}>
-                  {entry.percent}%
-                </span>
-
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-navy-300 shrink-0" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-navy-300 shrink-0" />
-                )}
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-navy-300 shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-navy-300 shrink-0" />
+                    )}
+                  </div>
+                </CardContent>
               </button>
 
-              {isExpanded && (
-                <div className="px-4 pb-4 border-t border-cream-100 pt-3 space-y-3">
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div>
-                      <p className="text-sm font-bold text-navy-900">{entry.totalCorrect}/{entry.totalQuestions}</p>
-                      <p className="text-[10px] text-navy-400">bonnes reponses</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-navy-900">{formatTime(entry.timeSpent)}</p>
-                      <p className="text-[10px] text-navy-400">duree</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-teal-600">+{entry.xpEarned ?? 0} XP</p>
-                      <p className="text-[10px] text-navy-400">gagnes</p>
-                    </div>
-                  </div>
-
-                  {/* Section breakdown */}
-                  {entry.sectionResults && entry.sectionResults.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider">Par section</p>
-                      {entry.sectionResults.map((sr, j) => {
-                        const pct = sr.max > 0 ? Math.round((sr.earned / sr.max) * 100) : 0;
-                        return (
-                          <div key={j} className="flex items-center gap-3">
-                            <span className="text-xs text-navy-500 w-20 shrink-0 truncate">{sr.sectionTitle}</span>
-                            <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
-                              <div
-                                className={cn(
-                                  'h-full rounded-full',
-                                  pct >= 70 ? 'bg-emerald-400' : pct >= 40 ? 'bg-amber-400' : 'bg-red-300'
-                                )}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-navy-400 w-12 text-right">{sr.correct}/{sr.total}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
+              {isExpanded && entry.sectionResults && (
+                <div className="px-5 pb-4 border-t border-cream-50 pt-3 space-y-2">
+                  {entry.sectionResults.map((sr, i) => {
+                    const srPct = sr.max > 0 ? Math.round((sr.earned / sr.max) * 100) : 0;
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-xs text-navy-500 w-24 shrink-0 truncate">{sr.sectionTitle}</span>
+                        <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              'h-full rounded-full',
+                              srPct >= 70 ? 'bg-emerald-400' : srPct >= 40 ? 'bg-amber-400' : 'bg-red-400'
+                            )}
+                            style={{ width: `${srPct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-navy-400 w-16 text-right">{sr.earned}/{sr.max}</span>
+                      </div>
+                    );
+                  })}
+                  {entry.xpEarned > 0 && (
+                    <p className="text-xs text-teal-600 mt-2">+{entry.xpEarned} XP gagnes</p>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>
     </div>
+  );
+}
+
+// ─── Mini Stat Card ─────────────────────────────────────────────────────
+
+function MiniStat({ icon: Icon, value, label, color }: {
+  icon: React.ComponentType<{ className?: string }>;
+  value: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <Card className="!py-0">
+      <CardContent className="py-2.5 flex items-center gap-2.5">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cream-50 shrink-0">
+          <Icon className="h-4 w-4 text-navy-500" />
+        </div>
+        <div>
+          <p className={cn('text-sm font-bold', color)}>{value}</p>
+          <p className="text-[10px] text-navy-400">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
