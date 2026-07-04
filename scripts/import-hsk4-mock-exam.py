@@ -3,9 +3,9 @@
 Import HSK 4 Mock Exam (real conditions, 100 questions) into Supabase.
 
 HSK4 structure (official new format):
-- Listening (45q): Part1 picture choice (10), Part2+3 audio MCQ text (35)
-- Reading (40q):   Part1+2 fill-blank MCQ (20), Part3+4 reading MCQ (20)
-- Writing (15q):   Part1 reorder words (10), Part2 picture prompt writing (5)
+- Listening (45q): Part1 picture choice (10), Part2-3 audio text MCQ (35)
+- Reading (40q):   Part1 fill-blank MCQ (20), Part2 reading comprehension MCQ (20)
+- Writing (15q):   Part1 reorder words (10), Part2 picture-prompt writing (5)
 Total: 100 questions, 300 points, passing 180, ~95 minutes
 
 Tables involved:
@@ -121,23 +121,23 @@ def supabase_delete(table: str, filter_str: str) -> bool:
 
 TYPE_MAP = {
     # Listening
-    "picture_choice": "mcq",           # Part 1: 4 image options A/B/C/D
-    "audio_mcq_text": "mcq",           # Part 2+3: 3 text options with audio
+    "picture_choice": "mcq",             # Part 1: 4 image options A/B/C/D
+    "audio_mcq_text": "mcq",             # Part 2-3: 3 text options
     # Reading
-    "fill_blank_mcq": "fill_blank",    # Part 1+2: sentence with blank, 4 options
-    "reading_mcq": "mcq",              # Part 3+4: passage + question, 3 options
+    "fill_blank_mcq": "fill_blank",      # Part 1: 4 text options
+    "reading_mcq": "mcq",                # Part 2: 3 text options
     # Writing
-    "reorder_words": "reorder",                   # Part 1: reorder word tiles
-    "picture_prompt_writing": "controlled_translation",  # Part 2: free writing from image+keyword (5pts)
+    "reorder_words": "reorder",          # Part 1: word tiles
+    "picture_prompt_writing": "essay",    # Part 2: free writing, 5pts each
 }
 
 # ─── Image path helpers ─────────────────────────────────────────────────
-# HSK4 picture_choice: each question has its own 4 images (A/B/C/D),
-# unlike HSK3 which had a shared bank.
+# For picture_choice (Q1-Q10): each question has 4 individual images A/B/C/D
+# Images were cropped from admin sheets and saved as WebP
 
-def get_image_url(q_num: int, label: str) -> str:
-    """Get the static URL for a picture_choice option image."""
-    return f"/static/mock-exam/hsk4/hsk4_l_p1_q{q_num:02d}_{label}.webp"
+def image_url_for(q_num: int, option_id: str) -> str:
+    """Get the static image URL for a picture_choice option."""
+    return f"/static/mock-exam/hsk4/hsk4_q{q_num:02d}_{option_id}.webp"
 
 # ─── Build exercise metadata ───────────────────────────────────────────
 
@@ -146,49 +146,46 @@ def build_metadata(item: dict, section_type: str) -> dict:
     meta = {
         "mock_exam_type": item["type"],
         "section": section_type,
-        "part": item["part"],
+        "part": item.get("part", ""),
     }
 
     # Audio data (listening questions)
     if "audio" in item:
+        aud = item["audio"]
         meta["audio"] = {
-            "script_hanzi": item["audio"]["transcript_zh"],
-            "script_pinyin": item["audio"].get("transcript_pinyin", ""),
-            "repeat_count": item["audio"].get("play_count", 2),
+            "script_hanzi": aud.get("transcript_zh", ""),
+            "script_pinyin": aud.get("transcript_pinyin", ""),
+            "repeat_count": aud.get("play_count", 2),
         }
-
-    # Stimulus (reading/writing questions)
-    if "stimulus" in item:
-        meta["stimulus"] = item["stimulus"]
 
     # Review/explanation
     if "review" in item:
         meta["review"] = item["review"]
 
+    # Diagnostic tags
+    if "diagnostic" in item:
+        meta["diagnostic_tags"] = item["diagnostic"].get("skill_tags", [])
+        meta["if_wrong"] = item["diagnostic"].get("if_wrong", [])
+
     # Exam display info (crucial for rendering)
     if "exam_display" in item:
         meta["exam_display"] = item["exam_display"]
 
-    # Scoring rubric (writing section)
-    if "scoring" in item:
-        meta["scoring_info"] = item["scoring"]
+    # Stimulus data (reading / writing questions)
+    if "stimulus" in item:
+        meta["stimulus"] = item["stimulus"]
 
-    # For picture_choice: store image URLs in metadata
+    # Scoring rubric (writing section)
+    if "scoring" in item and "rubric" in item.get("review", {}):
+        meta["scoring_rubric"] = item["review"]["rubric"]
+
+    # Image references for picture_choice (Q1-Q10)
     if item["type"] == "picture_choice":
         q_num = item["order"]
-        meta["image_options"] = {}
-        for opt in item["exam_display"]["image_options"]:
-            label = opt["id"]
-            meta["image_options"][label] = {
-                "url": get_image_url(q_num, label),
-                "prompt": opt["image_prompt"],
-            }
-
-    # For picture_prompt_writing: store image prompt in metadata
-    if item["type"] == "picture_prompt_writing":
-        stim = item.get("stimulus", {})
-        meta["keyword_phrase_zh"] = stim.get("keyword_phrase_zh", "")
-        meta["image_prompt"] = stim.get("image_prompt", "")
+        meta["image_options"] = {
+            opt_id: image_url_for(q_num, opt_id)
+            for opt_id in ("A", "B", "C", "D")
+        }
 
     return meta
 
@@ -196,25 +193,25 @@ def build_metadata(item: dict, section_type: str) -> dict:
 def build_options(item: dict) -> list:
     """Build option list for an exercise."""
     options = []
-    answer = item["correct_answer"]
+    answer = item.get("correct_answer")
     item_type = item["type"]
     q_num = item["order"]
 
     if item_type == "picture_choice":
-        # Part 1: 4 image options A/B/C/D (each question has its own images)
+        # Part 1: 4 image options A/B/C/D, each with its own image
         for i, opt in enumerate(item["exam_display"]["image_options"]):
-            label = opt["id"]  # A, B, C, D
+            cid = opt["id"]  # A, B, C, D
             options.append({
-                "id": label,
-                "content": label,
+                "id": cid,
+                "content": cid,
                 "content_detail": opt.get("image_prompt", ""),
-                "image_url": get_image_url(q_num, label),
-                "is_correct": label == answer,
+                "image_url": image_url_for(q_num, cid),
+                "is_correct": cid == answer,
                 "sort_order": i + 1,
             })
 
     elif item_type == "audio_mcq_text":
-        # Part 2+3: 3 text options A/B/C with zh + pinyin
+        # Part 2-3: Text MCQ options A/B/C
         for i, opt in enumerate(item["exam_display"]["options"]):
             cid = opt["id"]
             options.append({
@@ -227,7 +224,7 @@ def build_options(item: dict) -> list:
             })
 
     elif item_type == "fill_blank_mcq":
-        # Reading Part 1+2: 4 text options A/B/C/D with zh + pinyin
+        # Reading Part 1: 4 text options A/B/C/D
         for i, opt in enumerate(item["exam_display"]["options"]):
             cid = opt["id"]
             options.append({
@@ -240,7 +237,7 @@ def build_options(item: dict) -> list:
             })
 
     elif item_type == "reading_mcq":
-        # Reading Part 3+4: 3 text options A/B/C
+        # Reading Part 2: Text MCQ A/B/C
         for i, opt in enumerate(item["exam_display"]["options"]):
             cid = opt["id"]
             options.append({
@@ -265,8 +262,8 @@ def build_options(item: dict) -> list:
             })
 
     elif item_type == "picture_prompt_writing":
-        # Writing Part 2: Free writing — no options to choose from
-        # Store the model answer as a single "reference" option
+        # Writing Part 2: Free writing — no options (open-ended)
+        # We store the model answer as a single "reference" option
         model_answer = item.get("review", {}).get("model_answer_zh", "")
         if model_answer:
             options.append({
@@ -284,6 +281,7 @@ def build_prompt_fr(item: dict) -> str:
     """Build the French prompt/instruction for the exercise translation."""
     item_type = item["type"]
     ed = item.get("exam_display", {})
+    stim = item.get("stimulus", {})
 
     if item_type == "picture_choice":
         return ed.get("instruction_fr", "Choisis l'image qui correspond au dialogue.")
@@ -292,21 +290,25 @@ def build_prompt_fr(item: dict) -> str:
         return ed.get("instruction_fr", "Choisis la bonne réponse.")
 
     elif item_type == "fill_blank_mcq":
-        stimulus = item.get("stimulus", {}).get("hanzi", "")
-        return f"{ed.get('instruction_fr', 'Complète la phrase.')}\n{stimulus}"
+        sentence = stim.get("hanzi", "")
+        instr = ed.get("instruction_fr", "Complète la phrase.")
+        return f"{instr}\n{sentence}"
 
     elif item_type == "reading_mcq":
-        passage = item.get("stimulus", {}).get("passage_hanzi", "")
-        question = item.get("stimulus", {}).get("question_hanzi", "")
-        return f"{ed.get('instruction_fr', 'Lis le texte et réponds.')}\n{passage}\n★ {question}"
+        passage = stim.get("passage_hanzi", "")
+        question = stim.get("question_hanzi", "")
+        instr = ed.get("instruction_fr", "Lis le texte et réponds.")
+        return f"{instr}\n{passage}\n★ {question}"
 
     elif item_type == "reorder_words":
-        tiles = " / ".join(item.get("stimulus", {}).get("word_bank", []))
-        return f"{ed.get('instruction_fr', 'Remets les mots dans le bon ordre.')}\n{tiles}"
+        tiles = " / ".join(stim.get("word_bank", []))
+        instr = ed.get("instruction_fr", "Remets les mots dans le bon ordre.")
+        return f"{instr}\n{tiles}"
 
     elif item_type == "picture_prompt_writing":
-        keyword = item.get("stimulus", {}).get("keyword_phrase_zh", "")
-        return f"{ed.get('instruction_fr', 'Écris une ou plusieurs phrases.')}\n关键词：{keyword}"
+        keyword = stim.get("keyword_phrase_zh", "")
+        instr = ed.get("instruction_fr", "Écris une phrase avec le mot donné.")
+        return f"{instr}\n{keyword}"
 
     return ""
 
@@ -343,31 +345,31 @@ def main():
 
     # ─── Step 0: Clean up any previous import ───────────────────────────
     print("\n🧹 Cleaning up previous HSK4 mock exam import...")
-    
+
     # Delete mock exam question links (all 3 sections)
     for sec_order in range(1, NUM_SECTIONS + 1):
         supabase_delete("mock_exam_questions", f"section_id=eq.{section_uuid(sec_order)}")
-    
+
     # Delete section translations and sections
     for sec_order in range(1, NUM_SECTIONS + 1):
         supabase_delete("mock_exam_section_translations", f"section_id=eq.{section_uuid(sec_order)}")
     supabase_delete("mock_exam_sections", f"mock_exam_id=eq.{MOCK_EXAM_ID}")
-    
+
     # Delete exam translations and exam
     supabase_delete("mock_exam_translations", f"mock_exam_id=eq.{MOCK_EXAM_ID}")
     supabase_delete("mock_exams", f"id=eq.{MOCK_EXAM_ID}")
-    
+
     # Clean exercise-related data
     for q in range(1, TOTAL_QUESTIONS + 1):
         eid = exercise_uuid(q)
-        # Delete option translations and options (up to 10 options for word banks)
-        for o in range(1, 11):
+        # Delete option translations and options (up to 10 options per question)
+        for o in range(1, 10):
             oid = option_uuid(q, o)
             supabase_delete("exercise_option_translations", f"option_id=eq.{oid}")
         supabase_delete("exercise_options", f"exercise_id=eq.{eid}")
         supabase_delete("exercise_translations", f"exercise_id=eq.{eid}")
         supabase_delete("exercises", f"id=eq.{eid}")
-    
+
     print("   ✓ Cleanup done")
 
     # ─── Step 1: Create exercises ───────────────────────────────────────
@@ -392,17 +394,14 @@ def main():
             # Build metadata
             metadata = build_metadata(item, section_type)
 
-            # Duration estimation by section/type
+            # Duration estimation by section/part
             if section_type == "listening":
-                est_duration = 35  # listening items ~35s with replay
+                est_duration = 30  # listening items ~30s with replay
             elif section_type == "reading":
-                if item["type"] == "reading_mcq":
-                    est_duration = 60  # reading passages take longer
-                else:
-                    est_duration = 45  # fill-blank items ~45s
+                est_duration = 45  # reading items ~45s
             else:
                 if item["type"] == "picture_prompt_writing":
-                    est_duration = 180  # free writing ~3min
+                    est_duration = 120  # writing with image ~2min
                 else:
                     est_duration = 60  # reorder ~60s
 
@@ -529,7 +528,7 @@ def main():
             "locale": "fr",
             "title": "Examen blanc HSK 4 — Conditions réelles",
             "description": (
-                "100 questions \u00b7 ~95 min \u00b7 Format officiel HSK 2026. "
+                "100 questions · ~95 min · Format officiel HSK 2026. "
                 "Écoute (45 q.) + Lecture (40 q.) + Écriture (15 q.). "
                 "Score sur 300, seuil de réussite : 180."
             ),
@@ -540,7 +539,7 @@ def main():
             "locale": "en",
             "title": "HSK 4 Mock Exam — Real Conditions",
             "description": (
-                "100 questions \u00b7 ~95 min \u00b7 Official HSK 2026 format. "
+                "100 questions · ~95 min · Official HSK 2026 format. "
                 "Listening (45 q.) + Reading (40 q.) + Writing (15 q.). "
                 "Score out of 300, passing score: 180."
             ),
@@ -562,12 +561,12 @@ def main():
             "title_fr": "Compréhension orale",
             "title_en": "Listening Comprehension",
             "instructions_fr": (
-                "Tu vas entendre des phrases ou dialogues deux fois. "
-                "Réponds aux questions correspondantes."
+                "Tu vas entendre des dialogues deux fois. "
+                "Choisis l'image ou la réponse qui correspond."
             ),
             "instructions_en": (
-                "You will hear sentences or dialogues twice. "
-                "Answer the corresponding questions."
+                "You will hear dialogues twice. "
+                "Choose the image or answer that matches."
             ),
         },
         {
@@ -579,10 +578,12 @@ def main():
             "title_fr": "Compréhension écrite",
             "title_en": "Reading Comprehension",
             "instructions_fr": (
-                "Lis les phrases et textes, puis choisis la bonne réponse."
+                "Complète les phrases ou lis les textes, "
+                "puis choisis la bonne réponse."
             ),
             "instructions_en": (
-                "Read the sentences and texts, then choose the correct answer."
+                "Complete sentences or read passages, "
+                "then choose the correct answer."
             ),
         },
         {
@@ -594,12 +595,12 @@ def main():
             "title_fr": "Expression écrite",
             "title_en": "Writing",
             "instructions_fr": (
-                "Remets les mots dans le bon ordre ou rédige des phrases "
-                "à partir des images et des mots-clés."
+                "Remets les mots dans le bon ordre ou rédige "
+                "une phrase à partir du mot et de l'image donnés."
             ),
             "instructions_en": (
-                "Reorder the words to form sentences or write sentences "
-                "based on images and keywords."
+                "Reorder the words to form a sentence or write "
+                "a sentence based on the given word and image."
             ),
         },
     ]
@@ -654,13 +655,12 @@ def main():
         sec_id = section_id_map[section["id"]]
         for item in section["items"]:
             q_num = item["order"]
-            points = item.get("scoring", {}).get("raw_points", 1)
             question_links.append({
                 "id": mock_exam_question_uuid(q_num),
                 "section_id": sec_id,
                 "exercise_id": exercise_uuid(q_num),
                 "sort_order": q_num,
-                "points": points,
+                "points": item.get("scoring", {}).get("raw_points", 1),
             })
 
     ok = supabase_post("mock_exam_questions", question_links)
@@ -696,11 +696,6 @@ def main():
     print(f"\n  Total points: 300")
     print(f"  Duration: ~95 min")
     print(f"  Passing score: 180")
-
-    # Check 5-point writing items
-    five_pt = sum(1 for s in sections_data for it in s["items"]
-                  if it.get("scoring", {}).get("raw_points", 1) == 5)
-    print(f"  5-point items (picture_prompt_writing): {five_pt}")
     print()
 
 

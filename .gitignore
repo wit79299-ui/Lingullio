@@ -47,3 +47,6 @@ logs/
 *.log
 data/
 __pycache__/
+
+# Temp working files
+tmp/
