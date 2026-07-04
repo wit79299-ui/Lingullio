@@ -27,7 +27,7 @@ interface FlashcardItem {
   back_sub?: string;
   audio_url?: string | null;
   difficulty: number;
-  hsk_level: string;
+  level: string;
   mastery?: string;
   srs_interval?: number;
   is_overdue?: boolean;
@@ -47,21 +47,21 @@ interface ReviewStats {
 // ─── Fallback data for users with empty knowledge map ───────────────────
 
 const STARTER_CARDS: FlashcardItem[] = [
-  { id: 'starter-v1', type: 'vocabulary', front: '你好', front_sub: 'nǐ hǎo', back: 'Bonjour', difficulty: 1, hsk_level: '1' },
-  { id: 'starter-v2', type: 'vocabulary', front: '谢谢', front_sub: 'xiè xie', back: 'Merci', difficulty: 1, hsk_level: '1' },
-  { id: 'starter-c1', type: 'character', front: '人', front_sub: 'rén', back: 'Personne, etre humain', difficulty: 1, hsk_level: '1' },
-  { id: 'starter-v3', type: 'vocabulary', front: '学生', front_sub: 'xué shēng', back: 'Etudiant', difficulty: 1, hsk_level: '1' },
-  { id: 'starter-c2', type: 'character', front: '大', front_sub: 'dà', back: 'Grand', difficulty: 1, hsk_level: '1' },
-  { id: 'starter-v4', type: 'vocabulary', front: '准备', front_sub: 'zhǔn bèi', back: 'Preparer', difficulty: 2, hsk_level: '2' },
-  { id: 'starter-v5', type: 'vocabulary', front: '已经', front_sub: 'yǐ jīng', back: 'Deja', difficulty: 2, hsk_level: '2' },
-  { id: 'starter-g1', type: 'grammar', front: '虽然…但是…', front_sub: 'suī rán...dàn shì...', back: 'Bien que... mais...', back_sub: 'Concession', difficulty: 2, hsk_level: '2' },
-  { id: 'starter-v6', type: 'vocabulary', front: '环境', front_sub: 'huán jìng', back: 'Environnement', difficulty: 3, hsk_level: '3' },
-  { id: 'starter-v7', type: 'vocabulary', front: '经验', front_sub: 'jīng yàn', back: 'Experience', difficulty: 3, hsk_level: '3' },
-  { id: 'starter-c3', type: 'character', front: '爱', front_sub: 'ài', back: 'Aimer, amour', difficulty: 2, hsk_level: '2' },
-  { id: 'starter-v8', type: 'vocabulary', front: '影响', front_sub: 'yǐng xiǎng', back: 'Influence, affecter', difficulty: 3, hsk_level: '3' },
-  { id: 'starter-v9', type: 'vocabulary', front: '积极', front_sub: 'jī jí', back: 'Positif, actif', difficulty: 3, hsk_level: '4' },
-  { id: 'starter-g2', type: 'grammar', front: '不但…而且…', front_sub: 'bù dàn...ér qiě...', back: 'Non seulement... mais aussi...', back_sub: 'Addition', difficulty: 3, hsk_level: '4' },
-  { id: 'starter-v10', type: 'vocabulary', front: '竞争', front_sub: 'jìng zhēng', back: 'Competition', difficulty: 4, hsk_level: '4' },
+  { id: 'starter-v1', type: 'vocabulary', front: '你好', front_sub: 'nǐ hǎo', back: 'Bonjour', difficulty: 1, level: '1' },
+  { id: 'starter-v2', type: 'vocabulary', front: '谢谢', front_sub: 'xiè xie', back: 'Merci', difficulty: 1, level: '1' },
+  { id: 'starter-c1', type: 'character', front: '人', front_sub: 'rén', back: 'Personne, etre humain', difficulty: 1, level: '1' },
+  { id: 'starter-v3', type: 'vocabulary', front: '学生', front_sub: 'xué shēng', back: 'Etudiant', difficulty: 1, level: '1' },
+  { id: 'starter-c2', type: 'character', front: '大', front_sub: 'dà', back: 'Grand', difficulty: 1, level: '1' },
+  { id: 'starter-v4', type: 'vocabulary', front: '准备', front_sub: 'zhǔn bèi', back: 'Preparer', difficulty: 2, level: '2' },
+  { id: 'starter-v5', type: 'vocabulary', front: '已经', front_sub: 'yǐ jīng', back: 'Deja', difficulty: 2, level: '2' },
+  { id: 'starter-g1', type: 'grammar', front: '虽然…但是…', front_sub: 'suī rán...dàn shì...', back: 'Bien que... mais...', back_sub: 'Concession', difficulty: 2, level: '2' },
+  { id: 'starter-v6', type: 'vocabulary', front: '环境', front_sub: 'huán jìng', back: 'Environnement', difficulty: 3, level: '3' },
+  { id: 'starter-v7', type: 'vocabulary', front: '经验', front_sub: 'jīng yàn', back: 'Experience', difficulty: 3, level: '3' },
+  { id: 'starter-c3', type: 'character', front: '爱', front_sub: 'ài', back: 'Aimer, amour', difficulty: 2, level: '2' },
+  { id: 'starter-v8', type: 'vocabulary', front: '影响', front_sub: 'yǐng xiǎng', back: 'Influence, affecter', difficulty: 3, level: '3' },
+  { id: 'starter-v9', type: 'vocabulary', front: '积极', front_sub: 'jī jí', back: 'Positif, actif', difficulty: 3, level: '4' },
+  { id: 'starter-g2', type: 'grammar', front: '不但…而且…', front_sub: 'bù dàn...ér qiě...', back: 'Non seulement... mais aussi...', back_sub: 'Addition', difficulty: 3, level: '4' },
+  { id: 'starter-v10', type: 'vocabulary', front: '竞争', front_sub: 'jìng zhēng', back: 'Competition', difficulty: 4, level: '4' },
 ];
 
 // ─── Convert knowledge item to flashcard ────────────────────────────────
@@ -79,7 +79,7 @@ function knowledgeToFlashcard(item: KnowledgeItem): FlashcardItem {
     back_sub: item.item_type === 'grammar' ? 'Grammaire' : undefined,
     audio_url: item.audio_url,
     difficulty: Math.min(5, Math.max(1, Math.round(6 - item.srs.ease_factor * 2))),
-    hsk_level: item.hsk_level,
+    level: item.level,
     mastery: item.mastery,
     srs_interval: item.srs.interval_days,
     is_overdue: isOverdue,
@@ -123,7 +123,7 @@ export default function RevisionsPage() {
   // HSK levels present in knowledge map
   const knownHskLevels = useMemo(() => {
     const levels = new Set<string>();
-    Object.values(knowledgeStore.items).forEach(i => levels.add(i.hsk_level));
+    Object.values(knowledgeStore.items).forEach(i => levels.add(i.level));
     return [...levels].sort();
   }, [knowledgeStore.items]);
 
@@ -154,14 +154,14 @@ export default function RevisionsPage() {
       // SRS due items — the core review mode
       let queueItems = reviewQueue.items;
       if (filter !== 'all') queueItems = queueItems.filter(i => i.item_type === filter);
-      if (hskFilter !== 'all') queueItems = queueItems.filter(i => i.hsk_level === hskFilter);
+      if (hskFilter !== 'all') queueItems = queueItems.filter(i => i.level === hskFilter);
       flashcards = queueItems.map(knowledgeToFlashcard);
 
       // If no SRS items due, fall back to all items sorted by priority
       if (flashcards.length === 0) {
         let allItems = Object.values(knowledgeStore.items).filter(i => i.times_seen > 0);
         if (filter !== 'all') allItems = allItems.filter(i => i.item_type === filter);
-        if (hskFilter !== 'all') allItems = allItems.filter(i => i.hsk_level === hskFilter);
+        if (hskFilter !== 'all') allItems = allItems.filter(i => i.level === hskFilter);
         allItems.sort((a, b) => {
           // Prioritize lower mastery and older last_seen
           const masteryOrder = { unknown: 0, seen: 1, learning: 2, familiar: 3, mastered: 4 };
@@ -174,13 +174,13 @@ export default function RevisionsPage() {
       // Weakest items — lowest accuracy
       let items = [...weakItems];
       if (filter !== 'all') items = items.filter(i => i.item_type === filter);
-      if (hskFilter !== 'all') items = items.filter(i => i.hsk_level === hskFilter);
+      if (hskFilter !== 'all') items = items.filter(i => i.level === hskFilter);
       flashcards = items.map(knowledgeToFlashcard);
     } else if (reviewMode === 'all' || reviewMode === 'hsk') {
       // All known items (or filtered by HSK)
       let items = Object.values(knowledgeStore.items).filter(i => i.times_seen > 0);
       if (filter !== 'all') items = items.filter(i => i.item_type === filter);
-      if (hskFilter !== 'all') items = items.filter(i => i.hsk_level === hskFilter);
+      if (hskFilter !== 'all') items = items.filter(i => i.level === hskFilter);
       // Shuffle
       for (let i = items.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -218,7 +218,7 @@ export default function RevisionsPage() {
       recordFlashcardReview(
         card.id,
         card.type,
-        card.hsk_level,
+        card.level,
         card.front,
         card.front_sub ?? '',
         card.back,
@@ -231,7 +231,7 @@ export default function RevisionsPage() {
       knowledgeStore.recordAttempt({
         item_id: card.id,
         item_type: card.type,
-        hsk_level: card.hsk_level,
+        level: card.level,
         display: card.front,
         pinyin: card.front_sub ?? '',
         meaning: card.back,
@@ -615,7 +615,7 @@ export default function RevisionsPage() {
               </span>
             )}
           </div>
-          <span className="text-xs text-navy-400">HSK {card.hsk_level}</span>
+          <span className="text-xs text-navy-400">HSK {card.level}</span>
         </div>
 
         {/* Flashcard */}

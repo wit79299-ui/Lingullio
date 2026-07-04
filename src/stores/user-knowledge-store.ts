@@ -24,7 +24,7 @@ export interface KnowledgeItem {
   // Identity
   item_id: string;         // vocabulary_id, character_id, or grammar_point_id
   item_type: ContentItemType;
-  hsk_level: string;       // "1", "2", ..., "7"
+  level: string;       // "1", "2", ..., "7"
 
   // Display info (cached for offline/fast access)
   display: string;         // simplified character or pattern (e.g. "你好", "人", "虽然…但是…")
@@ -121,7 +121,7 @@ export interface UserKnowledgeStore {
 export interface RecordSeenParams {
   item_id: string;
   item_type: ContentItemType;
-  hsk_level: string;
+  level: string;
   display: string;
   pinyin: string;
   meaning: string;
@@ -133,7 +133,7 @@ export interface RecordSeenParams {
 export interface RecordAttemptParams {
   item_id: string;
   item_type: ContentItemType;
-  hsk_level: string;
+  level: string;
   display: string;
   pinyin: string;
   meaning: string;
@@ -149,7 +149,7 @@ export interface RecordAttemptParams {
 export interface RegisterItemParams {
   item_id: string;
   item_type: ContentItemType;
-  hsk_level: string;
+  level: string;
   display: string;
   pinyin: string;
   meaning: string;
@@ -160,7 +160,7 @@ export interface RegisterItemParams {
 
 export interface ReviewFilters {
   item_type?: ContentItemType;
-  hsk_level?: string;
+  level?: string;
   limit?: number;
 }
 
@@ -185,7 +185,7 @@ function createKnowledgeItem(params: RegisterItemParams): KnowledgeItem {
   return {
     item_id: params.item_id,
     item_type: params.item_type,
-    hsk_level: params.hsk_level,
+    level: params.level,
     display: params.display,
     pinyin: params.pinyin,
     meaning: params.meaning,
@@ -274,7 +274,7 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
             item = createKnowledgeItem({
               item_id: params.item_id,
               item_type: params.item_type,
-              hsk_level: params.hsk_level,
+              level: params.level,
               display: params.display,
               pinyin: params.pinyin,
               meaning: params.meaning,
@@ -367,8 +367,8 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
         if (filters?.item_type) {
           candidates = candidates.filter((i) => i.item_type === filters.item_type);
         }
-        if (filters?.hsk_level) {
-          candidates = candidates.filter((i) => i.hsk_level === filters.hsk_level);
+        if (filters?.level) {
+          candidates = candidates.filter((i) => i.level === filters.level);
         }
 
         const now = new Date();
@@ -395,7 +395,7 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
       // ── Query: By mastery ─────────────────────────────────────────
       getByMastery: (mastery, hskLevel) => {
         let items = Object.values(get().items).filter((i) => i.mastery === mastery);
-        if (hskLevel) items = items.filter((i) => i.hsk_level === hskLevel);
+        if (hskLevel) items = items.filter((i) => i.level === hskLevel);
         return items;
       },
 
@@ -417,13 +417,13 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
           byMastery[item.mastery]++;
           byType[item.item_type]++;
 
-          if (!byHsk[item.hsk_level]) {
-            byHsk[item.hsk_level] = { total: 0, mastered: 0, learning: 0, unknown: 0 };
+          if (!byHsk[item.level]) {
+            byHsk[item.level] = { total: 0, mastered: 0, learning: 0, unknown: 0 };
           }
-          byHsk[item.hsk_level].total++;
-          if (item.mastery === 'mastered') byHsk[item.hsk_level].mastered++;
-          else if (item.mastery === 'learning' || item.mastery === 'familiar') byHsk[item.hsk_level].learning++;
-          else byHsk[item.hsk_level].unknown++;
+          byHsk[item.level].total++;
+          if (item.mastery === 'mastered') byHsk[item.level].mastered++;
+          else if (item.mastery === 'learning' || item.mastery === 'familiar') byHsk[item.level].learning++;
+          else byHsk[item.level].unknown++;
 
           if (item.times_seen > 0 && isDue(item.srs)) dueForReview++;
         }
@@ -453,7 +453,7 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
         return items.filter((i) => {
           if (i.item_type !== 'vocabulary') return false;
           if (i.mastery !== 'mastered' && i.mastery !== 'familiar') return false;
-          if (maxHskLevel && parseInt(i.hsk_level) > maxHskLevel) return false;
+          if (maxHskLevel && parseInt(i.level) > maxHskLevel) return false;
           return true;
         }).length;
       },
@@ -478,7 +478,7 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
 
       // ── Query: By HSK level ───────────────────────────────────────
       getByHskLevel: (hskLevel) => {
-        return Object.values(get().items).filter((i) => i.hsk_level === hskLevel);
+        return Object.values(get().items).filter((i) => i.level === hskLevel);
       },
 
       // ── Query: Weakest items ──────────────────────────────────────

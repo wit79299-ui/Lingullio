@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ArrowLeft, Layers, BookOpenText, ChevronRight } from 'lucide-react';
 import type { CourseWithTranslation, ModuleWithTranslation } from '@/lib/admin/queries';
 import type { ContentStatus } from '@/types/database';
@@ -117,7 +116,7 @@ export function CourseDetail({ course, modules, locale }: Props) {
         </CardContent>
       </Card>
 
-      {/* Modules list */}
+      {/* Modules list with drill-down */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -133,32 +132,34 @@ export function CourseDetail({ course, modules, locale }: Props) {
               {modules.map((mod) => {
                 const modTr = getTr(mod.translations, locale);
                 return (
-                  <div
+                  <Link
                     key={mod.id}
-                    className="flex items-center gap-4 p-3 rounded-lg bg-cream-50 hover:bg-cream-100 transition-colors"
+                    href={`/admin/content/courses/${course.id}/modules/${mod.id}`}
                   >
-                    <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-navy-100 text-sm font-bold text-navy-700">
-                      {mod.sort_order}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-navy-800 truncate">{modTr.title}</h4>
-                        <Badge variant={getStatusVariant(mod.status)}>
-                          {t(mod.status)}
-                        </Badge>
+                    <div className="flex items-center gap-4 p-3 rounded-lg bg-cream-50 hover:bg-cream-100 transition-colors group cursor-pointer">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-navy-100 text-sm font-bold text-navy-700">
+                        {mod.sort_order}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-navy-800 truncate">{modTr.title}</h4>
+                          <Badge variant={getStatusVariant(mod.status)}>
+                            {t(mod.status)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-navy-400">
+                          <span className="flex items-center gap-1">
+                            <BookOpenText className="h-3 w-3" />
+                            {mod.lesson_count} {t('lessons').toLowerCase()}
+                          </span>
+                          {mod.estimated_duration_minutes && (
+                            <span>{mod.estimated_duration_minutes} min</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-navy-400">
-                        <span className="flex items-center gap-1">
-                          <BookOpenText className="h-3 w-3" />
-                          {mod.lesson_count} {t('lessons').toLowerCase()}
-                        </span>
-                        {mod.estimated_duration_minutes && (
-                          <span>{mod.estimated_duration_minutes} min</span>
-                        )}
-                      </div>
+                      <ChevronRight className="h-4 w-4 text-navy-300 group-hover:text-teal-500 transition-colors shrink-0" />
                     </div>
-                    <ChevronRight className="h-4 w-4 text-navy-300 shrink-0" />
-                  </div>
+                  </Link>
                 );
               })}
             </div>

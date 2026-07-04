@@ -28,14 +28,14 @@ export async function POST(request: Request) {
       if (delTransErr) {
         // Try broader delete for HSK1
         await supabase.rpc('exec_sql', {
-          sql: "DELETE FROM vocabulary_translations WHERE vocabulary_id IN (SELECT id FROM vocabulary_items WHERE hsk_level = 'HSK1')"
+          sql: "DELETE FROM vocabulary_translations WHERE vocabulary_id IN (SELECT id FROM vocabulary_items WHERE level = 'HSK1')"
         }).then(() => {});
       }
 
       const { error: delItemErr } = await supabase
         .from('vocabulary_items')
         .delete()
-        .eq('hsk_level', 'HSK1');
+        .eq('level', 'HSK1');
 
       if (delItemErr) {
         results.errors.push(`Delete existing: ${delItemErr.message}`);
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         simplified: item.simplified,
         traditional: item.traditional || null,
         pinyin: item.pinyin,
-        hsk_level: item.hsk_level || 'HSK1',
+        level: item.level || 'HSK1',
         frequency_rank: item.frequency_rank || i + batchIdx + 1,
         word_type: item.word_type || null,
         theme: item.theme || null,
@@ -142,7 +142,7 @@ interface VocabInput {
   simplified: string;
   traditional?: string;
   pinyin: string;
-  hsk_level?: string;
+  level?: string;
   frequency_rank?: number;
   word_type?: string;
   theme?: string;

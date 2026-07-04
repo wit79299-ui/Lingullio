@@ -36,7 +36,7 @@ export function LessonVocabularyRegister({
       vocabularyItems.map((v) => ({
         id: v.id,
         type: v.type,
-        hsk_level: hskLevel,
+        level: hskLevel,
         display: v.display,
         pinyin: v.pinyin,
         meaning: v.meaning,

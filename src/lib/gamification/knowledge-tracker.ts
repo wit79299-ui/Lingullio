@@ -27,7 +27,7 @@ export interface ExerciseKnowledgeInfo {
 export interface ExtractedItem {
   item_id: string;
   item_type: 'vocabulary' | 'character' | 'grammar';
-  hsk_level: string;
+  level: string;
   display: string;
   pinyin: string;
   meaning: string;
@@ -48,7 +48,7 @@ export function extractItemsFromExercise(exercise: ExerciseKnowledgeInfo): Extra
     items.push({
       item_id: meta.vocabulary_id as string,
       item_type: 'vocabulary',
-      hsk_level: (meta.hsk_level as string) ?? '1',
+      level: (meta.level as string) ?? '1',
       display: (meta.simplified as string) ?? (meta.word as string) ?? exercise.prompt,
       pinyin: (meta.pinyin as string) ?? '',
       meaning: (meta.meaning as string) ?? (meta.translation as string) ?? '',
@@ -62,7 +62,7 @@ export function extractItemsFromExercise(exercise: ExerciseKnowledgeInfo): Extra
     items.push({
       item_id: meta.character_id as string,
       item_type: 'character',
-      hsk_level: (meta.hsk_level as string) ?? '1',
+      level: (meta.level as string) ?? '1',
       display: (meta.character as string) ?? exercise.prompt,
       pinyin: (meta.pinyin as string) ?? '',
       meaning: (meta.meaning as string) ?? '',
@@ -75,7 +75,7 @@ export function extractItemsFromExercise(exercise: ExerciseKnowledgeInfo): Extra
     items.push({
       item_id: meta.grammar_point_id as string,
       item_type: 'grammar',
-      hsk_level: (meta.hsk_level as string) ?? '1',
+      level: (meta.level as string) ?? '1',
       display: (meta.pattern as string) ?? exercise.prompt,
       pinyin: '',
       meaning: (meta.explanation_short as string) ?? '',
@@ -89,7 +89,7 @@ export function extractItemsFromExercise(exercise: ExerciseKnowledgeInfo): Extra
         items.push({
           item_id: v.id as string,
           item_type: 'vocabulary',
-          hsk_level: (v.hsk_level as string) ?? (meta.hsk_level as string) ?? '1',
+          level: (v.level as string) ?? (meta.level as string) ?? '1',
           display: (v.simplified as string) ?? '',
           pinyin: (v.pinyin as string) ?? '',
           meaning: (v.meaning as string) ?? '',
@@ -107,7 +107,7 @@ export function extractItemsFromExercise(exercise: ExerciseKnowledgeInfo): Extra
       items.push({
         item_id: tw.id as string,
         item_type: (tw.type as 'vocabulary' | 'character' | 'grammar') ?? 'vocabulary',
-        hsk_level: (tw.hsk_level as string) ?? (meta.hsk_level as string) ?? '1',
+        level: (tw.level as string) ?? (meta.level as string) ?? '1',
         display: (tw.simplified as string) ?? (tw.character as string) ?? (tw.pattern as string) ?? '',
         pinyin: (tw.pinyin as string) ?? '',
         meaning: (tw.meaning as string) ?? '',
@@ -123,7 +123,7 @@ export function extractItemsFromExercise(exercise: ExerciseKnowledgeInfo): Extra
     items.push({
       item_id: `synth-${exercise.exercise_id}`,
       item_type: 'vocabulary',
-      hsk_level: (meta.hsk_level as string) ?? '1',
+      level: (meta.level as string) ?? '1',
       display: (meta.simplified as string) ?? '',
       pinyin: (meta.pinyin as string) ?? '',
       meaning: (meta.meaning as string) ?? (meta.translation as string) ?? '',
@@ -151,7 +151,7 @@ export function recordExerciseInKnowledge(
     store.recordAttempt({
       item_id: item.item_id,
       item_type: item.item_type,
-      hsk_level: item.hsk_level,
+      level: item.level,
       display: item.display,
       pinyin: item.pinyin,
       meaning: item.meaning,
@@ -175,7 +175,7 @@ export function registerLessonVocabulary(
   items: Array<{
     id: string;
     type: 'vocabulary' | 'character' | 'grammar';
-    hsk_level: string;
+    level: string;
     display: string;
     pinyin: string;
     meaning: string;
@@ -187,7 +187,7 @@ export function registerLessonVocabulary(
   const registerParams: RegisterItemParams[] = items.map((item) => ({
     item_id: item.id,
     item_type: item.type,
-    hsk_level: item.hsk_level,
+    level: item.level,
     display: item.display,
     pinyin: item.pinyin,
     meaning: item.meaning,
@@ -215,7 +215,7 @@ export function recordFlashcardReview(
   store.recordAttempt({
     item_id: itemId,
     item_type: itemType,
-    hsk_level: hskLevel,
+    level: hskLevel,
     display,
     pinyin,
     meaning,
@@ -233,7 +233,7 @@ export interface AtRiskItemDetail {
   display: string;
   pinyin: string;
   meaning: string;
-  hsk_level: string;
+  level: string;
   item_type: 'vocabulary' | 'character' | 'grammar';
   days_overdue: number;
   memory_decay_percent: number;
@@ -260,7 +260,7 @@ export function getAtRiskItemsDetailed(limit: number = 15): AtRiskItemDetail[] {
       display: item.display,
       pinyin: item.pinyin,
       meaning: item.meaning,
-      hsk_level: item.hsk_level,
+      level: item.level,
       item_type: item.item_type,
       days_overdue: daysOverdue,
       memory_decay_percent: decayPercent,
@@ -290,7 +290,7 @@ export function getReviewSummary(): ReviewSummary {
 
   for (const item of queue.items) {
     byType[item.item_type]++;
-    byHsk[item.hsk_level] = (byHsk[item.hsk_level] ?? 0) + 1;
+    byHsk[item.level] = (byHsk[item.level] ?? 0) + 1;
   }
 
   return {

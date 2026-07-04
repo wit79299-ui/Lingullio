@@ -33,9 +33,9 @@ export function cumulativeWordsForHsk(targetLevel: number): number {
 export type TrainingMode = 'standard' | 'coach_autonome' | 'parcours_inverse';
 
 export interface ParcoursInverseConfig {
-  target_hsk_level: number;    // 1-7
+  target_level: number;    // 1-7
   deadline_date: string;       // YYYY-MM-DD
-  current_hsk_level: number;   // estimated or user-declared
+  current_level: number;   // estimated or user-declared
   created_at: string;          // ISO string
   words_already_known: number; // estimated from gamification data
 }
@@ -127,7 +127,7 @@ function computeRoadmap(
   const weeksElapsed = Math.floor(daysElapsed / 7);
 
   // Calculate words
-  const targetTotalWords = cumulativeWordsForHsk(config.target_hsk_level);
+  const targetTotalWords = cumulativeWordsForHsk(config.target_level);
   const wordsKnown = config.words_already_known + additionalWordsLearned;
   const wordsRemaining = Math.max(0, targetTotalWords - wordsKnown);
 
@@ -151,7 +151,7 @@ function computeRoadmap(
     // Every 4 weeks
     if (w % 4 === 0) mockExamWeeks.push(w);
     // At HSK level boundaries
-    for (let hsk = config.current_hsk_level + 1; hsk <= config.target_hsk_level; hsk++) {
+    for (let hsk = config.current_level + 1; hsk <= config.target_level; hsk++) {
       const wordsForThisHsk = cumulativeWordsForHsk(hsk) - config.words_already_known;
       const weekForThisHsk = Math.ceil((wordsForThisHsk / (targetTotalWords - config.words_already_known)) * totalWeeks);
       if (w === weekForThisHsk && !mockExamWeeks.includes(w)) {
@@ -177,7 +177,7 @@ function computeRoadmap(
   for (let w = 1; w <= totalWeeks; w++) {
     runningWords += wordsPerWeek;
     let checkpoint: number | null = null;
-    for (let hsk = 1; hsk <= config.target_hsk_level; hsk++) {
+    for (let hsk = 1; hsk <= config.target_level; hsk++) {
       const needed = cumulativeWordsForHsk(hsk);
       if (runningWords >= needed && runningWords - wordsPerWeek < needed) {
         checkpoint = hsk;

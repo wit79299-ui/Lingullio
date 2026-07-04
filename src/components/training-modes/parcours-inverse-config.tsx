@@ -47,9 +47,9 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
 
   const handleConfirm = () => {
     const config: ParcoursInverseConfig = {
-      target_hsk_level: targetHsk,
+      target_level: targetHsk,
       deadline_date: deadlineStr,
-      current_hsk_level: currentHsk,
+      current_level: currentHsk,
       created_at: new Date().toISOString(),
       words_already_known: estimatedKnownWords,
     };

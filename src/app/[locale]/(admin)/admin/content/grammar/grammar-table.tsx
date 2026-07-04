@@ -43,7 +43,7 @@ export function GrammarTable({ items, locale }: Props) {
   const filtered = useMemo(() => {
     let result = items;
     if (statusFilter) result = result.filter((g) => g.status === statusFilter);
-    if (levelFilter) result = result.filter((g) => g.hsk_level === levelFilter);
+    if (levelFilter) result = result.filter((g) => g.level === levelFilter);
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((g) =>
@@ -78,12 +78,12 @@ export function GrammarTable({ items, locale }: Props) {
       ),
     },
     {
-      key: 'hsk_level',
+      key: 'level',
       header: t('level'),
       className: 'w-20',
       render: (item) => (
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-navy-100 text-xs font-bold text-navy-700">
-          {item.hsk_level}
+          {item.level}
         </span>
       ),
     },

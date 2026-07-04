@@ -31,7 +31,7 @@ export interface UserBadgeStats {
   perfect_sessions: number; // 100% sessions
   lessons_completed: number;
   days_active: number;
-  hsk_levels_completed: string[]; // ["1", "2", ...]
+  levels_completed: string[]; // ["1", "2", ...]
 }
 
 export const BADGES: BadgeDefinition[] = [

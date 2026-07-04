@@ -176,7 +176,7 @@ export const useGamificationStore = create<GamificationStore>()(
           perfect_sessions: perfectSessions,
           lessons_completed: 0,
           days_active: 0,
-          hsk_levels_completed: [],
+          levels_completed: [],
         };
 
         const newBadges = checkNewBadges(badgeStats, state.badges_unlocked);
@@ -352,7 +352,7 @@ export const useGamificationStore = create<GamificationStore>()(
           perfect_sessions: s.perfect_sessions,
           lessons_completed: 0,
           days_active: new Set(s.sessions_history.map(h => h.date)).size,
-          hsk_levels_completed: [],
+          levels_completed: [],
         };
       },
 

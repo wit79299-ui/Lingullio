@@ -39,7 +39,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
   // Sync knowledge map mastered count → training mode store
   const realMasteredCount = useMemo(() => {
     if (!parcours_config) return 0;
-    return getMasteredWordCount(parcours_config.target_hsk_level);
+    return getMasteredWordCount(parcours_config.target_level);
   }, [getMasteredWordCount, parcours_config, knowledgeLastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep parcours_words_learned_snapshot in sync with real Knowledge Map data
@@ -86,7 +86,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
             Parcours Inversé
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            Objectif HSK {parcours_config.target_hsk_level} avant le{' '}
+            Objectif HSK {parcours_config.target_level} avant le{' '}
             {new Date(parcours_config.deadline_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
@@ -131,9 +131,9 @@ export function ParcoursInverseView({ className }: { className?: string }) {
               </div>
             </div>
             <div className="flex justify-between text-[11px] text-white/50">
-              <span>HSK {parcours_config.current_hsk_level || 'Début'}</span>
+              <span>HSK {parcours_config.current_level || 'Début'}</span>
               <span>{wordsLearned} / {roadmap.total_words_needed} mots</span>
-              <span>HSK {parcours_config.target_hsk_level}</span>
+              <span>HSK {parcours_config.target_level}</span>
             </div>
           </div>
         </div>
@@ -194,8 +194,8 @@ export function ParcoursInverseView({ className }: { className?: string }) {
 
       {/* HSK Level Checkpoints */}
       <HskCheckpoints
-        currentHsk={parcours_config.current_hsk_level}
-        targetHsk={parcours_config.target_hsk_level}
+        currentHsk={parcours_config.current_level}
+        targetHsk={parcours_config.target_level}
         wordsLearned={wordsLearned}
         wordsKnownAtStart={parcours_config.words_already_known}
       />

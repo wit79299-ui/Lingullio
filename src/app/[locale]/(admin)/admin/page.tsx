@@ -2,8 +2,12 @@ import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
-import { Users, KeyRound, BookOpen, BarChart3, BookOpenText, PenTool, Languages } from 'lucide-react';
+import {
+  Users, KeyRound, BookOpen, BarChart3, BookOpenText,
+  PenTool, Languages, Package, Dumbbell, FileQuestion, ShoppingCart,
+} from 'lucide-react';
 import { fetchAdminStats } from '@/lib/admin/queries';
+import type { AdminStats } from '@/lib/admin/queries';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,36 +18,44 @@ export default async function AdminDashboardPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'admin' });
 
-  let stats = {
+  let stats: AdminStats = {
     totalLearners: 0,
     activeLicenses: 0,
+    totalProducts: 0,
     totalCourses: 0,
     publishedCourses: 0,
     totalVocabulary: 0,
     totalExercises: 0,
+    totalMockExams: 0,
   };
 
   try {
     stats = await fetchAdminStats();
   } catch {
-    // Supabase not configured or error - use defaults
+    // Supabase not configured or products table not yet migrated
   }
 
   const kpiCards = [
+    { label: t('totalProducts'), value: String(stats.totalProducts), icon: Package, color: 'bg-indigo-50 text-indigo-600' },
     { label: t('activeLearners'), value: String(stats.totalLearners), icon: Users, color: 'bg-blue-50 text-blue-600' },
     { label: t('activationRate'), value: String(stats.activeLicenses), icon: KeyRound, color: 'bg-teal-50 text-teal-600' },
     { label: t('publishedCourses'), value: `${stats.publishedCourses} / ${stats.totalCourses}`, icon: BookOpen, color: 'bg-gold-50 text-gold-600' },
     { label: t('totalVocabulary'), value: String(stats.totalVocabulary), icon: Languages, color: 'bg-purple-50 text-purple-600' },
-    { label: t('totalExercises'), value: String(stats.totalExercises), icon: PenTool, color: 'bg-green-50 text-green-600' },
+    { label: t('totalExercises'), value: String(stats.totalExercises), icon: Dumbbell, color: 'bg-green-50 text-green-600' },
+    { label: t('totalMockExams'), value: String(stats.totalMockExams), icon: FileQuestion, color: 'bg-orange-50 text-orange-600' },
   ];
 
   const quickLinks = [
+    { label: t('products'), href: '/admin/products', icon: Package, desc: t('manageProducts') },
     { label: t('courses'), href: '/admin/content/courses', icon: BookOpen, desc: t('manageContent') },
     { label: t('vocabulary'), href: '/admin/content/vocabulary', icon: BookOpenText, desc: `${stats.totalVocabulary} ${t('vocabulary').toLowerCase()}` },
     { label: t('grammar'), href: '/admin/content/grammar', icon: Languages, desc: t('grammar') },
     { label: t('characters'), href: '/admin/content/characters', icon: PenTool, desc: t('characters') },
+    { label: t('exercises'), href: '/admin/content/exercises', icon: Dumbbell, desc: `${stats.totalExercises} ${t('exercises').toLowerCase()}` },
+    { label: t('mockExams'), href: '/admin/content/mock-exams', icon: FileQuestion, desc: `${stats.totalMockExams} ${t('mockExams').toLowerCase()}` },
     { label: t('learners'), href: '/admin/learners', icon: Users, desc: t('manageLearners') },
     { label: t('licenses'), href: '/admin/licenses', icon: KeyRound, desc: t('manageLicenses') },
+    { label: t('skuMappings'), href: '/admin/sku-mappings', icon: ShoppingCart, desc: t('manageSkuMappings') },
     { label: t('analytics'), href: '/admin/analytics', icon: BarChart3, desc: t('analytics') },
   ];
 
@@ -54,7 +66,7 @@ export default async function AdminDashboardPage({ params }: Props) {
       </h1>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
           return (

@@ -8,6 +8,10 @@ export type ContentStatus = 'draft' | 'validated' | 'published' | 'archived';
 
 export type LicenseStatus = 'pending' | 'active' | 'expired' | 'revoked' | 'refunded';
 
+export type ExamType = 'HSK' | 'TOPIK' | 'TEF' | 'DELF' | 'JLPT' | string;
+
+export type TargetLanguage = 'zh' | 'ko' | 'fr' | 'ja' | 'es' | 'de' | string;
+
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 
 export type PreparationStatus =
@@ -109,10 +113,41 @@ export interface License {
   updated_at: string;
 }
 
+export interface Product {
+  id: string;
+  code: string;
+  exam_type: ExamType;
+  target_language: TargetLanguage;
+  icon_url: string | null;
+  status: ContentStatus;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductTranslation {
+  id: string;
+  product_id: string;
+  locale: string;
+  name: string;
+  description: string | null;
+  tagline: string | null;
+}
+
+export interface ShopifySkuMapping {
+  id: string;
+  sku: string;
+  course_id: string | null;
+  product_id: string | null;
+  grants_full_product: boolean;
+  created_at: string;
+}
+
 export interface Course {
   id: string;
   exam_type: string;
   slug: string;
+  product_id: string | null;
   status: ContentStatus;
   version: number;
   created_at: string;
@@ -125,7 +160,7 @@ export interface VocabularyItem {
   traditional: string | null;
   pinyin: string;
   audio_url: string | null;
-  hsk_level: string;
+  level: string;
   frequency_rank: number | null;
   radical: string | null;
   stroke_count: number | null;
@@ -138,7 +173,7 @@ export interface VocabularyItem {
 export interface GrammarPoint {
   id: string;
   pattern: string;
-  hsk_level: string;
+  level: string;
   sort_order: number | null;
   difficulty: number;
   status: ContentStatus;
@@ -151,7 +186,7 @@ export interface Character {
   pinyin: string;
   radical: string | null;
   stroke_count: number;
-  hsk_level: string;
+  level: string;
   frequency_rank: number | null;
   decomposition: string | null;
   audio_url: string | null;
@@ -168,7 +203,7 @@ export interface Exercise {
   estimated_duration_seconds: number | null;
   audio_url: string | null;
   skill_tags: SkillTag[];
-  hsk_level: string | null;
+  level: string | null;
   grammar_point_id: string | null;
   sort_order: number;
   status: ContentStatus;

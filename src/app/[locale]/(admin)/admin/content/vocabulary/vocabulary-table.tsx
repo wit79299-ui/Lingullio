@@ -90,12 +90,12 @@ export function VocabularyTable({ items, total, page, pageSize, locale }: Props)
       ),
     },
     {
-      key: 'hsk_level',
+      key: 'level',
       header: t('level'),
       className: 'w-20',
       render: (item) => (
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-navy-100 text-xs font-bold text-navy-700">
-          {item.hsk_level}
+          {item.level}
         </span>
       ),
     },

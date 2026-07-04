@@ -66,7 +66,7 @@ export interface VocabWord {
   simplified: string;
   traditional: string | null;
   pinyin: string;
-  hsk_level: string;
+  level: string;
   frequency_rank: number | null;
   word_type: string | null;
   theme: string | null;
@@ -80,7 +80,7 @@ export interface VocabWord {
 export interface GrammarCard {
   id: string;
   pattern: string;
-  hsk_level: string;
+  level: string;
   difficulty: number;
   title: string;
   explanation_html: string;
@@ -92,7 +92,7 @@ export interface CharacterCard {
   pinyin: string;
   radical: string | null;
   stroke_count: number;
-  hsk_level: string;
+  level: string;
   frequency_rank: number | null;
   audio_url: string | null;
   meaning: string;
@@ -129,33 +129,33 @@ export async function fetchLearnerCourses(locale: string): Promise<CourseCard[]>
   // Get vocabulary counts per HSK level
   const { data: vocabCounts } = await supabase
     .from('vocabulary_items')
-    .select('hsk_level');
+    .select('level');
 
   const vocabByLevel: Record<string, number> = {};
   (vocabCounts ?? []).forEach((v) => {
-    const lvl = v.hsk_level;
+    const lvl = v.level;
     vocabByLevel[lvl] = (vocabByLevel[lvl] ?? 0) + 1;
   });
 
   // Get grammar counts per HSK level
   const { data: grammarCounts } = await supabase
     .from('grammar_points')
-    .select('hsk_level');
+    .select('level');
 
   const grammarByLevel: Record<string, number> = {};
   (grammarCounts ?? []).forEach((g) => {
-    const lvl = g.hsk_level;
+    const lvl = g.level;
     grammarByLevel[lvl] = (grammarByLevel[lvl] ?? 0) + 1;
   });
 
   // Get character counts per HSK level
   const { data: charCounts } = await supabase
     .from('characters')
-    .select('hsk_level');
+    .select('level');
 
   const charByLevel: Record<string, number> = {};
   (charCounts ?? []).forEach((c) => {
-    const lvl = c.hsk_level;
+    const lvl = c.level;
     charByLevel[lvl] = (charByLevel[lvl] ?? 0) + 1;
   });
 
@@ -215,9 +215,9 @@ export async function fetchCourseBySlug(slug: string, locale: string): Promise<C
     { count: grammarCount },
     { count: charCount },
   ] = await Promise.all([
-    supabase.from('vocabulary_items').select('*', { count: 'exact', head: true }).eq('hsk_level', hskLevel),
-    supabase.from('grammar_points').select('*', { count: 'exact', head: true }).eq('hsk_level', hskLevel),
-    supabase.from('characters').select('*', { count: 'exact', head: true }).eq('hsk_level', hskLevel),
+    supabase.from('vocabulary_items').select('*', { count: 'exact', head: true }).eq('level', hskLevel),
+    supabase.from('grammar_points').select('*', { count: 'exact', head: true }).eq('level', hskLevel),
+    supabase.from('characters').select('*', { count: 'exact', head: true }).eq('level', hskLevel),
   ]);
 
   const courseTranslations = (course.course_translations as Array<{ locale: string; title: string; description: string | null }>) ?? [];
@@ -308,10 +308,10 @@ export async function fetchLearnerVocabulary(
   let query = supabase
     .from('vocabulary_items')
     .select(`
-      id, simplified, traditional, pinyin, hsk_level, frequency_rank, word_type, theme, audio_url,
+      id, simplified, traditional, pinyin, level, frequency_rank, word_type, theme, audio_url,
       vocabulary_translations ( locale, meaning, example_sentence, example_pinyin, example_translation )
     `, { count: 'exact' })
-    .eq('hsk_level', hskLevel)
+    .eq('level', hskLevel)
     .order('frequency_rank', { ascending: true, nullsFirst: false });
 
   if (filters?.theme) query = query.eq('theme', filters.theme);
@@ -329,7 +329,7 @@ export async function fetchLearnerVocabulary(
   const { data: allItems } = await supabase
     .from('vocabulary_items')
     .select('theme, word_type')
-    .eq('hsk_level', hskLevel);
+    .eq('level', hskLevel);
 
   const themes = [...new Set((allItems ?? []).map((i) => i.theme).filter(Boolean))] as string[];
   const wordTypes = [...new Set((allItems ?? []).map((i) => i.word_type).filter(Boolean))] as string[];
@@ -349,7 +349,7 @@ export async function fetchLearnerVocabulary(
       simplified: v.simplified,
       traditional: v.traditional,
       pinyin: v.pinyin,
-      hsk_level: v.hsk_level,
+      level: v.level,
       frequency_rank: v.frequency_rank,
       word_type: v.word_type,
       theme: v.theme,
@@ -377,10 +377,10 @@ export async function fetchLearnerGrammar(
   const { data, error } = await supabase
     .from('grammar_points')
     .select(`
-      id, pattern, hsk_level, difficulty, sort_order,
+      id, pattern, level, difficulty, sort_order,
       grammar_point_translations ( locale, title, explanation_html )
     `)
-    .eq('hsk_level', hskLevel)
+    .eq('level', hskLevel)
     .order('sort_order');
 
   if (error) throw new Error(`fetchLearnerGrammar: ${error.message}`);
@@ -396,7 +396,7 @@ export async function fetchLearnerGrammar(
     return {
       id: g.id,
       pattern: g.pattern,
-      hsk_level: g.hsk_level,
+      level: g.level,
       difficulty: g.difficulty,
       title: t?.title ?? g.pattern,
       explanation_html: t?.explanation_html ?? '',
@@ -417,10 +417,10 @@ export async function fetchLearnerCharacters(
   const { data, error } = await supabase
     .from('characters')
     .select(`
-      id, character, pinyin, radical, stroke_count, hsk_level, frequency_rank, audio_url,
+      id, character, pinyin, radical, stroke_count, level, frequency_rank, audio_url,
       character_translations ( locale, meaning, mnemonic )
     `)
-    .eq('hsk_level', hskLevel)
+    .eq('level', hskLevel)
     .order('frequency_rank', { ascending: true, nullsFirst: false });
 
   if (error) throw new Error(`fetchLearnerCharacters: ${error.message}`);
@@ -439,7 +439,7 @@ export async function fetchLearnerCharacters(
       pinyin: c.pinyin,
       radical: c.radical,
       stroke_count: c.stroke_count,
-      hsk_level: c.hsk_level,
+      level: c.level,
       frequency_rank: c.frequency_rank,
       audio_url: (c as Record<string, unknown>).audio_url as string | null ?? null,
       meaning: t?.meaning ?? '',
@@ -457,7 +457,7 @@ export interface PracticeCharacter {
   character: string;
   pinyin: string;
   stroke_count: number;
-  hsk_level: string;
+  level: string;
   audio_url: string | null;
   meaning: string;
 }
@@ -471,10 +471,10 @@ export async function fetchPracticeCharacters(
   const { data, error } = await supabase
     .from('characters')
     .select(`
-      id, character, pinyin, stroke_count, hsk_level, audio_url,
+      id, character, pinyin, stroke_count, level, audio_url,
       character_translations ( locale, meaning )
     `)
-    .eq('hsk_level', hskLevel)
+    .eq('level', hskLevel)
     .order('frequency_rank', { ascending: true, nullsFirst: false });
 
   if (error) throw new Error(`fetchPracticeCharacters: ${error.message}`);
@@ -491,7 +491,7 @@ export async function fetchPracticeCharacters(
       character: c.character,
       pinyin: c.pinyin,
       stroke_count: c.stroke_count,
-      hsk_level: c.hsk_level,
+      level: c.level,
       audio_url: (c as Record<string, unknown>).audio_url as string | null ?? null,
       meaning: t?.meaning ?? '',
     };

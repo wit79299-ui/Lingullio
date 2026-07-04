@@ -74,7 +74,7 @@ function generateKMQuestion(item: KnowledgeItem, type: ChallengeQuestion['type']
       correctIndex: correctIdx,
       explanation: `${item.display} (${item.pinyin}) = ${item.meaning}`,
       difficulty: (item.mastery === 'mastered' ? 1 : item.mastery === 'familiar' ? 2 : 3) as 1 | 2 | 3,
-      hskLevel: parseInt(item.hsk_level) || 1,
+      hskLevel: parseInt(item.level) || 1,
       km_item_id: item.item_id,
       km_item_type: item.item_type,
     };
@@ -94,7 +94,7 @@ function generateKMQuestion(item: KnowledgeItem, type: ChallengeQuestion['type']
       correctIndex: correctIdx,
       explanation: `${item.display} (${item.pinyin}) = ${item.meaning}`,
       difficulty: (item.mastery === 'mastered' ? 1 : item.mastery === 'familiar' ? 2 : 3) as 1 | 2 | 3,
-      hskLevel: parseInt(item.hsk_level) || 1,
+      hskLevel: parseInt(item.level) || 1,
       km_item_id: item.item_id,
       km_item_type: item.item_type,
     };
@@ -114,7 +114,7 @@ function generateKMQuestion(item: KnowledgeItem, type: ChallengeQuestion['type']
       correctIndex: correctIdx,
       explanation: `${item.display} (${item.pinyin}) = ${item.meaning}`,
       difficulty: (item.mastery === 'mastered' ? 1 : item.mastery === 'familiar' ? 2 : 3) as 1 | 2 | 3,
-      hskLevel: parseInt(item.hsk_level) || 1,
+      hskLevel: parseInt(item.level) || 1,
       km_item_id: item.item_id,
       km_item_type: item.item_type,
     };
@@ -251,7 +251,7 @@ export function DailyChallenge({ className }: { className?: string }) {
           const item = kmStore.items[q.km_item_id];
           if (item) {
             recordFlashcardReview(
-              item.item_id, item.item_type, item.hsk_level,
+              item.item_id, item.item_type, item.level,
               item.display, item.pinyin, item.meaning,
               a.isCorrect, Math.round(totalTime / questions.length),
               item.audio_url,

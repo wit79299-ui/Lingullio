@@ -310,7 +310,7 @@ export async function finishSession(
     perfect_sessions: perfectSessions,
     lessons_completed: 0, // TODO: track
     days_active: 0,
-    hsk_levels_completed: [],
+    levels_completed: [],
   };
   
   const newBadges = checkNewBadges(badgeStats, currentBadges);

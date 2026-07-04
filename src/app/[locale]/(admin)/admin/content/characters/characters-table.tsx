@@ -43,7 +43,7 @@ export function CharactersTable({ items, locale }: Props) {
   const filtered = useMemo(() => {
     let result = items;
     if (statusFilter) result = result.filter((c) => c.status === statusFilter);
-    if (levelFilter) result = result.filter((c) => c.hsk_level === levelFilter);
+    if (levelFilter) result = result.filter((c) => c.level === levelFilter);
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((c) =>
@@ -95,12 +95,12 @@ export function CharactersTable({ items, locale }: Props) {
       ),
     },
     {
-      key: 'hsk_level',
+      key: 'level',
       header: t('level'),
       className: 'w-16',
       render: (item) => (
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-navy-100 text-xs font-bold text-navy-700">
-          {item.hsk_level}
+          {item.level}
         </span>
       ),
     },

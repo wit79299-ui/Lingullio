@@ -16,7 +16,7 @@ interface VocabWord {
   simplified: string;
   traditional: string | null;
   pinyin: string;
-  hsk_level: string;
+  level: string;
   frequency_rank: number | null;
   word_type: string | null;
   theme: string | null;
@@ -30,7 +30,7 @@ interface VocabWord {
 interface GrammarCard {
   id: string;
   pattern: string;
-  hsk_level: string;
+  level: string;
   difficulty: number;
   title: string;
   explanation_html: string;
@@ -42,7 +42,7 @@ interface CharacterCard {
   pinyin: string;
   radical: string | null;
   stroke_count: number;
-  hsk_level: string;
+  level: string;
   frequency_rank: number | null;
   audio_url: string | null;
   meaning: string;

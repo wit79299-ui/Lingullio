@@ -1717,7 +1717,7 @@ function ResultCTA({ result, diagnosticAnswers, diagnosticQuestions }: {
         store.recordAttempt({
           item_id: itemId,
           item_type: itemType,
-          hsk_level: hskLevel,
+          level: hskLevel,
           display,
           pinyin,
           meaning,
