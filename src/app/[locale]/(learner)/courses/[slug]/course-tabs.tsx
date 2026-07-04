@@ -137,11 +137,89 @@ export function CourseTabs(props: CourseTabsProps) {
   }
   const MASTERY_BADGE: Record<MasteryLevel, { label: string; color: string } | null> = {
     unknown: null,
-    seen: { label: 'vu', color: 'bg-sky-50 text-sky-600' },
-    learning: { label: 'en cours', color: 'bg-amber-50 text-amber-600' },
-    familiar: { label: 'familier', color: 'bg-teal-50 text-teal-600' },
-    mastered: { label: 'maitrise', color: 'bg-emerald-50 text-emerald-600' },
+    seen: { label: 'Seen', color: 'bg-sky-50 text-sky-600' },
+    learning: { label: 'Learning', color: 'bg-amber-50 text-amber-600' },
+    familiar: { label: 'Familiar', color: 'bg-teal-50 text-teal-600' },
+    mastered: { label: 'Mastered', color: 'bg-emerald-50 text-emerald-600' },
   };
+
+  // ── E12: Mastery statistics per tab ──
+  const masteryStats = useMemo(() => {
+    function countMastery(ids: string[]) {
+      const counts: Record<MasteryLevel, number> = { unknown: 0, seen: 0, learning: 0, familiar: 0, mastered: 0 };
+      for (const id of ids) {
+        const m = knowledgeItems[id]?.mastery ?? 'unknown';
+        counts[m]++;
+      }
+      const total = ids.length;
+      const studied = total - counts.unknown;
+      const masteredPct = total > 0 ? Math.round((counts.mastered / total) * 100) : 0;
+      const studiedPct = total > 0 ? Math.round((studied / total) * 100) : 0;
+      return { ...counts, total, studied, masteredPct, studiedPct };
+    }
+    return {
+      vocabulary: countMastery(props.vocabulary.words.map(w => w.id)),
+      grammar: countMastery(props.grammar.map(g => g.id)),
+      characters: countMastery(props.characters.map(c => c.id)),
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.vocabulary.words, props.grammar, props.characters, knowledgeItems, kmLastUpdated]);
+
+  // ── E12: Mastery Progress Bar component ──
+  function MasteryProgressBar({ stats }: { stats: typeof masteryStats.vocabulary }) {
+    if (stats.total === 0) return null;
+    const segments: { key: MasteryLevel; count: number; color: string }[] = [
+      { key: 'mastered', count: stats.mastered, color: 'bg-emerald-400' },
+      { key: 'familiar', count: stats.familiar, color: 'bg-teal-400' },
+      { key: 'learning', count: stats.learning, color: 'bg-amber-400' },
+      { key: 'seen', count: stats.seen, color: 'bg-sky-300' },
+    ];
+    const hasAnyStudied = stats.studied > 0;
+    if (!hasAnyStudied) return null;
+
+    return (
+      <div className="rounded-xl border border-cream-100 bg-white p-3 space-y-2">
+        {/* Segmented bar */}
+        <div className="h-2.5 bg-cream-100 rounded-full overflow-hidden flex">
+          {segments.map(seg => {
+            const pct = (seg.count / stats.total) * 100;
+            if (pct === 0) return null;
+            return <div key={seg.key} className={cn('h-full', seg.color)} style={{ width: `${pct}%` }} />;
+          })}
+        </div>
+        {/* Legend */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-navy-500">
+          {stats.mastered > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Mastered {stats.mastered}
+            </span>
+          )}
+          {stats.familiar > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-teal-400" />
+              Familiar {stats.familiar}
+            </span>
+          )}
+          {stats.learning > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              Learning {stats.learning}
+            </span>
+          )}
+          {stats.seen > 0 && (
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-sky-300" />
+              Seen {stats.seen}
+            </span>
+          )}
+          <span className="text-navy-300 ml-auto">
+            {stats.unknown > 0 ? `${stats.unknown} not studied yet` : 'All studied!'}
+          </span>
+        </div>
+      </div>
+    );
+  }
   function MasteryBadge({ itemId }: { itemId: string }) {
     const m = getMastery(itemId);
     const badge = MASTERY_BADGE[m];
@@ -266,6 +344,20 @@ export function CourseTabs(props: CourseTabsProps) {
                       )}
                     </p>
                     <p className="text-[11px] text-navy-400 leading-tight">{stat.label}</p>
+                    {/* E12: Mini mastery bar in stat card */}
+                    {stat.tabId !== 'modules' && (() => {
+                      const ms = masteryStats[stat.tabId as 'vocabulary' | 'grammar' | 'characters'];
+                      if (!ms || ms.studied === 0) return null;
+                      const pct = ms.masteredPct;
+                      return (
+                        <div className="mt-1.5 space-y-0.5">
+                          <div className="h-1.5 bg-cream-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-[9px] text-navy-300">{pct}% mastered</p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -322,6 +414,9 @@ export function CourseTabs(props: CourseTabsProps) {
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm text-navy-900 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
               />
             </div>
+
+            {/* E12: Vocabulary mastery summary */}
+            <MasteryProgressBar stats={masteryStats.vocabulary} />
 
             {/* Word count */}
             <p className="text-xs text-navy-400">
@@ -446,6 +541,9 @@ export function CourseTabs(props: CourseTabsProps) {
               />
             </div>
 
+            {/* E12: Grammar mastery summary */}
+            <MasteryProgressBar stats={masteryStats.grammar} />
+
             <p className="text-xs text-navy-400">
               {filteredGrammar.length} {t('grammarPointsShowing')}
             </p>
@@ -537,6 +635,9 @@ export function CourseTabs(props: CourseTabsProps) {
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm text-navy-900 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
               />
             </div>
+
+            {/* E12: Characters mastery summary */}
+            <MasteryProgressBar stats={masteryStats.characters} />
 
             <p className="text-xs text-navy-400">
               {filteredChars.length} {t('charactersShowing') ?? 'caractères'}
