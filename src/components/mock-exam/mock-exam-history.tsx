@@ -1,14 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Trophy, Clock, Target, TrendingUp, ChevronDown, ChevronUp,
-  Check, X, Calendar, BarChart3, Award,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-// ─── Types ──────────────────────────────────────────────────────────────
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Trophy, Clock, Target, TrendingUp, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ExamHistoryEntry {
   examId: string;
@@ -23,7 +18,7 @@ interface ExamHistoryEntry {
   timeSpent: number;
   completedAt: string;
   xpEarned: number;
-  sectionResults: Array<{
+  sectionResults?: Array<{
     sectionTitle: string;
     earned: number;
     max: number;
@@ -32,201 +27,208 @@ interface ExamHistoryEntry {
   }>;
 }
 
-const STORAGE_KEY = 'lingullio_mock_exam_history';
+const HISTORY_KEY = 'lingullio_mock_exam_history';
 
-// ─── Main Component ─────────────────────────────────────────────────────
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}m${s.toString().padStart(2, '0')}s`;
+}
+
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return iso;
+  }
+}
+
+function getLevelColor(courseSlug: string): string {
+  const colors: Record<string, string> = {
+    'hsk-1': 'bg-emerald-500',
+    'hsk-2': 'bg-sky-500',
+    'hsk-3': 'bg-violet-500',
+    'hsk-4': 'bg-amber-500',
+    'hsk-5': 'bg-rose-500',
+    'hsk-6': 'bg-indigo-500',
+    'hsk-7-9': 'bg-pink-500',
+  };
+  return colors[courseSlug] ?? 'bg-gray-500';
+}
 
 export function MockExamHistory() {
   const [history, setHistory] = useState<ExamHistoryEntry[]>([]);
-  const [expandedEntry, setExpandedEntry] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const data = JSON.parse(saved) as ExamHistoryEntry[];
-        setHistory(data.reverse()); // Most recent first
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as ExamHistoryEntry[];
+        // Most recent first
+        setHistory(parsed.reverse());
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, []);
 
-  const stats = useMemo(() => {
-    if (history.length === 0) return null;
-    const totalAttempts = history.length;
-    const passCount = history.filter(h => h.passed).length;
-    const avgPercent = Math.round(history.reduce((s, h) => s + h.percent, 0) / totalAttempts);
-    const bestScore = Math.max(...history.map(h => h.percent));
-    const totalXp = history.reduce((s, h) => s + (h.xpEarned ?? 0), 0);
-    // Trend: compare last 3 vs first 3
-    const recent = history.slice(0, Math.min(3, history.length));
-    const older = history.slice(Math.max(0, history.length - 3));
-    const recentAvg = recent.reduce((s, h) => s + h.percent, 0) / recent.length;
-    const olderAvg = older.reduce((s, h) => s + h.percent, 0) / older.length;
-    const trend = history.length >= 2 ? recentAvg - olderAvg : 0;
-    return { totalAttempts, passCount, avgPercent, bestScore, totalXp, trend };
-  }, [history]);
+  const handleClear = () => {
+    if (confirm('Clear all exam history?')) {
+      localStorage.removeItem(HISTORY_KEY);
+      setHistory([]);
+    }
+  };
 
   if (history.length === 0) return null;
 
+  const displayed = showAll ? history : history.slice(0, 5);
+
+  // Aggregate stats
+  const totalExams = history.length;
+  const passCount = history.filter(h => h.passed).length;
+  const avgPercent = Math.round(history.reduce((s, h) => s + h.percent, 0) / totalExams);
+  const bestScore = Math.max(...history.map(h => h.percent));
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-teal-500" />
-        Historique des examens
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-navy-900 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-teal-500" />
+          Your History
+        </h2>
+        <Button variant="ghost" size="sm" onClick={handleClear} className="text-navy-300 hover:text-red-500">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
 
-      {/* Global stats */}
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <MiniStat
-            icon={Trophy}
-            value={`${stats.passCount}/${stats.totalAttempts}`}
-            label="Reussis"
-            color={stats.passCount > 0 ? 'text-emerald-600' : 'text-navy-600'}
-          />
-          <MiniStat
-            icon={Target}
-            value={`${stats.avgPercent}%`}
-            label="Score moyen"
-            color="text-navy-600"
-          />
-          <MiniStat
-            icon={Award}
-            value={`${stats.bestScore}%`}
-            label="Meilleur score"
-            color="text-teal-600"
-          />
-          <MiniStat
-            icon={TrendingUp}
-            value={`${stats.trend >= 0 ? '+' : ''}${Math.round(stats.trend)}%`}
-            label="Tendance"
-            color={stats.trend >= 0 ? 'text-emerald-600' : 'text-red-500'}
-          />
+      {/* Quick stats */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="text-center p-3 rounded-xl bg-cream-50 border border-cream-100">
+          <p className="text-2xl font-bold text-navy-900">{totalExams}</p>
+          <p className="text-xs text-navy-400">Exams taken</p>
         </div>
-      )}
+        <div className="text-center p-3 rounded-xl bg-cream-50 border border-cream-100">
+          <p className="text-2xl font-bold text-emerald-600">{passCount}</p>
+          <p className="text-xs text-navy-400">Passed</p>
+        </div>
+        <div className="text-center p-3 rounded-xl bg-cream-50 border border-cream-100">
+          <p className="text-2xl font-bold text-teal-600">{avgPercent}%</p>
+          <p className="text-xs text-navy-400">Avg score</p>
+        </div>
+        <div className="text-center p-3 rounded-xl bg-cream-50 border border-cream-100">
+          <p className="text-2xl font-bold text-gold-600">{bestScore}%</p>
+          <p className="text-xs text-navy-400">Best</p>
+        </div>
+      </div>
 
-      {/* History entries */}
+      {/* History list */}
       <div className="space-y-2">
-        {history.map((entry, idx) => {
-          const isExpanded = expandedEntry === idx;
-          const date = new Date(entry.completedAt);
-          const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-          const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        {displayed.map((entry, idx) => {
+          const key = `${entry.examId}-${entry.completedAt}-${idx}`;
+          const isExpanded = expanded === key;
           const level = entry.courseSlug.replace('hsk-', '').toUpperCase();
 
           return (
-            <Card key={idx} className="overflow-hidden">
+            <Card key={key} className="overflow-hidden">
               <button
-                type="button"
-                onClick={() => setExpandedEntry(isExpanded ? null : idx)}
                 className="w-full text-left"
+                onClick={() => setExpanded(isExpanded ? null : key)}
               >
-                <CardContent className="py-3">
+                <CardContent className="py-3 px-4">
                   <div className="flex items-center gap-3">
-                    {/* Status icon */}
-                    <div className={cn(
-                      'flex items-center justify-center w-10 h-10 rounded-xl shrink-0',
-                      entry.passed ? 'bg-emerald-50' : 'bg-red-50'
-                    )}>
-                      {entry.passed ? (
-                        <Check className="h-5 w-5 text-emerald-500" />
-                      ) : (
-                        <X className="h-5 w-5 text-red-400" />
-                      )}
-                    </div>
+                    {/* Level badge */}
+                    <span className={`w-9 h-9 rounded-lg ${getLevelColor(entry.courseSlug)} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
+                      {level}
+                    </span>
 
-                    {/* Info */}
+                    {/* Title + date */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">{level}</span>
-                        <span className="text-sm font-medium text-navy-900 truncate">{entry.examTitle}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-navy-400 mt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {dateStr} {timeStr}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {Math.floor(entry.timeSpent / 60)}min
-                        </span>
-                      </div>
+                      <p className="text-sm font-medium text-navy-900 truncate">{entry.examTitle}</p>
+                      <p className="text-xs text-navy-400">{formatDate(entry.completedAt)}</p>
                     </div>
 
                     {/* Score */}
-                    <div className="text-right shrink-0">
-                      <p className={cn(
-                        'text-lg font-bold',
-                        entry.passed ? 'text-emerald-600' : 'text-red-500'
-                      )}>
-                        {entry.percent}%
-                      </p>
-                      <p className="text-[10px] text-navy-400">
-                        {entry.totalEarned}/{entry.totalPoints}
-                      </p>
+                    <div className="text-right shrink-0 flex items-center gap-2">
+                      <div>
+                        <p className={`text-lg font-bold ${entry.passed ? 'text-emerald-600' : 'text-red-500'}`}>
+                          {entry.percent}%
+                        </p>
+                        <p className="text-[10px] text-navy-400">
+                          {entry.totalEarned}/{entry.totalPoints}
+                        </p>
+                      </div>
+                      {entry.passed ? (
+                        <Trophy className="h-4 w-4 text-gold-500" />
+                      ) : null}
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-navy-300" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-navy-300" />
+                      )}
                     </div>
-
-                    {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-navy-300 shrink-0" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-navy-300 shrink-0" />
-                    )}
                   </div>
+
+                  {/* Expanded details */}
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t border-cream-100 space-y-3">
+                      {/* Meta row */}
+                      <div className="flex items-center gap-4 text-xs text-navy-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatTime(entry.timeSpent)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Target className="h-3.5 w-3.5" />
+                          {entry.totalCorrect}/{entry.totalQuestions} correct
+                        </span>
+                        {entry.xpEarned > 0 && (
+                          <span className="flex items-center gap-1 text-gold-600">
+                            +{entry.xpEarned} XP
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Section breakdown */}
+                      {entry.sectionResults && entry.sectionResults.length > 0 && (
+                        <div className="space-y-2">
+                          {entry.sectionResults.map((sr, i) => {
+                            const pct = sr.max > 0 ? Math.round((sr.earned / sr.max) * 100) : 0;
+                            return (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="text-xs text-navy-500 w-20 shrink-0 capitalize">{sr.sectionTitle}</span>
+                                <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${pct >= 60 ? 'bg-emerald-400' : pct >= 40 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-navy-400 w-16 text-right">{sr.earned}/{sr.max}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </button>
-
-              {isExpanded && entry.sectionResults && (
-                <div className="px-5 pb-4 border-t border-cream-50 pt-3 space-y-2">
-                  {entry.sectionResults.map((sr, i) => {
-                    const srPct = sr.max > 0 ? Math.round((sr.earned / sr.max) * 100) : 0;
-                    return (
-                      <div key={i} className="flex items-center gap-3">
-                        <span className="text-xs text-navy-500 w-24 shrink-0 truncate">{sr.sectionTitle}</span>
-                        <div className="flex-1 h-2 bg-cream-100 rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              'h-full rounded-full',
-                              srPct >= 70 ? 'bg-emerald-400' : srPct >= 40 ? 'bg-amber-400' : 'bg-red-400'
-                            )}
-                            style={{ width: `${srPct}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-navy-400 w-16 text-right">{sr.earned}/{sr.max}</span>
-                      </div>
-                    );
-                  })}
-                  {entry.xpEarned > 0 && (
-                    <p className="text-xs text-teal-600 mt-2">+{entry.xpEarned} XP gagnes</p>
-                  )}
-                </div>
-              )}
             </Card>
           );
         })}
       </div>
+
+      {/* Show more / less */}
+      {history.length > 5 && (
+        <button
+          className="w-full text-center text-sm text-teal-600 hover:text-teal-700 font-medium py-2"
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll ? 'Show less' : `Show all ${history.length} results`}
+        </button>
+      )}
     </div>
-  );
-}
-
-// ─── Mini Stat Card ─────────────────────────────────────────────────────
-
-function MiniStat({ icon: Icon, value, label, color }: {
-  icon: React.ComponentType<{ className?: string }>;
-  value: string;
-  label: string;
-  color: string;
-}) {
-  return (
-    <Card className="!py-0">
-      <CardContent className="py-2.5 flex items-center gap-2.5">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cream-50 shrink-0">
-          <Icon className="h-4 w-4 text-navy-500" />
-        </div>
-        <div>
-          <p className={cn('text-sm font-bold', color)}>{value}</p>
-          <p className="text-[10px] text-navy-400">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
