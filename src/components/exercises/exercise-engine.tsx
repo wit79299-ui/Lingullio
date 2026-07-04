@@ -20,6 +20,7 @@ import { XpBadgeInline } from '@/components/gamification/xp-bar';
 import { ConfettiBurst, LevelUpModal } from '@/components/gamification/xp-toast';
 import { BADGES, RARITY_COLORS } from '@/lib/gamification/badges';
 import { levelTitle } from '@/lib/gamification/xp-config';
+import { recordExerciseInKnowledge } from '@/lib/gamification/knowledge-tracker';
 import { Flame, Award } from 'lucide-react';
 
 // ─── Props ──────────────────────────────────────────────────────────────────
@@ -279,10 +280,29 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
         time_spent_seconds: a.timeSpent,
         user_answer: a.userAnswer,
         exercise_type: exercises[i]?.exercise_type ?? 'mcq',
-        skill_tags: exercises[i]?.skill_tags ?? [],
+        skill_tags: (exercises[i] as unknown as { skill_tags?: string[] })?.skill_tags ?? [],
       }));
       const summary = finishSessionLocal(attemptPayloads, results.timeElapsed);
       setSessionSummary(summary);
+
+      // ── Record each exercise in the Knowledge Map ──
+      session.answers.forEach((a, i) => {
+        const ex = exercises[i];
+        if (!ex) return;
+        recordExerciseInKnowledge(
+          {
+            exercise_id: ex.id,
+            exercise_type: ex.exercise_type,
+            metadata: ex.metadata,
+            prompt: ex.prompt,
+            explanation: ex.explanation,
+          },
+          a.isCorrect,
+          a.timeSpent,
+          false, // hintUsed — individual hint tracking per exercise not yet wired
+          lessonId,
+        );
+      });
 
       // Confetti on pass or perfect
       if (results.passed || summary.xp_earned >= 80) {

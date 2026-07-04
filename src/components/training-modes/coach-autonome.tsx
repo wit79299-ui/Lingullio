@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { getAtRiskItemsDetailed, type AtRiskItemDetail } from '@/lib/gamification/knowledge-tracker';
+import { useUserKnowledgeStore } from '@/stores/user-knowledge-store';
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
@@ -202,19 +204,8 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
           </button>
         </div>
 
-        {/* Alert message */}
-        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white/70 border border-amber-200 mb-4">
-          <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm text-navy-800 leading-relaxed">
-              Tu n'as pas révisé depuis <strong>{daysSinceActivity} jours</strong>. 
-              D'après la courbe d'Ebbinghaus, tu as oublié environ{' '}
-              <strong className="text-red-600">{decayPercent}%</strong>{' '}
-              de ton vocabulaire récent. 
-              <span className="text-amber-700 font-medium"> Fais cette séance de 7 minutes maintenant.</span>
-            </p>
-          </div>
-        </div>
+        {/* Alert message with specific at-risk words */}
+        <AtRiskAlert daysSinceActivity={daysSinceActivity} decayPercent={decayPercent} />
 
         {/* Memory decay visualization */}
         <div className="mb-4">
@@ -270,6 +261,96 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
             Désactiver le coach
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── At-Risk Alert Sub-Component ──────────────────────────────────────
+
+function AtRiskAlert({ daysSinceActivity, decayPercent }: { daysSinceActivity: number; decayPercent: number }) {
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const atRiskItems = useMemo(() => {
+    try { return getAtRiskItemsDetailed(6); } catch { return []; }
+  }, [knowledgeLastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="p-3.5 rounded-xl bg-white/70 border border-amber-200 mb-4 space-y-3">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm text-navy-800 leading-relaxed">
+            Tu n'as pas révisé depuis <strong>{daysSinceActivity} jours</strong>.
+            D'après la courbe d'Ebbinghaus, tu as oublié environ{' '}
+            <strong className="text-red-600">{decayPercent}%</strong>{' '}
+            de ton vocabulaire récent.
+            <span className="text-amber-700 font-medium"> Fais cette séance de 7 minutes maintenant.</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Show specific words at risk */}
+      {atRiskItems.length > 0 && (
+        <div className="pt-2 border-t border-amber-200/60">
+          <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider mb-2">
+            Mots en train de s'effacer
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {atRiskItems.map((item) => (
+              <span
+                key={item.item_id}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-xs"
+                title={`${item.pinyin} — ${item.meaning} (−${item.memory_decay_percent}% mémoire)`}
+              >
+                <span className="font-bold text-navy-900">{item.display}</span>
+                <span className="text-red-500 text-[10px]">−{item.memory_decay_percent}%</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── At-Risk Words Grid for Full View ──────────────────────────────────
+
+function AtRiskWordsGrid() {
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const atRiskItems = useMemo(() => {
+    try { return getAtRiskItemsDetailed(12); } catch { return []; }
+  }, [knowledgeLastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (atRiskItems.length === 0) return null;
+
+  return (
+    <div className="mt-3 pt-3 border-t border-amber-200/60">
+      <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2">
+        Vocabulaire en danger ({atRiskItems.length} mots)
+      </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {atRiskItems.map((item) => {
+          const decayColor = item.memory_decay_percent > 60 ? 'border-red-300 bg-red-50'
+            : item.memory_decay_percent > 30 ? 'border-amber-300 bg-amber-50'
+              : 'border-yellow-300 bg-yellow-50';
+          return (
+            <div key={item.item_id} className={cn('rounded-lg border p-2', decayColor)}>
+              <div className="flex items-center justify-between">
+                <span className="text-base font-bold text-navy-900">{item.display}</span>
+                <span className="text-[10px] font-bold text-red-600">
+                  −{item.memory_decay_percent}%
+                </span>
+              </div>
+              <p className="text-[10px] text-navy-500 truncate">{item.pinyin} — {item.meaning}</p>
+              <div className="h-1 bg-white/60 rounded-full mt-1 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-red-400"
+                  style={{ width: `${item.memory_decay_percent}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -347,6 +428,9 @@ export function CoachAutonomeView({ className }: { className?: string }) {
                 la rétention de ton vocabulaire récent. La bonne nouvelle : quelques sessions ciblées 
                 peuvent restaurer ta mémoire rapidement.
               </p>
+
+              {/* At-risk words detail in full view */}
+              <AtRiskWordsGrid />
 
               {/* Memory bar */}
               <div className="space-y-1">

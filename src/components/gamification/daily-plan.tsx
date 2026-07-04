@@ -7,8 +7,10 @@ import { Link } from '@/i18n/navigation';
 import {
   BookOpen, Brain, Trophy, RefreshCw, Flame,
   CheckCircle2, ChevronRight, Zap, Target, Star,
-  Clock, TrendingUp, Sparkles, GraduationCap,
+  Clock, TrendingUp, Sparkles, GraduationCap, AlertCircle,
 } from 'lucide-react';
+import { getReviewSummary, type ReviewSummary } from '@/lib/gamification/knowledge-tracker';
+import { useUserKnowledgeStore } from '@/stores/user-knowledge-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -41,6 +43,7 @@ function generateDailyPlan(state: {
   sessions_history: SessionHistoryEntry[];
   perfect_sessions: number;
   total_study_minutes: number;
+  reviewSummary: ReviewSummary | null;
 }): PlanItem[] {
   const items: PlanItem[] = [];
   const accuracy = state.total_exercises > 0
@@ -79,25 +82,28 @@ function generateDailyPlan(state: {
       : 'La regularite est la cle de la reussite',
   });
 
-  // ── 2. SRS Revisions (crucial for memory retention) ──
-  if (state.total_exercises >= 5) {
+  // ── 2. SRS Revisions (connected to real Knowledge Map data) ──
+  const rs = state.reviewSummary;
+  const dueCount = rs?.due_count ?? 0;
+  if (dueCount > 0 || state.total_exercises >= 5) {
+    const urgentWords = rs?.urgent_items?.slice(0, 3).map(w => w.display).join(', ') ?? '';
     items.push({
       id: 'srs-review',
       type: 'revision',
-      title: 'Revisions SRS',
-      subtitle: isStruggling
-        ? 'Renforcez vos points faibles'
-        : 'Consolidez vos acquis',
+      title: dueCount > 0 ? `Revisions SRS (${dueCount} mots)` : 'Revisions SRS',
+      subtitle: dueCount > 0
+        ? urgentWords ? `A revoir : ${urgentWords}...` : `${dueCount} elements en attente de revision`
+        : isStruggling ? 'Renforcez vos points faibles' : 'Consolidez vos acquis',
       href: '/revisions',
       icon: Brain,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
-      xpEstimate: 30,
-      durationMinutes: 10,
-      priority: isStruggling ? 1 : 2,
-      reason: isStruggling
-        ? 'Votre precision recente est en dessous de 60% — les revisions vont vous aider'
+      xpEstimate: Math.max(30, dueCount * 3),
+      durationMinutes: Math.max(5, Math.ceil(dueCount * 0.5)),
+      priority: dueCount >= 10 ? 0 : isStruggling ? 1 : 2,
+      reason: dueCount > 0
+        ? `${dueCount} mots attendent leur revision SRS — la memoire s'efface sans pratique`
         : 'La repetition espacee optimise la memorisation a long terme',
     });
   }
@@ -177,6 +183,12 @@ function generateDailyPlan(state: {
 export function DailyPlan({ className }: { className?: string }) {
   const state = useGamificationStore();
 
+  // Get Knowledge Map review data
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const reviewSummary = useMemo(() => {
+    try { return getReviewSummary(); } catch { return null; }
+  }, [knowledgeLastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const planItems = useMemo(() => generateDailyPlan({
     total_xp: state.total_xp,
     level: state.level,
@@ -188,11 +200,13 @@ export function DailyPlan({ className }: { className?: string }) {
     sessions_history: state.sessions_history,
     perfect_sessions: state.perfect_sessions,
     total_study_minutes: state.total_study_minutes,
+    reviewSummary,
   }), [
     state.total_xp, state.level, state.streak_days,
     state.total_exercises, state.total_correct,
     state.daily_exercises, state.daily_xp,
     state.sessions_history, state.perfect_sessions, state.total_study_minutes,
+    reviewSummary,
   ]);
 
   const totalXpEstimate = planItems.reduce((s, i) => s + i.xpEstimate, 0);
@@ -241,6 +255,25 @@ export function DailyPlan({ className }: { className?: string }) {
           </Link>
         ))}
       </div>
+
+      {/* SRS due alert */}
+      {reviewSummary && reviewSummary.due_count > 0 && (
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-50 border border-blue-200">
+          <AlertCircle className="h-5 w-5 text-blue-500 shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-blue-700">
+              {reviewSummary.due_count} mot{reviewSummary.due_count > 1 ? 's' : ''} a revoir
+            </p>
+            <p className="text-[10px] text-blue-600">
+              {reviewSummary.urgent_items.slice(0, 3).map(w => w.display).join(' · ')}
+              {reviewSummary.due_count > 3 ? ` +${reviewSummary.due_count - 3} autres` : ''}
+            </p>
+          </div>
+          <Link href="/revisions">
+            <ChevronRight className="h-4 w-4 text-blue-400" />
+          </Link>
+        </div>
+      )}
 
       {/* Streak protection reminder */}
       {state.streak_days > 0 && state.daily_exercises === 0 && (

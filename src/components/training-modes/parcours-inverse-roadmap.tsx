@@ -13,6 +13,7 @@ import {
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useUserKnowledgeStore } from '@/stores/user-knowledge-store';
 import {
   Target, Calendar, ChevronRight, BookOpen, Brain,
   Trophy, Zap, Clock, ArrowRight, AlertTriangle,
@@ -25,14 +26,33 @@ import { useState } from 'react';
 // ─── Parcours Inversé Roadmap Dashboard ─────────────────────────────────
 
 export function ParcoursInverseView({ className }: { className?: string }) {
-  const { parcours_config, parcours_words_learned_snapshot, calculateRoadmap, resetToStandard } = useTrainingModeStore();
+  const { parcours_config, calculateRoadmap, resetToStandard, updateParcoursProgress } = useTrainingModeStore();
   const {
     total_xp, level, streak_days, daily_xp, daily_exercises,
     total_exercises, total_correct, sessions_history,
   } = useGamificationStore();
 
+  // Connect to Knowledge Map for real mastered word count
+  const getMasteredWordCount = useUserKnowledgeStore(s => s.getMasteredWordCount);
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+
+  // Sync knowledge map mastered count → training mode store
+  const realMasteredCount = useMemo(() => {
+    if (!parcours_config) return 0;
+    return getMasteredWordCount(parcours_config.target_hsk_level);
+  }, [getMasteredWordCount, parcours_config, knowledgeLastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep parcours_words_learned_snapshot in sync with real Knowledge Map data
+  useMemo(() => {
+    if (!parcours_config) return;
+    const delta = Math.max(0, realMasteredCount - parcours_config.words_already_known);
+    updateParcoursProgress(delta);
+  }, [realMasteredCount, parcours_config, updateParcoursProgress]);
+
+  const parcours_words_learned_snapshot = useTrainingModeStore(s => s.parcours_words_learned_snapshot);
+
   const roadmap = useMemo(() => calculateRoadmap(), [
-    parcours_config, parcours_words_learned_snapshot,
+    parcours_config, parcours_words_learned_snapshot, calculateRoadmap,
   ]);
 
   if (!parcours_config || !roadmap) {

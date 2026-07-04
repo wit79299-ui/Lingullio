@@ -36,6 +36,7 @@ import { BADGES, RARITY_COLORS } from '@/lib/gamification/badges';
 import { levelTitle } from '@/lib/gamification/xp-config';
 import { cn } from '@/lib/utils';
 import { Flame, Zap, Sparkles } from 'lucide-react';
+import { recordExerciseInKnowledge } from '@/lib/gamification/knowledge-tracker';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -1245,6 +1246,27 @@ function ResultsScreen({
 
     const summary = finishSessionLocal(attemptPayloads, timeSpent);
     setSessionSummary(summary);
+
+    // ── Record each exam question in the Knowledge Map ──
+    exam.sections.forEach((section) => {
+      section.questions.forEach((q) => {
+        const answer = answers.get(q.id);
+        const correctOption = q.options.find((o) => o.is_correct);
+        const isCorrect = !!(answer?.selectedOptionId && correctOption && answer.selectedOptionId === correctOption.id);
+        recordExerciseInKnowledge(
+          {
+            exercise_id: q.id,
+            exercise_type: (q.metadata?.mock_exam_type as string) ?? `mock_exam_hsk${hskLevel}`,
+            metadata: q.metadata ?? {},
+            prompt: q.prompt ?? '',
+            explanation: q.explanation ?? '',
+          },
+          isCorrect,
+          answer?.timeSpent ?? 0,
+          false,
+        );
+      });
+    });
 
     // Confetti on pass or high XP
     if (results.passed || summary.xp_earned >= 100) {

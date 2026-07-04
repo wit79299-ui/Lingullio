@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useGamificationStore } from '@/stores/gamification-store';
+import { useUserKnowledgeStore, type KnowledgeItem } from '@/stores/user-knowledge-store';
+import { recordFlashcardReview } from '@/lib/gamification/knowledge-tracker';
 import { XP_CONFIG } from '@/lib/gamification/xp-config';
 import { cn } from '@/lib/utils';
 import {
   RefreshCw, Brain, Zap, CheckCircle2, XCircle, Volume2,
   ChevronRight, RotateCcw, Lightbulb, Star, Clock,
-  BookOpen, Layers, Sparkles,
+  BookOpen, Layers, Sparkles, AlertTriangle, TrendingUp,
+  Target, Flame,
 } from 'lucide-react';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 
@@ -19,15 +22,19 @@ interface FlashcardItem {
   id: string;
   type: 'vocabulary' | 'character' | 'grammar';
   front: string;
-  front_sub?: string; // pinyin, pattern, etc.
+  front_sub?: string;
   back: string;
   back_sub?: string;
   audio_url?: string | null;
-  difficulty: number; // 1-5
+  difficulty: number;
   hsk_level: string;
+  mastery?: string;
+  srs_interval?: number;
+  is_overdue?: boolean;
 }
 
 type ReviewPhase = 'idle' | 'reviewing' | 'results';
+type ReviewMode = 'srs' | 'weak' | 'all' | 'hsk';
 
 interface ReviewStats {
   total: number;
@@ -37,88 +44,215 @@ interface ReviewStats {
   time_seconds: number;
 }
 
-// ─── Demo flashcard data ────────────────────────────────────────────────
+// ─── Fallback data for users with empty knowledge map ───────────────────
 
-const DEMO_CARDS: FlashcardItem[] = [
-  // HSK1
-  { id: 'v1', type: 'vocabulary', front: '你好', front_sub: 'nǐ hǎo', back: 'Bonjour', difficulty: 1, hsk_level: '1' },
-  { id: 'v2', type: 'vocabulary', front: '谢谢', front_sub: 'xiè xie', back: 'Merci', difficulty: 1, hsk_level: '1' },
-  { id: 'c1', type: 'character', front: '人', front_sub: 'rén', back: 'Personne, etre humain', difficulty: 1, hsk_level: '1' },
-  { id: 'v3', type: 'vocabulary', front: '学生', front_sub: 'xué shēng', back: 'Etudiant', difficulty: 1, hsk_level: '1' },
-  { id: 'c2', type: 'character', front: '大', front_sub: 'dà', back: 'Grand', difficulty: 1, hsk_level: '1' },
-  // HSK2
-  { id: 'v4', type: 'vocabulary', front: '准备', front_sub: 'zhǔn bèi', back: 'Preparer', difficulty: 2, hsk_level: '2' },
-  { id: 'v5', type: 'vocabulary', front: '已经', front_sub: 'yǐ jīng', back: 'Deja', difficulty: 2, hsk_level: '2' },
-  { id: 'g1', type: 'grammar', front: '虽然…但是…', front_sub: 'suī rán...dàn shì...', back: 'Bien que... mais...', back_sub: 'Concession', difficulty: 2, hsk_level: '2' },
-  // HSK3
-  { id: 'v6', type: 'vocabulary', front: '环境', front_sub: 'huán jìng', back: 'Environnement', difficulty: 3, hsk_level: '3' },
-  { id: 'v7', type: 'vocabulary', front: '经验', front_sub: 'jīng yàn', back: 'Experience', difficulty: 3, hsk_level: '3' },
-  { id: 'c3', type: 'character', front: '爱', front_sub: 'ài', back: 'Aimer, amour', difficulty: 2, hsk_level: '2' },
-  { id: 'v8', type: 'vocabulary', front: '影响', front_sub: 'yǐng xiǎng', back: 'Influence, affecter', difficulty: 3, hsk_level: '3' },
-  // HSK4
-  { id: 'v9', type: 'vocabulary', front: '积极', front_sub: 'jī jí', back: 'Positif, actif', difficulty: 3, hsk_level: '4' },
-  { id: 'g2', type: 'grammar', front: '不但…而且…', front_sub: 'bù dàn...ér qiě...', back: 'Non seulement... mais aussi...', back_sub: 'Addition', difficulty: 3, hsk_level: '4' },
-  { id: 'v10', type: 'vocabulary', front: '竞争', front_sub: 'jìng zhēng', back: 'Competition', difficulty: 4, hsk_level: '4' },
+const STARTER_CARDS: FlashcardItem[] = [
+  { id: 'starter-v1', type: 'vocabulary', front: '你好', front_sub: 'nǐ hǎo', back: 'Bonjour', difficulty: 1, hsk_level: '1' },
+  { id: 'starter-v2', type: 'vocabulary', front: '谢谢', front_sub: 'xiè xie', back: 'Merci', difficulty: 1, hsk_level: '1' },
+  { id: 'starter-c1', type: 'character', front: '人', front_sub: 'rén', back: 'Personne, etre humain', difficulty: 1, hsk_level: '1' },
+  { id: 'starter-v3', type: 'vocabulary', front: '学生', front_sub: 'xué shēng', back: 'Etudiant', difficulty: 1, hsk_level: '1' },
+  { id: 'starter-c2', type: 'character', front: '大', front_sub: 'dà', back: 'Grand', difficulty: 1, hsk_level: '1' },
+  { id: 'starter-v4', type: 'vocabulary', front: '准备', front_sub: 'zhǔn bèi', back: 'Preparer', difficulty: 2, hsk_level: '2' },
+  { id: 'starter-v5', type: 'vocabulary', front: '已经', front_sub: 'yǐ jīng', back: 'Deja', difficulty: 2, hsk_level: '2' },
+  { id: 'starter-g1', type: 'grammar', front: '虽然…但是…', front_sub: 'suī rán...dàn shì...', back: 'Bien que... mais...', back_sub: 'Concession', difficulty: 2, hsk_level: '2' },
+  { id: 'starter-v6', type: 'vocabulary', front: '环境', front_sub: 'huán jìng', back: 'Environnement', difficulty: 3, hsk_level: '3' },
+  { id: 'starter-v7', type: 'vocabulary', front: '经验', front_sub: 'jīng yàn', back: 'Experience', difficulty: 3, hsk_level: '3' },
+  { id: 'starter-c3', type: 'character', front: '爱', front_sub: 'ài', back: 'Aimer, amour', difficulty: 2, hsk_level: '2' },
+  { id: 'starter-v8', type: 'vocabulary', front: '影响', front_sub: 'yǐng xiǎng', back: 'Influence, affecter', difficulty: 3, hsk_level: '3' },
+  { id: 'starter-v9', type: 'vocabulary', front: '积极', front_sub: 'jī jí', back: 'Positif, actif', difficulty: 3, hsk_level: '4' },
+  { id: 'starter-g2', type: 'grammar', front: '不但…而且…', front_sub: 'bù dàn...ér qiě...', back: 'Non seulement... mais aussi...', back_sub: 'Addition', difficulty: 3, hsk_level: '4' },
+  { id: 'starter-v10', type: 'vocabulary', front: '竞争', front_sub: 'jìng zhēng', back: 'Competition', difficulty: 4, hsk_level: '4' },
 ];
+
+// ─── Convert knowledge item to flashcard ────────────────────────────────
+
+function knowledgeToFlashcard(item: KnowledgeItem): FlashcardItem {
+  const now = new Date();
+  const isOverdue = new Date(item.srs.next_review_at) <= now;
+
+  return {
+    id: item.item_id,
+    type: item.item_type,
+    front: item.display,
+    front_sub: item.pinyin || undefined,
+    back: item.meaning,
+    back_sub: item.item_type === 'grammar' ? 'Grammaire' : undefined,
+    audio_url: item.audio_url,
+    difficulty: Math.min(5, Math.max(1, Math.round(6 - item.srs.ease_factor * 2))),
+    hsk_level: item.hsk_level,
+    mastery: item.mastery,
+    srs_interval: item.srs.interval_days,
+    is_overdue: isOverdue,
+  };
+}
 
 // ─── Main Component ──────────────────────────────────────────────────────
 
 export default function RevisionsPage() {
   const [phase, setPhase] = useState<ReviewPhase>('idle');
+  const [reviewMode, setReviewMode] = useState<ReviewMode>('srs');
   const [cards, setCards] = useState<FlashcardItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [results, setResults] = useState<Array<{ card: FlashcardItem; correct: boolean }>>([]);
+  const [results, setResults] = useState<Array<{ card: FlashcardItem; correct: boolean; timeSpent: number }>>([]);
   const [startTime, setStartTime] = useState(0);
+  const [cardStartTime, setCardStartTime] = useState(0);
   const [filter, setFilter] = useState<'all' | 'vocabulary' | 'character' | 'grammar'>('all');
   const [hskFilter, setHskFilter] = useState<string>('all');
 
   const finishSessionLocal = useGamificationStore(s => s.finishSessionLocal);
+  const knowledgeStore = useUserKnowledgeStore();
   const { playingId, play: playAudio } = useAudioPlayer();
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
 
-  // ─── Start review ──────────────────────────────────────────────────────
+  // ─── Knowledge Map Stats ──────────────────────────────────────────────
+
+  const knowledgeStats = useMemo(() => knowledgeStore.getStats(), [knowledgeStore.items]);
+  const reviewQueue = useMemo(
+    () => knowledgeStore.getReviewQueue({ limit: 50 }),
+    [knowledgeStore.items],
+  );
+  const weakItems = useMemo(
+    () => knowledgeStore.getWeakestItems(20),
+    [knowledgeStore.items],
+  );
+
+  const hasKnowledgeData = knowledgeStats.total_items > 0;
+  const hasDueItems = reviewQueue.due_today_count > 0;
+
+  // HSK levels present in knowledge map
+  const knownHskLevels = useMemo(() => {
+    const levels = new Set<string>();
+    Object.values(knowledgeStore.items).forEach(i => levels.add(i.hsk_level));
+    return [...levels].sort();
+  }, [knowledgeStore.items]);
+
+  // Counts from knowledge map
+  const kmCounts = useMemo(() => {
+    const items = Object.values(knowledgeStore.items);
+    return {
+      total: items.length,
+      vocab: items.filter(i => i.item_type === 'vocabulary').length,
+      chars: items.filter(i => i.item_type === 'character').length,
+      grammar: items.filter(i => i.item_type === 'grammar').length,
+      due: reviewQueue.due_today_count,
+      weak: weakItems.length,
+      mastered: knowledgeStats.by_mastery.mastered,
+      learning: knowledgeStats.by_mastery.learning + knowledgeStats.by_mastery.familiar,
+    };
+  }, [knowledgeStore.items, reviewQueue, weakItems, knowledgeStats]);
+
+  // ─── Build review cards based on mode ─────────────────────────────────
 
   const startReview = useCallback(() => {
-    let filtered = [...DEMO_CARDS];
-    if (filter !== 'all') filtered = filtered.filter(c => c.type === filter);
-    if (hskFilter !== 'all') filtered = filtered.filter(c => c.hsk_level === hskFilter);
+    let flashcards: FlashcardItem[] = [];
 
-    // Shuffle
-    for (let i = filtered.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+    if (!hasKnowledgeData) {
+      // Use starter cards for new users
+      flashcards = [...STARTER_CARDS];
+    } else if (reviewMode === 'srs') {
+      // SRS due items — the core review mode
+      let queueItems = reviewQueue.items;
+      if (filter !== 'all') queueItems = queueItems.filter(i => i.item_type === filter);
+      if (hskFilter !== 'all') queueItems = queueItems.filter(i => i.hsk_level === hskFilter);
+      flashcards = queueItems.map(knowledgeToFlashcard);
+
+      // If no SRS items due, fall back to all items sorted by priority
+      if (flashcards.length === 0) {
+        let allItems = Object.values(knowledgeStore.items).filter(i => i.times_seen > 0);
+        if (filter !== 'all') allItems = allItems.filter(i => i.item_type === filter);
+        if (hskFilter !== 'all') allItems = allItems.filter(i => i.hsk_level === hskFilter);
+        allItems.sort((a, b) => {
+          // Prioritize lower mastery and older last_seen
+          const masteryOrder = { unknown: 0, seen: 1, learning: 2, familiar: 3, mastered: 4 };
+          return (masteryOrder[a.mastery] - masteryOrder[b.mastery]) ||
+            ((a.last_seen_at ?? '').localeCompare(b.last_seen_at ?? ''));
+        });
+        flashcards = allItems.slice(0, 20).map(knowledgeToFlashcard);
+      }
+    } else if (reviewMode === 'weak') {
+      // Weakest items — lowest accuracy
+      let items = [...weakItems];
+      if (filter !== 'all') items = items.filter(i => i.item_type === filter);
+      if (hskFilter !== 'all') items = items.filter(i => i.hsk_level === hskFilter);
+      flashcards = items.map(knowledgeToFlashcard);
+    } else if (reviewMode === 'all' || reviewMode === 'hsk') {
+      // All known items (or filtered by HSK)
+      let items = Object.values(knowledgeStore.items).filter(i => i.times_seen > 0);
+      if (filter !== 'all') items = items.filter(i => i.item_type === filter);
+      if (hskFilter !== 'all') items = items.filter(i => i.hsk_level === hskFilter);
+      // Shuffle
+      for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+      }
+      flashcards = items.slice(0, 20).map(knowledgeToFlashcard);
     }
 
-    // Take max 15 cards
-    setCards(filtered.slice(0, 15));
+    // Shuffle final cards
+    for (let i = flashcards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [flashcards[i], flashcards[j]] = [flashcards[j], flashcards[i]];
+    }
+
+    setCards(flashcards.slice(0, 20));
     setCurrentIndex(0);
     setFlipped(false);
     setResults([]);
     setStartTime(Date.now());
+    setCardStartTime(Date.now());
     setPhase('reviewing');
     setReviewStats(null);
-  }, [filter, hskFilter]);
+  }, [filter, hskFilter, reviewMode, hasKnowledgeData, reviewQueue, weakItems, knowledgeStore.items]);
 
-  // ─── Answer handlers ───────────────────────────────────────────────────
+  // ─── Answer handler (records in both gamification AND knowledge map) ──
 
   const handleAnswer = useCallback((correct: boolean) => {
     const card = cards[currentIndex];
-    const newResults = [...results, { card, correct }];
+    const cardTime = Math.round((Date.now() - cardStartTime) / 1000);
+    const newResults = [...results, { card, correct, timeSpent: cardTime }];
     setResults(newResults);
+
+    // ── Record in Knowledge Map (SRS update) ──
+    if (!card.id.startsWith('starter-')) {
+      recordFlashcardReview(
+        card.id,
+        card.type,
+        card.hsk_level,
+        card.front,
+        card.front_sub ?? '',
+        card.back,
+        correct,
+        cardTime,
+        card.audio_url,
+      );
+    } else {
+      // For starter cards, register them in the knowledge map
+      knowledgeStore.recordAttempt({
+        item_id: card.id,
+        item_type: card.type,
+        hsk_level: card.hsk_level,
+        display: card.front,
+        pinyin: card.front_sub ?? '',
+        meaning: card.back,
+        audio_url: card.audio_url,
+        is_correct: correct,
+        time_spent_seconds: cardTime,
+      });
+    }
 
     if (currentIndex + 1 >= cards.length) {
       // Session complete
       const elapsed = Math.round((Date.now() - startTime) / 1000);
       const correctCount = newResults.filter(r => r.correct).length;
 
-      // Record in gamification
+      // Record in gamification store
       const attempts = newResults.map(r => ({
         exercise_id: `srs-${r.card.id}`,
         is_correct: r.correct,
         score: r.correct ? 1 : 0,
         max_score: 1,
-        time_spent_seconds: Math.round(elapsed / newResults.length),
+        time_spent_seconds: r.timeSpent,
         user_answer: r.correct ? 'knew' : 'didnt_know',
         exercise_type: 'flashcard' as const,
         skill_tags: [r.card.type === 'vocabulary' ? 'vocabulary' : r.card.type === 'character' ? 'characters' : 'grammar'],
@@ -138,22 +272,9 @@ export default function RevisionsPage() {
     } else {
       setCurrentIndex(currentIndex + 1);
       setFlipped(false);
+      setCardStartTime(Date.now());
     }
-  }, [cards, currentIndex, results, startTime, finishSessionLocal]);
-
-  // ─── Filtered card counts ──────────────────────────────────────────────
-
-  const counts = useMemo(() => {
-    const all = DEMO_CARDS.length;
-    const vocab = DEMO_CARDS.filter(c => c.type === 'vocabulary').length;
-    const chars = DEMO_CARDS.filter(c => c.type === 'character').length;
-    const grammar = DEMO_CARDS.filter(c => c.type === 'grammar').length;
-    return { all, vocab, chars, grammar };
-  }, []);
-
-  const hskLevels = useMemo(() => {
-    return [...new Set(DEMO_CARDS.map(c => c.hsk_level))].sort();
-  }, []);
+  }, [cards, currentIndex, results, startTime, cardStartTime, finishSessionLocal, knowledgeStore]);
 
   // ═══ IDLE PHASE ═══
   if (phase === 'idle') {
@@ -169,45 +290,144 @@ export default function RevisionsPage() {
           </p>
         </header>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        {/* SRS Alert: Items due */}
+        {hasDueItems && (
+          <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-amber-800">
+                {reviewQueue.due_today_count} carte{reviewQueue.due_today_count > 1 ? 's' : ''} a reviser maintenant
+              </p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                L&apos;algorithme SM-2 a calcule le moment optimal pour chaque carte.
+                {reviewQueue.upcoming_count > 0 && ` +${reviewQueue.upcoming_count} a venir dans les prochaines 24h.`}
+              </p>
+            </div>
+            <Button
+              variant="teal" size="sm"
+              onClick={() => { setReviewMode('srs'); startReview(); }}
+              className="shrink-0"
+            >
+              <Brain className="h-4 w-4 mr-1" />
+              Reviser
+            </Button>
+          </div>
+        )}
+
+        {/* Knowledge Map Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Card className="text-center">
-            <CardContent className="py-4">
-              <Layers className="h-5 w-5 text-teal-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-navy-900">{counts.all}</p>
-              <p className="text-xs text-navy-400">Cartes disponibles</p>
+            <CardContent className="py-3">
+              <Layers className="h-4 w-4 text-teal-500 mx-auto mb-1" />
+              <p className="text-xl font-bold text-navy-900">{kmCounts.total || STARTER_CARDS.length}</p>
+              <p className="text-[10px] text-navy-400">Mots connus</p>
             </CardContent>
           </Card>
           <Card className="text-center">
-            <CardContent className="py-4">
-              <Brain className="h-5 w-5 text-purple-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-navy-900">{counts.vocab}</p>
-              <p className="text-xs text-navy-400">Vocabulaire</p>
+            <CardContent className="py-3">
+              <Clock className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+              <p className="text-xl font-bold text-amber-600">{kmCounts.due}</p>
+              <p className="text-[10px] text-navy-400">A reviser</p>
             </CardContent>
           </Card>
           <Card className="text-center">
-            <CardContent className="py-4">
-              <BookOpen className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-navy-900">{counts.chars + counts.grammar}</p>
-              <p className="text-xs text-navy-400">Caracteres & Grammaire</p>
+            <CardContent className="py-3">
+              <Target className="h-4 w-4 text-red-400 mx-auto mb-1" />
+              <p className="text-xl font-bold text-red-500">{kmCounts.weak}</p>
+              <p className="text-[10px] text-navy-400">Points faibles</p>
+            </CardContent>
+          </Card>
+          <Card className="text-center">
+            <CardContent className="py-3">
+              <Star className="h-4 w-4 text-emerald-500 mx-auto mb-1" />
+              <p className="text-xl font-bold text-emerald-600">{kmCounts.mastered}</p>
+              <p className="text-[10px] text-navy-400">Maitrises</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
+        {/* Mastery breakdown bar */}
+        {hasKnowledgeData && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] text-navy-400">
+              <span>Progression du vocabulaire</span>
+              <span>{kmCounts.mastered} maitrises / {kmCounts.total} total</span>
+            </div>
+            <div className="h-3 bg-cream-100 rounded-full overflow-hidden flex">
+              {knowledgeStats.by_mastery.mastered > 0 && (
+                <div className="h-full bg-emerald-400" style={{ width: `${(knowledgeStats.by_mastery.mastered / kmCounts.total) * 100}%` }} title={`Maitrise: ${knowledgeStats.by_mastery.mastered}`} />
+              )}
+              {knowledgeStats.by_mastery.familiar > 0 && (
+                <div className="h-full bg-teal-300" style={{ width: `${(knowledgeStats.by_mastery.familiar / kmCounts.total) * 100}%` }} title={`Familier: ${knowledgeStats.by_mastery.familiar}`} />
+              )}
+              {knowledgeStats.by_mastery.learning > 0 && (
+                <div className="h-full bg-amber-300" style={{ width: `${(knowledgeStats.by_mastery.learning / kmCounts.total) * 100}%` }} title={`En cours: ${knowledgeStats.by_mastery.learning}`} />
+              )}
+              {(knowledgeStats.by_mastery.seen + knowledgeStats.by_mastery.unknown) > 0 && (
+                <div className="h-full bg-cream-200" style={{ width: `${((knowledgeStats.by_mastery.seen + knowledgeStats.by_mastery.unknown) / kmCounts.total) * 100}%` }} title={`Vu/Inconnu: ${knowledgeStats.by_mastery.seen + knowledgeStats.by_mastery.unknown}`} />
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-[9px] text-navy-400">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-400" /> Maitrise</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-teal-300" /> Familier</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-amber-300" /> En cours</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-cream-200" /> Nouveau</span>
+            </div>
+          </div>
+        )}
+
+        {/* Review Mode Selector */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Personnaliser votre session</CardTitle>
+            <CardTitle className="text-sm">Mode de revision</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewModeButton
+                active={reviewMode === 'srs'}
+                onClick={() => setReviewMode('srs')}
+                icon={Brain}
+                title="SRS Intelligent"
+                subtitle={hasDueItems ? `${reviewQueue.due_today_count} cartes dues` : 'Aucune carte due'}
+                color="teal"
+                badge={hasDueItems ? reviewQueue.due_today_count : undefined}
+              />
+              <ReviewModeButton
+                active={reviewMode === 'weak'}
+                onClick={() => setReviewMode('weak')}
+                icon={Target}
+                title="Points faibles"
+                subtitle={`${kmCounts.weak} mots en difficulte`}
+                color="red"
+                badge={kmCounts.weak > 0 ? kmCounts.weak : undefined}
+              />
+              <ReviewModeButton
+                active={reviewMode === 'all'}
+                onClick={() => setReviewMode('all')}
+                icon={Layers}
+                title="Tout reviser"
+                subtitle={`${kmCounts.total || STARTER_CARDS.length} cartes`}
+                color="blue"
+              />
+              <ReviewModeButton
+                active={reviewMode === 'hsk'}
+                onClick={() => setReviewMode('hsk')}
+                icon={BookOpen}
+                title="Par niveau HSK"
+                subtitle="Filtrer par niveau"
+                color="purple"
+              />
+            </div>
+
+            {/* Type filter */}
             <div>
               <p className="text-xs text-navy-400 mb-2">Type de contenu</p>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { value: 'all', label: 'Tout', count: counts.all },
-                  { value: 'vocabulary', label: 'Vocabulaire', count: counts.vocab },
-                  { value: 'character', label: 'Caracteres', count: counts.chars },
-                  { value: 'grammar', label: 'Grammaire', count: counts.grammar },
+                  { value: 'all', label: 'Tout', count: kmCounts.total || STARTER_CARDS.length },
+                  { value: 'vocabulary', label: 'Vocabulaire', count: kmCounts.vocab },
+                  { value: 'character', label: 'Caracteres', count: kmCounts.chars },
+                  { value: 'grammar', label: 'Grammaire', count: kmCounts.grammar },
                 ].map(opt => (
                   <button
                     key={opt.value}
@@ -225,36 +445,42 @@ export default function RevisionsPage() {
               </div>
             </div>
 
-            <div>
-              <p className="text-xs text-navy-400 mb-2">Niveau HSK</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setHskFilter('all')}
-                  className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all',
-                    hskFilter === 'all'
-                      ? 'border-teal-500 bg-teal-50 text-teal-700'
-                      : 'border-cream-200 bg-white text-navy-600 hover:border-cream-300'
-                  )}
-                >
-                  Tous
-                </button>
-                {hskLevels.map(lvl => (
+            {/* HSK filter */}
+            {(reviewMode === 'hsk' || knownHskLevels.length > 1) && (
+              <div>
+                <p className="text-xs text-navy-400 mb-2">Niveau HSK</p>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    key={lvl}
-                    onClick={() => setHskFilter(lvl)}
+                    onClick={() => setHskFilter('all')}
                     className={cn(
                       'px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all',
-                      hskFilter === lvl
+                      hskFilter === 'all'
                         ? 'border-teal-500 bg-teal-50 text-teal-700'
                         : 'border-cream-200 bg-white text-navy-600 hover:border-cream-300'
                     )}
                   >
-                    HSK {lvl}
+                    Tous
                   </button>
-                ))}
+                  {(hasKnowledgeData ? knownHskLevels : ['1', '2', '3', '4']).map(lvl => (
+                    <button
+                      key={lvl}
+                      onClick={() => setHskFilter(lvl)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium border-2 transition-all',
+                        hskFilter === lvl
+                          ? 'border-teal-500 bg-teal-50 text-teal-700'
+                          : 'border-cream-200 bg-white text-navy-600 hover:border-cream-300'
+                      )}
+                    >
+                      HSK {lvl}
+                      {hasKnowledgeData && knowledgeStats.by_hsk[lvl] && (
+                        <span className="ml-1 text-navy-400">({knowledgeStats.by_hsk[lvl].total})</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <Button onClick={startReview} variant="teal" size="lg" className="w-full">
               <Sparkles className="h-5 w-5" />
@@ -262,6 +488,42 @@ export default function RevisionsPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Urgent review preview — show actual words to review */}
+        {hasDueItems && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-500" />
+                Apercu des mots a reviser
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {reviewQueue.items.slice(0, 9).map(item => (
+                  <div
+                    key={item.item_id}
+                    className={cn(
+                      'p-2.5 rounded-xl border text-center',
+                      item.mastery === 'learning' ? 'bg-amber-50 border-amber-200' :
+                      item.mastery === 'seen' ? 'bg-red-50 border-red-200' :
+                      'bg-cream-25 border-cream-200'
+                    )}
+                  >
+                    <p className="text-lg font-chinese font-medium text-navy-900">{item.display}</p>
+                    <p className="text-[10px] text-teal-600 font-mono">{item.pinyin}</p>
+                    <p className="text-[10px] text-navy-400 truncate">{item.meaning}</p>
+                  </div>
+                ))}
+              </div>
+              {reviewQueue.due_today_count > 9 && (
+                <p className="text-[10px] text-navy-400 text-center mt-2">
+                  +{reviewQueue.due_today_count - 9} autres cartes a reviser
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* How it works */}
         <Card>
@@ -275,19 +537,19 @@ export default function RevisionsPage() {
             <div className="space-y-3 text-sm text-navy-600">
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">1</span>
-                <p>Une carte s&apos;affiche avec un caractere ou un mot en chinois.</p>
+                <p>Chaque mot que vous apprenez est suivi par l&apos;algorithme SM-2 qui calcule le moment ideal pour reviser.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">2</span>
-                <p>Essayez de vous rappeler la traduction, puis retournez la carte.</p>
+                <p>Les cartes dues sont priorisees : les mots que vous oubliez le plus vite apparaissent en premier.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">3</span>
-                <p>Indiquez honnetement si vous connaissiez la reponse. L&apos;algorithme SM-2 adaptera les prochaines revisions.</p>
+                <p>Chaque reponse ajuste l&apos;intervalle : correct = intervalle x2, incorrect = retour a 1 jour.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">4</span>
-                <p>Gagnez <strong>{XP_CONFIG.flashcard_correct} XP</strong> par bonne reponse et <strong>{XP_CONFIG.flashcard_incorrect} XP</strong> par participation !</p>
+                <p>Gagnez <strong>{XP_CONFIG.srs_review_correct} XP</strong> par bonne reponse et <strong>{XP_CONFIG.srs_review_incorrect} XP</strong> par participation !</p>
               </div>
             </div>
           </CardContent>
@@ -323,16 +585,36 @@ export default function RevisionsPage() {
           </div>
         </div>
 
-        {/* Card type badge */}
+        {/* Card type badge + mastery indicator */}
         <div className="flex items-center justify-between">
-          <span className={cn(
-            'text-xs px-2.5 py-1 rounded-full font-medium',
-            card.type === 'vocabulary' ? 'bg-teal-100 text-teal-700' :
-            card.type === 'character' ? 'bg-purple-100 text-purple-700' :
-            'bg-amber-100 text-amber-700'
-          )}>
-            {card.type === 'vocabulary' ? 'Vocabulaire' : card.type === 'character' ? 'Caractere' : 'Grammaire'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              'text-xs px-2.5 py-1 rounded-full font-medium',
+              card.type === 'vocabulary' ? 'bg-teal-100 text-teal-700' :
+              card.type === 'character' ? 'bg-purple-100 text-purple-700' :
+              'bg-amber-100 text-amber-700'
+            )}>
+              {card.type === 'vocabulary' ? 'Vocabulaire' : card.type === 'character' ? 'Caractere' : 'Grammaire'}
+            </span>
+            {card.mastery && card.mastery !== 'unknown' && (
+              <span className={cn(
+                'text-[10px] px-2 py-0.5 rounded-full font-medium',
+                card.mastery === 'mastered' ? 'bg-emerald-100 text-emerald-700' :
+                card.mastery === 'familiar' ? 'bg-teal-100 text-teal-700' :
+                card.mastery === 'learning' ? 'bg-amber-100 text-amber-700' :
+                'bg-cream-100 text-navy-500'
+              )}>
+                {card.mastery === 'mastered' ? 'Maitrise' :
+                 card.mastery === 'familiar' ? 'Familier' :
+                 card.mastery === 'learning' ? 'En cours' : 'Vu'}
+              </span>
+            )}
+            {card.is_overdue && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-600">
+                En retard
+              </span>
+            )}
+          </div>
           <span className="text-xs text-navy-400">HSK {card.hsk_level}</span>
         </div>
 
@@ -385,7 +667,7 @@ export default function RevisionsPage() {
           )}
         </button>
 
-        {/* Answer buttons (only when flipped) */}
+        {/* Answer buttons */}
         {flipped && (
           <div className="grid grid-cols-2 gap-3">
             <Button
@@ -453,7 +735,7 @@ export default function RevisionsPage() {
               </div>
             </div>
 
-            {/* Review errors */}
+            {/* Items that need more work */}
             {results.filter(r => !r.correct).length > 0 && (
               <div className="bg-red-50 rounded-xl p-4 border border-red-200">
                 <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2">
@@ -468,13 +750,25 @@ export default function RevisionsPage() {
                     </div>
                   ))}
                 </div>
+                <p className="text-[10px] text-red-500 mt-2 italic">
+                  Ces mots reviendront dans votre prochaine session SRS
+                </p>
               </div>
             )}
+
+            {/* SRS feedback */}
+            <div className="bg-teal-50 rounded-xl p-3 border border-teal-200">
+              <p className="text-xs text-teal-700">
+                <Brain className="h-3.5 w-3.5 inline mr-1" />
+                L&apos;algorithme SM-2 a mis a jour les intervalles de revision pour chaque carte.
+                Les mots corrects seront revus plus tard, les incorrects seront revus demain.
+              </p>
+            </div>
 
             <div className="flex gap-3">
               <Button onClick={startReview} variant="teal" size="lg" className="flex-1">
                 <RotateCcw className="h-4 w-4" />
-                Recommencer
+                Continuer
               </Button>
               <Button onClick={() => setPhase('idle')} variant="ghost" size="lg" className="flex-1 border border-cream-200">
                 Retour
@@ -487,4 +781,50 @@ export default function RevisionsPage() {
   }
 
   return null;
+}
+
+// ─── Review Mode Button ─────────────────────────────────────────────────
+
+function ReviewModeButton({ active, onClick, icon: Icon, title, subtitle, color, badge }: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle: string;
+  color: 'teal' | 'red' | 'blue' | 'purple';
+  badge?: number;
+}) {
+  const colorMap = {
+    teal: { border: 'border-teal-400', bg: 'bg-teal-50', text: 'text-teal-700', iconBg: 'bg-teal-100' },
+    red: { border: 'border-red-400', bg: 'bg-red-50', text: 'text-red-700', iconBg: 'bg-red-100' },
+    blue: { border: 'border-blue-400', bg: 'bg-blue-50', text: 'text-blue-700', iconBg: 'bg-blue-100' },
+    purple: { border: 'border-purple-400', bg: 'bg-purple-50', text: 'text-purple-700', iconBg: 'bg-purple-100' },
+  };
+  const c = colorMap[color];
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'relative flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all text-left',
+        active ? `${c.border} ${c.bg} shadow-sm` : 'border-cream-200 hover:border-cream-300 bg-white'
+      )}
+    >
+      <div className={cn('flex items-center justify-center w-9 h-9 rounded-lg shrink-0', active ? c.iconBg : 'bg-cream-100')}>
+        <Icon className={cn('h-4 w-4', active ? c.text : 'text-navy-500')} />
+      </div>
+      <div className="min-w-0">
+        <p className={cn('text-xs font-semibold', active ? c.text : 'text-navy-700')}>{title}</p>
+        <p className="text-[10px] text-navy-400 truncate">{subtitle}</p>
+      </div>
+      {badge !== undefined && badge > 0 && (
+        <span className={cn(
+          'absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-[10px] font-bold text-white',
+          color === 'red' ? 'bg-red-500' : 'bg-amber-500'
+        )}>
+          {badge}
+        </span>
+      )}
+    </button>
+  );
 }

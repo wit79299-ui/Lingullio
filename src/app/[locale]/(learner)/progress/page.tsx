@@ -8,7 +8,10 @@ import { cn } from '@/lib/utils';
 import {
   TrendingUp, Calendar, Award, Zap, Flame, Target,
   Star, Clock, CheckCircle2, BarChart3, Trophy,
+  Brain, BookOpen, AlertTriangle,
 } from 'lucide-react';
+import { useUserKnowledgeStore, type KnowledgeItem, type MasteryLevel, type ContentItemType } from '@/stores/user-knowledge-store';
+import { HSK_VOCAB_COUNTS } from '@/stores/training-mode-store';
 
 export default function ProgressPage() {
   const store = useGamificationStore();
@@ -112,6 +115,9 @@ export default function ProgressPage() {
           <BadgeGallery unlocked={store.badges_unlocked} />
         </CardContent>
       </Card>
+
+      {/* Knowledge Map */}
+      <KnowledgeMapSection />
 
       {/* Detailed Statistics */}
       <Card>
@@ -430,5 +436,180 @@ function DetailStat({ label, value, icon }: { label: string; value: string | num
       <p className="text-lg font-bold text-navy-900">{value}</p>
       <p className="text-[10px] text-navy-400">{label}</p>
     </div>
+  );
+}
+
+// ─── Knowledge Map Section ─────────────────────────────────────────────────
+
+function KnowledgeMapSection() {
+  const stats = useUserKnowledgeStore(s => s.getStats());
+  const weakest = useUserKnowledgeStore(s => s.getWeakestItems(8));
+
+  if (stats.total_items === 0) {
+    return (
+      <Card className="border-dashed border-2 border-cream-200">
+        <CardContent className="pt-5 text-center py-10">
+          <Brain className="h-10 w-10 text-navy-200 mx-auto mb-3" />
+          <p className="text-sm font-medium text-navy-500">Memoire Vivante</p>
+          <p className="text-xs text-navy-400 mt-1 max-w-xs mx-auto">
+            Commencez des exercices pour remplir votre carte de connaissances.
+            Chaque mot appris sera suivi ici.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const masteryColors: Record<MasteryLevel, { bg: string; text: string; label: string }> = {
+    mastered: { bg: 'bg-emerald-400', text: 'text-emerald-700', label: 'Maitrise' },
+    familiar: { bg: 'bg-teal-400', text: 'text-teal-700', label: 'Familier' },
+    learning: { bg: 'bg-amber-400', text: 'text-amber-700', label: 'En cours' },
+    seen: { bg: 'bg-cream-300', text: 'text-navy-500', label: 'Vu' },
+    unknown: { bg: 'bg-cream-100', text: 'text-navy-300', label: 'Inconnu' },
+  };
+
+  const totalSeen = stats.by_mastery.mastered + stats.by_mastery.familiar + stats.by_mastery.learning + stats.by_mastery.seen;
+
+  return (
+    <>
+      {/* Knowledge overview stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-4 w-4 text-teal-500" />
+            Memoire Vivante
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Mastery bar */}
+          <div>
+            <div className="flex items-center justify-between text-xs mb-2">
+              <span className="text-navy-500">{totalSeen} elements rencontres</span>
+              <span className="font-bold text-emerald-600">{stats.by_mastery.mastered} maitrises</span>
+            </div>
+            <div className="h-5 bg-cream-100 rounded-full overflow-hidden flex">
+              {(['mastered', 'familiar', 'learning', 'seen'] as MasteryLevel[]).map((level) => {
+                const count = stats.by_mastery[level];
+                if (count === 0) return null;
+                const pct = (count / Math.max(1, totalSeen)) * 100;
+                return (
+                  <div
+                    key={level}
+                    className={cn('h-full transition-all duration-500', masteryColors[level].bg)}
+                    style={{ width: `${pct}%` }}
+                    title={`${masteryColors[level].label}: ${count}`}
+                  />
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-3 mt-2">
+              {(['mastered', 'familiar', 'learning', 'seen'] as MasteryLevel[]).map((level) => {
+                const count = stats.by_mastery[level];
+                if (count === 0) return null;
+                return (
+                  <span key={level} className="flex items-center gap-1 text-[10px]">
+                    <span className={cn('w-2.5 h-2.5 rounded-full', masteryColors[level].bg)} />
+                    <span className={masteryColors[level].text}>{masteryColors[level].label}: {count}</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* By type */}
+          <div className="grid grid-cols-3 gap-3">
+            {(['vocabulary', 'character', 'grammar'] as ContentItemType[]).map((type) => {
+              const count = stats.by_type[type];
+              const icons = { vocabulary: '📝', character: '字', grammar: '📐' };
+              const labels = { vocabulary: 'Vocabulaire', character: 'Caracteres', grammar: 'Grammaire' };
+              return (
+                <div key={type} className="bg-cream-25 rounded-xl p-3 border border-cream-100 text-center">
+                  <span className="text-lg">{icons[type]}</span>
+                  <p className="text-lg font-bold text-navy-900 mt-1">{count}</p>
+                  <p className="text-[10px] text-navy-400">{labels[type]}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* HSK Heatmap */}
+          <div>
+            <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">Maitrise par niveau HSK</p>
+            <div className="space-y-2">
+              {Object.entries(stats.by_hsk)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .map(([hsk, data]) => {
+                  const totalForHsk = HSK_VOCAB_COUNTS[parseInt(hsk)] ?? data.total;
+                  const masteredPct = totalForHsk > 0 ? Math.round((data.mastered / totalForHsk) * 100) : 0;
+                  const learningPct = totalForHsk > 0 ? Math.round((data.learning / totalForHsk) * 100) : 0;
+                  return (
+                    <div key={hsk}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-medium text-navy-700">HSK {hsk}</span>
+                        <span className="text-navy-400">
+                          {data.mastered}/{totalForHsk} maitrises ({masteredPct}%)
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-cream-100 rounded-full overflow-hidden flex">
+                        <div
+                          className="h-full bg-emerald-400 rounded-l-full"
+                          style={{ width: `${masteredPct}%` }}
+                        />
+                        <div
+                          className="h-full bg-amber-300"
+                          style={{ width: `${learningPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* SRS status */}
+          {stats.due_for_review > 0 && (
+            <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-blue-50 border border-blue-200">
+              <AlertTriangle className="h-4 w-4 text-blue-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-blue-700">
+                  {stats.due_for_review} element{stats.due_for_review > 1 ? 's' : ''} a revoir
+                </p>
+                <p className="text-[10px] text-blue-600">La revision SRS optimise la memorisation a long terme</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Weakest Items */}
+      {weakest.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              Points faibles ({weakest.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {weakest.map((item) => {
+                const accuracy = Math.round((item.times_correct / item.times_seen) * 100);
+                return (
+                  <div key={item.item_id} className="bg-red-50 rounded-xl p-2.5 border border-red-200">
+                    <p className="text-lg font-bold text-navy-900 leading-tight">{item.display}</p>
+                    <p className="text-[10px] text-navy-500 truncate">{item.pinyin}</p>
+                    <p className="text-[10px] text-navy-400 truncate">{item.meaning}</p>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-[10px] text-red-600 font-bold">{accuracy}%</span>
+                      <span className="text-[10px] text-navy-300">{item.times_correct}/{item.times_seen}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }
