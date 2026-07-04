@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { recordFlashcardReview } from '@/lib/gamification/knowledge-tracker';
 import {
   HanziWriterPad,
   type PadMode,
@@ -61,6 +62,7 @@ export function CharacterPractice({
   const [showResult, setShowResult] = useState(false);
   const [lastStroke, setLastStroke] = useState<StrokeResult | null>(null);
   const [quizKey, setQuizKey] = useState(0); // Force re-mount on retry
+  const [startTime, setStartTime] = useState<number | null>(null);
 
   const char = characters[currentIndex];
   if (!char) return null;
@@ -124,6 +126,7 @@ export function CharacterPractice({
     setShowResult(false);
     setLastStroke(null);
     setQuizKey((k) => k + 1);
+    setStartTime(Date.now());
   }, []);
 
   const startLearn = useCallback(() => {
@@ -154,8 +157,22 @@ export function CharacterPractice({
           timestamp: Date.now(),
         },
       ]);
+
+      // ── Record in Knowledge Map ──
+      const isCorrect = result.score >= 70; // 70%+ counts as "correct" for SRS
+      recordFlashcardReview(
+        char.id,
+        'character',
+        hskLevel,
+        char.character,
+        char.pinyin,
+        char.meaning,
+        isCorrect,
+        Math.round((Date.now() - (startTime ?? Date.now())) / 1000),
+        char.audio_url,
+      );
     },
-    []
+    [char, hskLevel]
   );
 
   const handleStrokeComplete = useCallback((result: StrokeResult) => {

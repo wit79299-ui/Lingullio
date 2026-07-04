@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,11 @@ import { Link } from '@/i18n/navigation';
 import {
   BookOpen, Target, Clock, Flame, ChevronRight, Brain,
   Zap, Star, Trophy, Award, TrendingUp, RefreshCw,
-  Calendar, Sparkles, Rocket, BellRing,
+  Calendar, Sparkles, Rocket, BellRing, AlertCircle,
 } from 'lucide-react';
+import { useUserKnowledgeStore } from '@/stores/user-knowledge-store';
+import { getReviewSummary } from '@/lib/gamification/knowledge-tracker';
+import { HSK_VOCAB_COUNTS } from '@/stores/training-mode-store';
 import { cn } from '@/lib/utils';
 import { DailyPlan } from '@/components/gamification/daily-plan';
 import { DailyChallengeWidget } from '@/components/gamification/daily-challenge';
@@ -120,6 +123,9 @@ export function DashboardView() {
           <DailyPlan />
         </CardContent>
       </Card>
+
+      {/* Knowledge Map Summary */}
+      <KnowledgeMapWidget />
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -526,5 +532,62 @@ function TrainingModeSelector({ onStartParcours }: { onStartParcours: () => void
         <span className="text-[9px] text-navy-300">(auto)</span>
       </div>
     </div>
+  );
+}
+
+// ─── Knowledge Map Dashboard Widget ────────────────────────────────────
+
+function KnowledgeMapWidget() {
+  const stats = useUserKnowledgeStore(s => s.getStats());
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const reviewSummary = useMemo(() => getReviewSummary(), [knowledgeLastUpdated]);
+
+  if (stats.total_items === 0) return null;
+
+  const masteredPct = stats.total_items > 0 ? Math.round((stats.mastered_count / stats.total_items) * 100) : 0;
+
+  return (
+    <Card className="!py-0 overflow-hidden">
+      <div className="flex items-stretch">
+        {/* Left: stats */}
+        <div className="flex-1 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="h-4 w-4 text-teal-500" />
+            <h3 className="text-sm font-semibold text-navy-900">Memoire Vivante</h3>
+          </div>
+          <div className="grid grid-cols-3 gap-4 mb-3">
+            <div>
+              <p className="text-2xl font-bold text-navy-900">{stats.total_items}</p>
+              <p className="text-[10px] text-navy-400">mots rencontres</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-emerald-600">{stats.mastered_count}</p>
+              <p className="text-[10px] text-navy-400">maitrises ({masteredPct}%)</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-blue-600">{stats.due_for_review}</p>
+              <p className="text-[10px] text-navy-400">a reviser</p>
+            </div>
+          </div>
+          {/* Mastery bar */}
+          <div className="flex h-2 rounded-full overflow-hidden bg-cream-100">
+            {stats.by_mastery.mastered > 0 && <div className="bg-emerald-400" style={{ width: `${(stats.by_mastery.mastered / stats.total_items) * 100}%` }} />}
+            {stats.by_mastery.familiar > 0 && <div className="bg-teal-400" style={{ width: `${(stats.by_mastery.familiar / stats.total_items) * 100}%` }} />}
+            {stats.by_mastery.learning > 0 && <div className="bg-amber-400" style={{ width: `${(stats.by_mastery.learning / stats.total_items) * 100}%` }} />}
+            {stats.by_mastery.seen > 0 && <div className="bg-sky-300" style={{ width: `${(stats.by_mastery.seen / stats.total_items) * 100}%` }} />}
+          </div>
+        </div>
+        {/* Right: SRS alert */}
+        {reviewSummary.due_count > 0 && (
+          <Link href="/revisions" className="flex items-center justify-center w-32 bg-gradient-to-br from-blue-50 to-teal-50 border-l border-cream-100 hover:from-blue-100 hover:to-teal-100 transition-colors">
+            <div className="text-center px-3">
+              <AlertCircle className="h-5 w-5 text-blue-500 mx-auto mb-1" />
+              <p className="text-lg font-bold text-blue-600">{reviewSummary.due_count}</p>
+              <p className="text-[10px] text-navy-400">mots a reviser</p>
+            </div>
+          </Link>
+        )}
+      </div>
+    </Card>
   );
 }

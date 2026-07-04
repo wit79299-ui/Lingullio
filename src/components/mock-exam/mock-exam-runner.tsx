@@ -1268,6 +1268,38 @@ function ResultsScreen({
       });
     });
 
+    // ── Save exam result to history (localStorage) ──
+    try {
+      const historyKey = 'lingullio_mock_exam_history';
+      const existing = JSON.parse(localStorage.getItem(historyKey) ?? '[]');
+      existing.push({
+        examId: exam.id,
+        examTitle: exam.title,
+        courseSlug: exam.course_slug,
+        totalEarned: results.totalEarned,
+        totalPoints: exam.total_points,
+        totalCorrect: results.totalCorrect,
+        totalQuestions,
+        percent,
+        passed: results.passed,
+        timeSpent,
+        completedAt: new Date().toISOString(),
+        xpEarned: summary.xp_earned,
+        sectionResults: results.sectionResults.map(sr => ({
+          sectionTitle: sr.title,
+          earned: sr.earnedPoints,
+          max: sr.totalPoints,
+          correct: sr.correct,
+          total: sr.total,
+        })),
+      });
+      // Keep last 50 results
+      if (existing.length > 50) existing.splice(0, existing.length - 50);
+      localStorage.setItem(historyKey, JSON.stringify(existing));
+    } catch (e) {
+      console.warn('[MockExam] Failed to save history:', e);
+    }
+
     // Confetti on pass or high XP
     if (results.passed || summary.xp_earned >= 100) {
       setShowConfetti(true);

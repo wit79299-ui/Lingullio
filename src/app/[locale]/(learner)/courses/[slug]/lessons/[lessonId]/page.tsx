@@ -1,9 +1,10 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { fetchLessonById } from '@/lib/learner/queries';
+import { fetchLessonById, fetchLearnerVocabulary } from '@/lib/learner/queries';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Dumbbell, BookOpen, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LessonVocabularyRegister } from '@/components/lessons/lesson-vocabulary-register';
 
 type Props = {
   params: Promise<{ locale: string; slug: string; lessonId: string }>;
@@ -14,11 +15,36 @@ export default async function LessonPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'lessons' });
 
-  const lesson = await fetchLessonById(lessonId, locale);
+  const hskLevel = slug.replace('hsk-', '');
+
+  const [lesson, vocabData] = await Promise.all([
+    fetchLessonById(lessonId, locale),
+    fetchLearnerVocabulary(hskLevel, locale, { pageSize: 50 }).catch(() => ({ words: [] as import('@/lib/learner/queries').VocabWord[], total: 0, themes: [], wordTypes: [] })),
+  ]);
   if (!lesson) notFound();
+
+  // Map vocabulary to register format for Knowledge Map
+  const vocabForKM = vocabData.words.map((w) => ({
+    id: w.id,
+    type: 'vocabulary' as const,
+    display: w.simplified,
+    pinyin: w.pinyin,
+    meaning: w.meaning,
+    audio_url: w.audio_url,
+    theme: w.theme,
+  }));
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
+      {/* Register lesson vocabulary in Knowledge Map */}
+      {vocabForKM.length > 0 && (
+        <LessonVocabularyRegister
+          lessonId={lessonId}
+          hskLevel={hskLevel}
+          vocabularyItems={vocabForKM}
+        />
+      )}
+
       {/* Breadcrumb navigation */}
       <div className="flex items-center gap-2 text-sm text-navy-400 flex-wrap">
         <Link

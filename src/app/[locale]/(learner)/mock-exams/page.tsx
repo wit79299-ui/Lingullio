@@ -13,6 +13,7 @@ import {
   Award,
   Zap,
 } from 'lucide-react';
+import { MockExamHistory } from '@/components/mock-exam/mock-exam-history';
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -68,6 +69,9 @@ export default async function MockExamsPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Exam History (client component) */}
+      <MockExamHistory />
 
       {/* Exam Cards */}
       {exams.length > 0 ? (

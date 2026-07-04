@@ -20,6 +20,7 @@ import {
   checkOrderingAnswer,
   checkSentenceReconstruction,
 } from '@/lib/placement/engine';
+import { useUserKnowledgeStore } from '@/stores/user-knowledge-store';
 import {
   ChevronRight,
   ChevronLeft,
@@ -329,7 +330,13 @@ export function PlacementTest() {
 
         {phase === 'computing' && <ComputingScreen />}
 
-        {phase === 'results' && result && <ResultsScreen result={result} />}
+        {phase === 'results' && result && testData && (
+          <ResultsScreen
+            result={result}
+            diagnosticAnswers={diagnosticAnswers}
+            diagnosticQuestions={testData.diagnostic_questions}
+          />
+        )}
       </div>
     </div>
   );
@@ -1379,7 +1386,11 @@ function ComputingScreen() {
 // RESULTS SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 
-function ResultsScreen({ result }: { result: PlacementResult }) {
+function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
+  result: PlacementResult;
+  diagnosticAnswers: DiagnosticAnswer[];
+  diagnosticQuestions: DiagnosticQuestion[];
+}) {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
@@ -1583,7 +1594,11 @@ function ResultsScreen({ result }: { result: PlacementResult }) {
       )}
 
       {/* CTA */}
-      <ResultCTA result={result} />
+      <ResultCTA
+        result={result}
+        diagnosticAnswers={diagnosticAnswers}
+        diagnosticQuestions={diagnosticQuestions}
+      />
     </div>
   );
 }
@@ -1641,7 +1656,11 @@ function SkillCard({ skillScore }: { skillScore: PlacementResult['skillScores'][
 
 // ─── Result CTA ──────────────────────────────────────────────────────────
 
-function ResultCTA({ result }: { result: PlacementResult }) {
+function ResultCTA({ result, diagnosticAnswers, diagnosticQuestions }: {
+  result: PlacementResult;
+  diagnosticAnswers: DiagnosticAnswer[];
+  diagnosticQuestions: DiagnosticQuestion[];
+}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
 
@@ -1649,6 +1668,66 @@ function ResultCTA({ result }: { result: PlacementResult }) {
 
   const handleStart = () => {
     setSaving(true);
+
+    // ── E10: Feed Knowledge Map from placement test results ──
+    try {
+      const store = useUserKnowledgeStore.getState();
+
+      // Build a lookup: questionId -> DiagnosticQuestion
+      const questionMap = new Map<string, DiagnosticQuestion>();
+      for (const q of diagnosticQuestions) {
+        questionMap.set(q.id, q);
+      }
+
+      // Map each band to an HSK level string
+      const bandToHsk: Record<string, string> = {
+        hsk1_band: '1', hsk2_band: '2', hsk3_band: '3',
+        hsk4_band: '4', hsk5_hsk6_band: '5',
+      };
+
+      for (const answer of diagnosticAnswers) {
+        const question = questionMap.get(answer.questionId);
+        if (!question) continue;
+
+        const hskLevel = bandToHsk[answer.band] ?? '1';
+        const zh = question.stimulus?.zh ?? '';
+        const pinyin = question.stimulus?.pinyin ?? '';
+
+        // Build a display string: use stimulus.zh, or correct option text, or prompt
+        let display = zh;
+        if (!display && question.correct_answer_id && question.options) {
+          const correctOpt = question.options.find(o => o.id === question.correct_answer_id);
+          display = correctOpt?.text ?? '';
+        }
+        if (!display) display = question.prompt_fr;
+
+        // Build meaning from explanation or prompt
+        const meaning = question.explanation_fr?.slice(0, 120) ?? question.prompt_fr;
+
+        // Determine item type from skill
+        const itemType = question.skill === 'characters' ? 'character' as const
+          : question.skill === 'grammar' ? 'grammar' as const
+          : 'vocabulary' as const;
+
+        const itemId = `placement-${question.id}`;
+
+        // Record as attempt (correct or incorrect based on answer)
+        store.recordAttempt({
+          item_id: itemId,
+          item_type: itemType,
+          hsk_level: hskLevel,
+          display,
+          pinyin,
+          meaning,
+          is_correct: answer.isCorrect,
+          time_spent_seconds: Math.round(answer.timeSpent / 1000),
+          source_exercise_id: `placement-${question.id}`,
+        });
+      }
+    } catch (e) {
+      console.warn('[Placement→KM] Failed to seed knowledge map:', e);
+    }
+
     // Store placement result in localStorage for onboarding adaptation
     try {
       localStorage.setItem(

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { useTranslations, useMessages } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,7 +19,11 @@ import {
   X,
   Volume2,
   Hash,
+  Brain,
+  CheckCircle2,
+  Eye,
 } from 'lucide-react';
+import { useUserKnowledgeStore, type MasteryLevel } from '@/stores/user-knowledge-store';
 
 interface VocabularyExplorerProps {
   words: VocabWord[];
@@ -54,6 +58,36 @@ export function VocabularyExplorer({
   const pathname = usePathname();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { playingId, play: playAudio } = useAudioPlayer();
+
+  // Knowledge Map mastery data
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+
+  function getMastery(wordId: string): MasteryLevel {
+    return knowledgeItems[wordId]?.mastery ?? 'unknown';
+  }
+
+  const MASTERY_BADGE: Record<MasteryLevel, { label: string; color: string; icon: typeof CheckCircle2 | typeof Eye | typeof Brain | null }> = {
+    mastered: { label: 'Maitrise', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
+    familiar: { label: 'Familier', color: 'bg-teal-50 text-teal-700 border-teal-200', icon: CheckCircle2 },
+    learning: { label: 'En cours', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: Brain },
+    seen: { label: 'Vu', color: 'bg-sky-50 text-sky-700 border-sky-200', icon: Eye },
+    unknown: { label: '', color: '', icon: null },
+  };
+
+  // Mastery stats for header
+  const masteryStats = useMemo(() => {
+    let mastered = 0, familiar = 0, learning = 0, seen = 0;
+    words.forEach(w => {
+      const m = getMastery(w.id);
+      if (m === 'mastered') mastered++;
+      else if (m === 'familiar') familiar++;
+      else if (m === 'learning') learning++;
+      else if (m === 'seen') seen++;
+    });
+    return { mastered, familiar, learning, seen, unknown: words.length - mastered - familiar - learning - seen };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [words, knowledgeLastUpdated]);
 
   // Safe translation helpers that fallback to raw key
   const courseMessages = (messages?.courses ?? {}) as Record<string, unknown>;
@@ -180,6 +214,28 @@ export function VocabularyExplorer({
         )}
       </div>
 
+      {/* Mastery overview bar */}
+      {(masteryStats.mastered + masteryStats.familiar + masteryStats.learning + masteryStats.seen) > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-cream-25 border border-cream-100">
+          <Brain className="h-4 w-4 text-teal-500 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex h-2 rounded-full overflow-hidden bg-cream-100">
+              {masteryStats.mastered > 0 && <div className="bg-emerald-400" style={{ width: `${(masteryStats.mastered / words.length) * 100}%` }} />}
+              {masteryStats.familiar > 0 && <div className="bg-teal-400" style={{ width: `${(masteryStats.familiar / words.length) * 100}%` }} />}
+              {masteryStats.learning > 0 && <div className="bg-amber-400" style={{ width: `${(masteryStats.learning / words.length) * 100}%` }} />}
+              {masteryStats.seen > 0 && <div className="bg-sky-300" style={{ width: `${(masteryStats.seen / words.length) * 100}%` }} />}
+            </div>
+            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-navy-400 flex-wrap">
+              {masteryStats.mastered > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />{masteryStats.mastered} maitrise{masteryStats.mastered > 1 ? 's' : ''}</span>}
+              {masteryStats.familiar > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400" />{masteryStats.familiar} familier{masteryStats.familiar > 1 ? 's' : ''}</span>}
+              {masteryStats.learning > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />{masteryStats.learning} en cours</span>}
+              {masteryStats.seen > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-300" />{masteryStats.seen} vu{masteryStats.seen > 1 ? 's' : ''}</span>}
+              {masteryStats.unknown > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cream-200" />{masteryStats.unknown} pas vu{masteryStats.unknown > 1 ? 's' : ''}</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Results info */}
       <div className="flex items-center justify-between text-sm text-navy-400">
         <span>{t('wordsCount', { count: words.length, total })}</span>
@@ -246,6 +302,16 @@ export function VocabularyExplorer({
                             {word.frequency_rank}
                           </span>
                         )}
+                        {getMastery(word.id) !== 'unknown' && (() => {
+                          const mb = MASTERY_BADGE[getMastery(word.id)];
+                          const Icon = mb.icon;
+                          return (
+                            <span className={`text-[10px] py-0.5 px-1.5 rounded-full border flex items-center gap-0.5 ${mb.color}`}>
+                              {Icon && <Icon className="h-2.5 w-2.5" />}
+                              {mb.label}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 

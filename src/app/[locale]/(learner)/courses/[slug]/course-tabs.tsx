@@ -1,8 +1,9 @@
 'use client';
 
 import { useTranslations, useMessages } from 'next-intl';
-import { useState, useRef } from 'react';
-import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2, Play, Clock, Dumbbell, FileText } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { BookOpen, PenTool, Languages, Layers, ChevronDown, ChevronUp, Search, Volume2, Play, Clock, Dumbbell, FileText, CheckCircle2, Eye, Brain } from 'lucide-react';
+import { useUserKnowledgeStore, type MasteryLevel } from '@/stores/user-knowledge-store';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
@@ -126,6 +127,27 @@ export function CourseTabs(props: CourseTabsProps) {
   const [charSearch, setCharSearch] = useState('');
   const { playingId, play: playAudio } = useAudioPlayer();
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // ── Knowledge Map integration for mastery badges ──
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const kmLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+
+  function getMastery(itemId: string): MasteryLevel {
+    return knowledgeItems[itemId]?.mastery ?? 'unknown';
+  }
+  const MASTERY_BADGE: Record<MasteryLevel, { label: string; color: string } | null> = {
+    unknown: null,
+    seen: { label: 'vu', color: 'bg-sky-50 text-sky-600' },
+    learning: { label: 'en cours', color: 'bg-amber-50 text-amber-600' },
+    familiar: { label: 'familier', color: 'bg-teal-50 text-teal-600' },
+    mastered: { label: 'maitrise', color: 'bg-emerald-50 text-emerald-600' },
+  };
+  function MasteryBadge({ itemId }: { itemId: string }) {
+    const m = getMastery(itemId);
+    const badge = MASTERY_BADGE[m];
+    if (!badge) return null;
+    return <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', badge.color)}>{badge.label}</span>;
+  }
 
   function translateTheme(key: string): string {
     return themeMessages[key] ?? key.replace(/_/g, ' ');
@@ -332,6 +354,7 @@ export function CourseTabs(props: CourseTabsProps) {
                         </span>
                         <span className="text-sm text-teal-600 font-mono">{word.pinyin}</span>
                         <span className="flex-1 text-sm text-navy-600 truncate">{word.meaning}</span>
+                        <MasteryBadge itemId={word.id} />
                         {isExpanded ? (
                           <ChevronUp className="h-4 w-4 text-navy-300 shrink-0" />
                         ) : (
@@ -447,6 +470,7 @@ export function CourseTabs(props: CourseTabsProps) {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-navy-900">{g.title}</p>
                         <p className="text-sm text-teal-600 font-mono mt-0.5">{g.pattern}</p>
+                        <MasteryBadge itemId={g.id} />
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={cn(
@@ -542,6 +566,7 @@ export function CourseTabs(props: CourseTabsProps) {
                           </span>
                           <span className="text-sm text-teal-600 font-mono">{c.pinyin}</span>
                           <span className="flex-1 text-sm text-navy-600 truncate">{c.meaning}</span>
+                          <MasteryBadge itemId={c.id} />
                           <div className="flex items-center gap-1.5 shrink-0">
                             {c.radical && (
                               <span className="text-[10px] text-navy-400 bg-cream-50 px-1.5 py-0.5 rounded">部 {c.radical}</span>
