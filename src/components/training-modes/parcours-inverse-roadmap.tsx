@@ -222,7 +222,7 @@ function TodaysActions({ roadmap }: { roadmap: ParcoursInverseRoadmap }) {
     }] : []),
   ];
 
-  const colorMap = {
+  const colorMap: Record<string, { bg: string; border: string; text: string; iconBg: string }> = {
     teal: { bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-600', iconBg: 'bg-teal-100' },
     blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600', iconBg: 'bg-blue-100' },
     purple: { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-600', iconBg: 'bg-purple-100' },
