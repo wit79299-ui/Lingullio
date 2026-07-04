@@ -34,10 +34,9 @@ CREATE INDEX IF NOT EXISTS idx_attempts_user_date
 CREATE INDEX IF NOT EXISTS idx_attempts_profile
   ON public.attempts(learner_profile_id, created_at DESC);
 
--- Index for SRS due items
-CREATE INDEX IF NOT EXISTS idx_srs_due
-  ON public.spaced_repetition_items(user_id, learner_profile_id, next_review_at)
-  WHERE next_review_at <= now();
+-- Index for SRS items (simple index, no WHERE clause — now() is not IMMUTABLE)
+CREATE INDEX IF NOT EXISTS idx_srs_next_review
+  ON public.spaced_repetition_items(user_id, learner_profile_id, next_review_at);
 
 -- Index for badges
 CREATE INDEX IF NOT EXISTS idx_profiles_level
