@@ -1,21 +1,26 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { useGamificationStore } from '@/stores/gamification-store';
+import { useTrainingModeStore } from '@/stores/training-mode-store';
 import { levelTitle } from '@/lib/gamification/xp-config';
 import { BADGES, RARITY_COLORS } from '@/lib/gamification/badges';
 import { Link } from '@/i18n/navigation';
 import {
   BookOpen, Target, Clock, Flame, ChevronRight, Brain,
   Zap, Star, Trophy, Award, TrendingUp, RefreshCw,
-  Calendar, Sparkles,
+  Calendar, Sparkles, Rocket, BellRing,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DailyPlan } from '@/components/gamification/daily-plan';
 import { DailyChallengeWidget } from '@/components/gamification/daily-challenge';
+import { CoachAutonomeBanner, CoachAutonomeView, useCoachAutoActivation } from '@/components/training-modes/coach-autonome';
+import { ParcoursInverseView } from '@/components/training-modes/parcours-inverse-roadmap';
+import { ParcoursInverseSetup } from '@/components/training-modes/parcours-inverse-config';
 
 export function DashboardView() {
   const t = useTranslations('dashboard');
@@ -28,6 +33,14 @@ export function DashboardView() {
     daily_exercises, daily_correct, sessions_history,
   } = useGamificationStore();
 
+  const activeMode = useTrainingModeStore(s => s.active_mode);
+  const parcoursConfig = useTrainingModeStore(s => s.parcours_config);
+  const setMode = useTrainingModeStore(s => s.setMode);
+  const [showParcoursSetup, setShowParcoursSetup] = useState(false);
+
+  // Auto-activate Coach Autonome after 15 days inactivity
+  useCoachAutoActivation();
+
   const levelInfo = useGamificationStore(s => s.getLevelInfo());
   const accuracy = total_exercises > 0 ? Math.round((total_correct / total_exercises) * 100) : 0;
 
@@ -36,6 +49,35 @@ export function DashboardView() {
   const weeklyXp = last7Days.reduce((s, d) => s + d.xp, 0);
   const weeklyExercises = last7Days.reduce((s, d) => s + d.exercises, 0);
 
+  // ─── Parcours Inversé Setup Screen ──────────────────────────────────
+  if (showParcoursSetup) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setShowParcoursSetup(false)}
+          className="mb-2"
+        >
+          <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
+          Retour au dashboard
+        </Button>
+        <ParcoursInverseSetup onComplete={() => setShowParcoursSetup(false)} />
+      </div>
+    );
+  }
+
+  // ─── Parcours Inversé Active → Show Roadmap ────────────────────────
+  if (activeMode === 'parcours_inverse' && parcoursConfig) {
+    return <ParcoursInverseView />;
+  }
+
+  // ─── Coach Autonome Active → Show Coach View ──────────────────────
+  if (activeMode === 'coach_autonome') {
+    return <CoachAutonomeView />;
+  }
+
+  // ─── Standard Dashboard ────────────────────────────────────────────
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -63,6 +105,14 @@ export function DashboardView() {
           )}
         </div>
       </header>
+
+      {/* Coach Autonome Banner (shows when auto-triggered in standard mode) */}
+      <CoachAutonomeBanner />
+
+      {/* Training Mode Selector */}
+      <TrainingModeSelector
+        onStartParcours={() => setShowParcoursSetup(true)}
+      />
 
       {/* Daily Plan */}
       <Card>
@@ -446,4 +496,35 @@ function getLastNDaysActivity(sessions: Array<{ date: string; xp_earned: number;
   }
 
   return result;
+}
+
+// ─── Training Mode Selector ─────────────────────────────────────────────
+
+function TrainingModeSelector({ onStartParcours }: { onStartParcours: () => void }) {
+  const activeMode = useTrainingModeStore(s => s.active_mode);
+  
+  // Only show in standard mode
+  if (activeMode !== 'standard') return null;
+
+  return (
+    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <span className="text-[11px] text-navy-400 shrink-0 font-medium">Modes :</span>
+      <button
+        onClick={onStartParcours}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium',
+          'border border-violet-200 bg-violet-50 text-violet-700',
+          'hover:bg-violet-100 hover:border-violet-300 transition-all',
+        )}
+      >
+        <Rocket className="h-3 w-3" />
+        Parcours Inverse
+      </button>
+      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border border-cream-200 bg-cream-25 text-navy-400">
+        <BellRing className="h-3 w-3" />
+        Coach Autonome
+        <span className="text-[9px] text-navy-300">(auto)</span>
+      </div>
+    </div>
+  );
 }
