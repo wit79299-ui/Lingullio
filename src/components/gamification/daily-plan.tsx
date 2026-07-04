@@ -1,0 +1,368 @@
+'use client';
+
+import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { useGamificationStore, type SessionHistoryEntry } from '@/stores/gamification-store';
+import { Link } from '@/i18n/navigation';
+import {
+  BookOpen, Brain, Trophy, RefreshCw, Flame,
+  CheckCircle2, ChevronRight, Zap, Target, Star,
+  Clock, TrendingUp, Sparkles, GraduationCap,
+} from 'lucide-react';
+
+// ─── Types ──────────────────────────────────────────────────────────────
+
+interface PlanItem {
+  id: string;
+  type: 'lesson' | 'revision' | 'mock_exam' | 'practice' | 'challenge';
+  title: string;
+  subtitle: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  xpEstimate: number;
+  durationMinutes: number;
+  priority: number; // lower = higher priority
+  reason: string; // pedagogical reason
+}
+
+// ─── Plan Generation Engine ─────────────────────────────────────────────
+
+function generateDailyPlan(state: {
+  total_xp: number;
+  level: number;
+  streak_days: number;
+  total_exercises: number;
+  total_correct: number;
+  daily_exercises: number;
+  daily_xp: number;
+  sessions_history: SessionHistoryEntry[];
+  perfect_sessions: number;
+  total_study_minutes: number;
+}): PlanItem[] {
+  const items: PlanItem[] = [];
+  const accuracy = state.total_exercises > 0
+    ? Math.round((state.total_correct / state.total_exercises) * 100)
+    : 0;
+
+  // Recent performance analysis
+  const recentSessions = state.sessions_history.slice(-7);
+  const recentAvgAccuracy = recentSessions.length > 0
+    ? Math.round(recentSessions.reduce((s, e) => s + e.percentage, 0) / recentSessions.length)
+    : 0;
+
+  const hasStudiedToday = state.daily_exercises > 0;
+  const isNewUser = state.total_exercises < 10;
+  const isStruggling = recentAvgAccuracy > 0 && recentAvgAccuracy < 60;
+  const isExcelling = recentAvgAccuracy > 85;
+
+  // ── 1. Always suggest continuing lessons ──
+  items.push({
+    id: 'continue-lesson',
+    type: 'lesson',
+    title: isNewUser ? 'Commencer les cours' : 'Continuer les cours',
+    subtitle: isNewUser
+      ? 'Decouvrez votre premiere lecon HSK'
+      : 'Reprenez la ou vous en etiez',
+    href: '/courses',
+    icon: BookOpen,
+    color: 'text-teal-600',
+    bgColor: 'bg-teal-50',
+    borderColor: 'border-teal-200',
+    xpEstimate: 50,
+    durationMinutes: 15,
+    priority: hasStudiedToday ? 3 : 1,
+    reason: isNewUser
+      ? 'Le meilleur moment pour commencer, c\'est maintenant !'
+      : 'La regularite est la cle de la reussite',
+  });
+
+  // ── 2. SRS Revisions (crucial for memory retention) ──
+  if (state.total_exercises >= 5) {
+    items.push({
+      id: 'srs-review',
+      type: 'revision',
+      title: 'Revisions SRS',
+      subtitle: isStruggling
+        ? 'Renforcez vos points faibles'
+        : 'Consolidez vos acquis',
+      href: '/revisions',
+      icon: Brain,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      xpEstimate: 30,
+      durationMinutes: 10,
+      priority: isStruggling ? 1 : 2,
+      reason: isStruggling
+        ? 'Votre precision recente est en dessous de 60% — les revisions vont vous aider'
+        : 'La repetition espacee optimise la memorisation a long terme',
+    });
+  }
+
+  // ── 3. Mock Exam (when ready) ──
+  if (state.total_exercises >= 30 && !isStruggling) {
+    items.push({
+      id: 'mock-exam',
+      type: 'mock_exam',
+      title: 'Examen blanc',
+      subtitle: isExcelling
+        ? 'Votre niveau est excellent, tentez l\'examen !'
+        : 'Evaluez-vous en conditions reelles',
+      href: '/mock-exams',
+      icon: Trophy,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      xpEstimate: 150,
+      durationMinutes: 30,
+      priority: isExcelling ? 2 : 4,
+      reason: isExcelling
+        ? 'Avec ' + recentAvgAccuracy + '% de precision, vous etes pret(e) pour le test'
+        : 'Les examens blancs preparent efficacement au vrai HSK',
+    });
+  }
+
+  // ── 4. Daily Challenge ──
+  if (!hasStudiedToday) {
+    items.push({
+      id: 'daily-challenge',
+      type: 'challenge',
+      title: 'Defi du jour',
+      subtitle: 'Un mini-exercice rapide pour maintenir votre serie',
+      href: '/daily-challenge',
+      icon: Target,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      xpEstimate: 20,
+      durationMinutes: 3,
+      priority: state.streak_days > 0 ? 0 : 5, // Top priority if streak at risk!
+      reason: state.streak_days > 0
+        ? `Maintenez votre serie de ${state.streak_days} jours !`
+        : 'Un exercice rapide pour bien demarrer',
+    });
+  }
+
+  // ── 5. Focused Practice (when accuracy is inconsistent) ──
+  if (state.total_exercises >= 20 && accuracy > 0 && accuracy < 80) {
+    items.push({
+      id: 'focused-practice',
+      type: 'practice',
+      title: 'Entrainement cible',
+      subtitle: 'Travaillez les points ou vous hesitez',
+      href: '/courses',
+      icon: Target,
+      color: 'text-rose-600',
+      bgColor: 'bg-rose-50',
+      borderColor: 'border-rose-200',
+      xpEstimate: 40,
+      durationMinutes: 10,
+      priority: 3,
+      reason: `Precision actuelle : ${accuracy}%. Objectif : 80%+`,
+    });
+  }
+
+  // Sort by priority
+  items.sort((a, b) => a.priority - b.priority);
+
+  // Return max 4 items for a focused plan
+  return items.slice(0, 4);
+}
+
+// ─── Daily Plan Component ────────────────────────────────────────────────
+
+export function DailyPlan({ className }: { className?: string }) {
+  const state = useGamificationStore();
+
+  const planItems = useMemo(() => generateDailyPlan({
+    total_xp: state.total_xp,
+    level: state.level,
+    streak_days: state.streak_days,
+    total_exercises: state.total_exercises,
+    total_correct: state.total_correct,
+    daily_exercises: state.daily_exercises,
+    daily_xp: state.daily_xp,
+    sessions_history: state.sessions_history,
+    perfect_sessions: state.perfect_sessions,
+    total_study_minutes: state.total_study_minutes,
+  }), [
+    state.total_xp, state.level, state.streak_days,
+    state.total_exercises, state.total_correct,
+    state.daily_exercises, state.daily_xp,
+    state.sessions_history, state.perfect_sessions, state.total_study_minutes,
+  ]);
+
+  const totalXpEstimate = planItems.reduce((s, i) => s + i.xpEstimate, 0);
+  const totalMinutes = planItems.reduce((s, i) => s + i.durationMinutes, 0);
+  const completedToday = state.daily_exercises;
+
+  // Motivational message
+  const motivMessage = getMotivationalMessage(state.streak_days, state.daily_xp, state.level);
+
+  return (
+    <div className={cn('space-y-4', className)}>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm">
+            <Star className="h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-navy-900">Plan du jour</h3>
+            <p className="text-[10px] text-navy-400">
+              ~{totalMinutes} min &middot; ~{totalXpEstimate} XP potentiels
+            </p>
+          </div>
+        </div>
+        {completedToday > 0 && (
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+            <CheckCircle2 className="h-3 w-3" />
+            {completedToday} fait{completedToday > 1 ? 's' : ''}
+          </div>
+        )}
+      </div>
+
+      {/* Motivational message */}
+      <div className="bg-gradient-to-r from-sky-50 to-indigo-50 rounded-xl p-3 border border-sky-100">
+        <p className="text-xs text-navy-600 leading-relaxed">
+          <Sparkles className="h-3.5 w-3.5 inline text-sky-500 mr-1" />
+          {motivMessage}
+        </p>
+      </div>
+
+      {/* Plan items */}
+      <div className="space-y-2.5">
+        {planItems.map((item, index) => (
+          <Link key={item.id} href={item.href}>
+            <PlanItemCard item={item} index={index} />
+          </Link>
+        ))}
+      </div>
+
+      {/* Streak protection reminder */}
+      {state.streak_days > 0 && state.daily_exercises === 0 && (
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-orange-50 border border-orange-200">
+          <Flame className="h-5 w-5 text-orange-500 animate-streak-fire shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-orange-700">
+              Serie en danger !
+            </p>
+            <p className="text-[10px] text-orange-600">
+              Completez au moins 1 exercice pour maintenir votre serie de {state.streak_days} jours
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Plan Item Card ──────────────────────────────────────────────────────
+
+function PlanItemCard({ item, index }: { item: PlanItem; index: number }) {
+  const Icon = item.icon;
+
+  return (
+    <div className={cn(
+      'flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer group',
+      'hover:shadow-md hover:scale-[1.01] active:scale-[0.99]',
+      item.bgColor, item.borderColor,
+    )}>
+      {/* Step number */}
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[10px] font-bold text-navy-300">{index + 1}</span>
+        <div className={cn(
+          'flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow-sm shrink-0',
+        )}>
+          <Icon className={cn('h-5 w-5', item.color)} />
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-navy-900">{item.title}</p>
+        <p className="text-[11px] text-navy-400 truncate">{item.subtitle}</p>
+        <div className="flex items-center gap-3 mt-1">
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium">
+            <Zap className="h-2.5 w-2.5" />
+            ~{item.xpEstimate} XP
+          </span>
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-navy-400">
+            <Clock className="h-2.5 w-2.5" />
+            ~{item.durationMinutes} min
+          </span>
+        </div>
+      </div>
+
+      <ChevronRight className="h-4 w-4 text-navy-300 group-hover:text-navy-500 shrink-0 transition-colors" />
+    </div>
+  );
+}
+
+// ─── Motivational Message Generator ──────────────────────────────────────
+
+function getMotivationalMessage(streakDays: number, dailyXp: number, level: number): string {
+  if (dailyXp > 100) {
+    return 'Journee exceptionnelle ! Vous avez deja gagne plus de 100 XP. Continuez sur cette lancee !';
+  }
+  if (dailyXp > 50) {
+    return 'Beau travail aujourd\'hui ! Encore un petit effort pour une journee parfaite.';
+  }
+  if (streakDays >= 30) {
+    return `${streakDays} jours de suite ! Vous faites preuve d'une discipline remarquable. Votre chinois progresse rapidement.`;
+  }
+  if (streakDays >= 7) {
+    return `Bravo pour cette serie de ${streakDays} jours ! La regularite paie : votre cerveau forme de nouvelles connexions chaque jour.`;
+  }
+  if (streakDays > 0 && dailyXp === 0) {
+    return `N'oubliez pas votre session du jour pour garder votre serie de ${streakDays} jours ! Meme 5 minutes comptent.`;
+  }
+  if (level <= 2) {
+    return 'Chaque expert etait autrefois debutant. Commencez par les bases et progressez a votre rythme !';
+  }
+  return 'Un peu chaque jour vaut mieux que beaucoup rarement. Le chinois s\'apprend mot par mot, caractere par caractere.';
+}
+
+// ─── Compact variant for sidebar ─────────────────────────────────────────
+
+export function DailyPlanCompact({ className }: { className?: string }) {
+  const state = useGamificationStore();
+  const hasStudiedToday = state.daily_exercises > 0;
+
+  return (
+    <div className={cn('rounded-xl p-3', className)}>
+      <div className="flex items-center gap-2 mb-2">
+        <GraduationCap className="h-4 w-4 text-teal-500" />
+        <span className="text-xs font-bold text-navy-700">Aujourd&apos;hui</span>
+      </div>
+
+      {hasStudiedToday ? (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-navy-500">{state.daily_exercises} exercices</span>
+            <span className="text-emerald-600 font-bold">+{state.daily_xp} XP</span>
+          </div>
+          <div className="h-1.5 bg-cream-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full transition-all"
+              style={{ width: `${Math.min(100, (state.daily_xp / 100) * 100)}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-navy-400 text-center">
+            {state.daily_xp >= 100 ? 'Objectif atteint !' : `${100 - state.daily_xp} XP pour l'objectif`}
+          </p>
+        </div>
+      ) : (
+        <Link href="/courses">
+          <div className="flex items-center gap-2 text-[11px] text-navy-500 hover:text-teal-600 transition-colors cursor-pointer">
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>Commencez votre session du jour</span>
+            <ChevronRight className="h-3 w-3 ml-auto" />
+          </div>
+        </Link>
+      )}
+    </div>
+  );
+}

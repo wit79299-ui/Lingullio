@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect, type RefObject } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,13 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import Image from 'next/image';
+import { useGamificationStore } from '@/stores/gamification-store';
+import type { AttemptPayload, SessionSummary } from '@/lib/gamification/progress-service';
+import { ConfettiBurst, LevelUpModal } from '@/components/gamification/xp-toast';
+import { BADGES, RARITY_COLORS } from '@/lib/gamification/badges';
+import { levelTitle } from '@/lib/gamification/xp-config';
+import { cn } from '@/lib/utils';
+import { Flame, Zap, Sparkles } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -513,6 +520,7 @@ export function MockExamRunner({ exam, locale }: Props) {
         onReview={handleReview}
         onRetry={handleRetry}
         onHome={() => router.push('/mock-exams')}
+        hskLevel={hskLevel}
       />
     );
   }
@@ -1184,6 +1192,7 @@ function ResultsScreen({
   onReview,
   onRetry,
   onHome,
+  hskLevel,
 }: {
   exam: MockExamDetail;
   results: {
@@ -1197,10 +1206,59 @@ function ResultsScreen({
   onReview: () => void;
   onRetry: () => void;
   onHome: () => void;
+  hskLevel: number;
 }) {
+  const finishSessionLocal = useGamificationStore(s => s.finishSessionLocal);
+  const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const gamificationProcessed = useRef(false);
+
   const totalQuestions = exam.sections.reduce((sum, s) => sum + s.questions.length, 0);
   const percent = Math.round((results.totalEarned / exam.total_points) * 100);
   const timeFormatted = formatTime(timeSpent);
+
+  // Process gamification (once)
+  useEffect(() => {
+    if (gamificationProcessed.current) return;
+    gamificationProcessed.current = true;
+
+    // Build attempt payloads from all questions
+    const attemptPayloads: AttemptPayload[] = [];
+    exam.sections.forEach((section) => {
+      section.questions.forEach((q) => {
+        const answer = answers.get(q.id);
+        const correctOption = q.options.find((o) => o.is_correct);
+        const isCorrect = !!(answer?.selectedOptionId && correctOption && answer.selectedOptionId === correctOption.id);
+        attemptPayloads.push({
+          exercise_id: q.id,
+          is_correct: isCorrect,
+          score: isCorrect ? q.points : 0,
+          max_score: q.points,
+          time_spent_seconds: answer?.timeSpent ?? 0,
+          user_answer: answer?.selectedOptionId ?? null,
+          exercise_type: `mock_exam_hsk${hskLevel}`,
+          skill_tags: [section.section_type],
+        });
+      });
+    });
+
+    const summary = finishSessionLocal(attemptPayloads, timeSpent);
+    setSessionSummary(summary);
+
+    // Confetti on pass or high XP
+    if (results.passed || summary.xp_earned >= 100) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3500);
+    }
+
+    // Level up modal
+    if (summary.level_up) {
+      setTimeout(() => {
+        setShowLevelUp({ level: summary.level_after, title: levelTitle(summary.level_after) });
+      }, 900);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bands = [
     { min: 0, max: 39, label: 'Non acquis', color: 'text-red-600', bg: 'bg-red-50' },
@@ -1213,6 +1271,15 @@ function ResultsScreen({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+      <ConfettiBurst active={showConfetti} />
+      {showLevelUp && (
+        <LevelUpModal
+          level={showLevelUp.level}
+          title={showLevelUp.title}
+          onClose={() => setShowLevelUp(null)}
+        />
+      )}
+
       <div className="text-center py-6">
         <div
           className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 ${
@@ -1227,6 +1294,15 @@ function ResultsScreen({
           {results.passed ? 'F\u00e9licitations !' : 'Continue tes efforts !'}
         </h1>
         <p className="text-navy-400">{exam.title}</p>
+        {/* XP earned floating badge */}
+        {sessionSummary && (
+          <div className="mt-3 animate-xp-count">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold shadow-sm">
+              <Zap className="h-4 w-4" />
+              +{sessionSummary.xp_earned} XP
+            </span>
+          </div>
+        )}
       </div>
 
       <Card>
@@ -1267,6 +1343,62 @@ function ResultsScreen({
               {exam.scoring.pass_threshold}
             </div>
           </div>
+
+          {/* Gamification summary row */}
+          {sessionSummary && (
+            <div className="grid grid-cols-3 gap-3 text-center mb-4">
+              <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Zap className="h-4 w-4 text-emerald-500" />
+                </div>
+                <p className="text-lg font-bold text-emerald-600 animate-xp-count">+{sessionSummary.xp_earned}</p>
+                <p className="text-[10px] text-emerald-600/70">XP gagn&eacute;s</p>
+              </div>
+              <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Flame className="h-4 w-4 text-orange-500" />
+                </div>
+                <p className="text-lg font-bold text-orange-600">{sessionSummary.streak_days}</p>
+                <p className="text-[10px] text-orange-600/70">S&eacute;rie</p>
+              </div>
+              <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Award className="h-4 w-4 text-purple-500" />
+                </div>
+                <p className="text-lg font-bold text-purple-600">{sessionSummary.new_badges.length > 0 ? `+${sessionSummary.new_badges.length}` : '-'}</p>
+                <p className="text-[10px] text-purple-600/70">Badges</p>
+              </div>
+            </div>
+          )}
+
+          {/* New badges earned */}
+          {sessionSummary && sessionSummary.new_badges.length > 0 && (
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200 mb-4">
+              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-3">
+                <Sparkles className="h-3.5 w-3.5 inline mr-1" />
+                Nouveaux badges d&eacute;bloqu&eacute;s !
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {sessionSummary.new_badges.map(badgeId => {
+                  const badge = BADGES.find(b => b.id === badgeId);
+                  if (!badge) return null;
+                  const colors = RARITY_COLORS[badge.rarity];
+                  return (
+                    <div key={badgeId} className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-xl border',
+                      colors.bg, colors.border
+                    )}>
+                      <span className="text-xl">{badge.icon}</span>
+                      <div>
+                        <p className={cn('text-xs font-bold', colors.text)}>{badge.name_fr}</p>
+                        <p className="text-[10px] text-navy-400">{badge.description_fr}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-cream-100">
             <div className="text-center">

@@ -2,6 +2,7 @@
 
 import { Bell } from 'lucide-react';
 import { LanguageSwitcher } from './language-switcher';
+import { XpBarCompact } from '@/components/gamification/xp-bar';
 
 export function TopBar() {
   return (
@@ -11,7 +12,8 @@ export function TopBar() {
         alt="Lingullio"
         className="h-7 w-auto"
       />
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <XpBarCompact />
         <LanguageSwitcher />
         <button
           type="button"

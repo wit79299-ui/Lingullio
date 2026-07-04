@@ -3,106 +3,38 @@
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { ScoreRing } from '@/components/ui/score-ring';
+import { useGamificationStore } from '@/stores/gamification-store';
+import { levelTitle } from '@/lib/gamification/xp-config';
+import { BADGES, RARITY_COLORS } from '@/lib/gamification/badges';
+import { Link } from '@/i18n/navigation';
 import {
-  BookOpen,
-  Target,
-  Clock,
-  Flame,
-  ChevronRight,
-  Headphones,
-  PenTool,
-  Brain,
+  BookOpen, Target, Clock, Flame, ChevronRight, Brain,
+  Zap, Star, Trophy, Award, TrendingUp, RefreshCw,
+  Calendar, Sparkles,
 } from 'lucide-react';
-
-// Mock data -- will be replaced by Supabase queries
-const mockData = {
-  name: 'Lisa',
-  level: 'HSK 4',
-  examDate: '20 decembre 2026',
-  targetScore: 250,
-  estimatedScore: 236,
-  maxScore: 300,
-  confidence: 'high' as const,
-  scoreChange: 28,
-  overallProgress: 68,
-  streak: 12,
-  skills: {
-    vocabulary: 72,
-    grammar: 64,
-    reading: 71,
-    listening: 63,
-    writing: 58,
-    speaking: 60,
-  },
-  todayPlan: [
-    {
-      id: '1',
-      title: 'Reviser les classificateurs',
-      type: 'revision',
-      duration: 15,
-      icon: Brain,
-    },
-    {
-      id: '2',
-      title: '10 questions ciblees',
-      type: 'exercise',
-      duration: 10,
-      icon: Target,
-    },
-    {
-      id: '3',
-      title: 'Lecon 8 (le) - aspect accompli',
-      type: 'lesson',
-      duration: 12,
-      icon: BookOpen,
-    },
-  ],
-  recommendations: [
-    {
-      id: 'r1',
-      title: 'Revision intelligente',
-      subtitle: '15 cartes a reviser',
-      icon: Brain,
-      badge: 'toReview' as const,
-    },
-    {
-      id: 'r2',
-      title: 'Examen blanc 2 - Lecture',
-      subtitle: 'Entrainement recommande - 30 min',
-      icon: Headphones,
-      badge: 'new' as const,
-    },
-    {
-      id: 'r3',
-      title: 'Points faibles a travailler',
-      subtitle: 'Grammaire - 3 fiches',
-      icon: PenTool,
-      badge: 'inProgress' as const,
-    },
-  ],
-};
-
-const confidenceLabels = {
-  low: 'confidenceLow',
-  medium: 'confidenceMedium',
-  high: 'confidenceHigh',
-} as const;
-
-const skillKeys = [
-  'vocabulary',
-  'grammar',
-  'reading',
-  'listening',
-  'writing',
-  'speaking',
-] as const;
+import { cn } from '@/lib/utils';
+import { DailyPlan } from '@/components/gamification/daily-plan';
+import { DailyChallengeWidget } from '@/components/gamification/daily-challenge';
 
 export function DashboardView() {
   const t = useTranslations('dashboard');
   const tc = useTranslations('common');
+
+  const {
+    total_xp, level, streak_days, longest_streak,
+    badges_unlocked, perfect_sessions, total_exercises,
+    total_correct, total_study_minutes, daily_xp,
+    daily_exercises, daily_correct, sessions_history,
+  } = useGamificationStore();
+
+  const levelInfo = useGamificationStore(s => s.getLevelInfo());
+  const accuracy = total_exercises > 0 ? Math.round((total_correct / total_exercises) * 100) : 0;
+
+  // Recent activity (last 7 days)
+  const last7Days = getLastNDaysActivity(sessions_history, 7);
+  const weeklyXp = last7Days.reduce((s, d) => s + d.xp, 0);
+  const weeklyExercises = last7Days.reduce((s, d) => s + d.exercises, 0);
 
   return (
     <div className="space-y-6">
@@ -110,149 +42,408 @@ export function DashboardView() {
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy-900">
-            {t('welcome', { name: mockData.name })}
+            {t('welcome', { name: 'Apprenant' })}
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            {mockData.level} &middot; {t('targetExam', { date: mockData.examDate })} &middot; {t('targetScore', { score: mockData.targetScore })}
+            {levelTitle(level)} &middot; Niveau {level} &middot; {total_xp} XP
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Flame className="h-5 w-5 text-gold-500" />
-          <span className="font-semibold text-navy-900">
-            {t('streak')}
-          </span>
-          <span className="text-navy-700">
-            {t('streakDays', { count: mockData.streak })}
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 text-sm">
+            <Flame className="h-5 w-5 text-orange-500 animate-streak-fire" />
+            <span className="font-bold text-navy-900">{streak_days}</span>
+            <span className="text-navy-400">jours</span>
+          </div>
+          {daily_xp > 0 && (
+            <div className="flex items-center gap-1 text-sm">
+              <Zap className="h-4 w-4 text-emerald-500" />
+              <span className="font-semibold text-emerald-600">+{daily_xp}</span>
+              <span className="text-navy-400">aujourd&apos;hui</span>
+            </div>
+          )}
         </div>
       </header>
 
+      {/* Daily Plan */}
+      <Card>
+        <CardContent className="p-5">
+          <DailyPlan />
+        </CardContent>
+      </Card>
+
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Score estime */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('estimatedScore')}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <ScoreRing
-              score={mockData.estimatedScore}
-              maxScore={mockData.maxScore}
-              label={mockData.level}
-              confidence={t('confidence', { level: t(confidenceLabels[mockData.confidence]) })}
-              change={mockData.scoreChange}
-            />
-            <p className="mt-2 text-xs text-navy-400">
-              {t('vsLastWeek')}
-            </p>
+
+        {/* Level & XP Card */}
+        <Card className="!py-0 overflow-hidden">
+          <div className="bg-gradient-to-br from-navy-800 to-navy-900 px-6 py-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-2xl font-black shadow-lg">
+                  {level}
+                  <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center w-5 h-5 rounded-full bg-navy-800 shadow">
+                    <Star className="h-3 w-3 text-amber-400" />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-bold">{levelTitle(level)}</p>
+                  <p className="text-xs text-white/60">Niveau {level}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-black">{total_xp}</p>
+                <p className="text-[10px] text-white/50">XP total</p>
+              </div>
+            </div>
+
+            {/* XP Progress */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-[11px] text-white/60">
+                <span>Niveau {level}</span>
+                <span>Niveau {level + 1}</span>
+              </div>
+              <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${levelInfo.progress}%` }}
+                />
+              </div>
+              <p className="text-center text-[11px] text-white/50">
+                {levelInfo.currentXp} / {levelInfo.nextLevelXp} XP ({levelInfo.progress}%)
+              </p>
+            </div>
+          </div>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-lg font-bold text-navy-900">{total_exercises}</p>
+                <p className="text-[10px] text-navy-400">Exercices</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-emerald-600">{accuracy}%</p>
+                <p className="text-[10px] text-navy-400">Precision</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-navy-900">{Math.floor(total_study_minutes / 60)}h{total_study_minutes % 60 > 0 ? total_study_minutes % 60 : ''}</p>
+                <p className="text-[10px] text-navy-400">Etude</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Progression globale */}
+        {/* Weekly Activity */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{t('overallProgress')}</CardTitle>
-              <span className="text-2xl font-bold text-navy-900">
-                {mockData.overallProgress}%
-              </span>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-teal-500" />
+                Cette semaine
+              </CardTitle>
+              <span className="text-sm font-bold text-emerald-600">+{weeklyXp} XP</span>
             </div>
           </CardHeader>
           <CardContent>
-            <ProgressBar
-              value={mockData.overallProgress}
-              size="md"
-              className="mb-5"
-            />
-            <p className="text-xs font-medium text-navy-500 mb-3">
-              {t('bySkill')}
-            </p>
-            <div className="space-y-3">
-              {skillKeys.map((skill) => (
-                <ProgressBar
-                  key={skill}
-                  label={t(skill)}
-                  value={mockData.skills[skill]}
-                  showValue
-                  size="sm"
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Plan du jour */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('todayPlan')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 mb-5">
-              {mockData.todayPlan.map((task) => {
-                const Icon = task.icon;
+            {/* Activity heatmap (last 7 days) */}
+            <div className="flex items-end gap-1.5 h-24 mb-4">
+              {last7Days.map((day, i) => {
+                const maxXp = Math.max(...last7Days.map(d => d.xp), 1);
+                const height = day.xp > 0 ? Math.max(12, (day.xp / maxXp) * 100) : 4;
                 return (
-                  <div
-                    key={task.id}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-cream-25 border border-cream-100"
-                  >
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-navy-50">
-                      <Icon className="h-4 w-4 text-navy-700" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-navy-900 truncate">
-                        {task.title}
-                      </p>
-                      <p className="text-xs text-navy-400">
-                        <Clock className="inline h-3 w-3 mr-1" />
-                        {task.duration} {tc('minutes')}
-                      </p>
-                    </div>
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className={cn(
+                        'w-full rounded-t-md transition-all duration-500',
+                        day.xp > 0
+                          ? 'bg-gradient-to-t from-teal-500 to-emerald-400'
+                          : 'bg-cream-100'
+                      )}
+                      style={{ height: `${height}%` }}
+                      title={`${day.label}: ${day.xp} XP, ${day.exercises} exercices`}
+                    />
+                    <span className="text-[9px] text-navy-400">{day.label}</span>
                   </div>
                 );
               })}
             </div>
-            <Button className="w-full" size="lg">
-              {t('startSession')} (15 min)
-            </Button>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-cream-25 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-navy-900">{weeklyExercises}</p>
+                <p className="text-[10px] text-navy-400">Exercices</p>
+              </div>
+              <div className="bg-cream-25 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-navy-900">{perfect_sessions}</p>
+                <p className="text-[10px] text-navy-400">Sessions parfaites</p>
+              </div>
+            </div>
+
+            <Link href="/progress">
+              <Button variant="ghost" size="sm" className="w-full mt-3 text-teal-600 hover:text-teal-700">
+                Voir toute la progression
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-teal-500" />
+              Actions rapides
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Link href="/daily-challenge">
+              <DailyChallengeWidget />
+            </Link>
+            <Link href="/courses">
+              <QuickActionCard
+                icon={BookOpen}
+                title="Continuer les cours"
+                subtitle="Reprendre la ou vous en etes"
+                color="teal"
+              />
+            </Link>
+            <Link href="/revisions">
+              <QuickActionCard
+                icon={RefreshCw}
+                title="Revisions SRS"
+                subtitle="Cartes a reviser avec la repetition espacee"
+                color="blue"
+              />
+            </Link>
+            <Link href="/mock-exams">
+              <QuickActionCard
+                icon={Trophy}
+                title="Examen blanc"
+                subtitle="Testez vos connaissances en conditions reelles"
+                color="purple"
+              />
+            </Link>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recommandations */}
-      <section>
-        <h2 className="text-lg font-semibold text-navy-900 mb-4">
-          {t('recommendations')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockData.recommendations.map((rec) => {
-            const Icon = rec.icon;
-            return (
-              <Card
-                key={rec.id}
-                className="cursor-pointer hover:shadow-md transition-shadow duration-150 group"
-              >
-                <CardContent className="flex items-center gap-4 py-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-cream-50 shrink-0">
-                    <Icon className="h-5 w-5 text-navy-700" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-medium text-navy-900 truncate">
-                        {rec.title}
-                      </p>
-                      <Badge variant={rec.badge} />
+      {/* Streak & Badges Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Streak Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              Serie d&apos;apprentissage
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6 mb-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 text-white mb-2 shadow-lg">
+                  <span className="text-2xl font-black">{streak_days}</span>
+                </div>
+                <p className="text-xs text-navy-400">Actuel</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-cream-50 border border-cream-200 text-navy-700 mb-2">
+                  <span className="text-2xl font-bold">{longest_streak}</span>
+                </div>
+                <p className="text-xs text-navy-400">Record</p>
+              </div>
+              <div className="flex-1">
+                <StreakCalendar sessions={sessions_history} />
+              </div>
+            </div>
+            {streak_days > 0 && (
+              <p className="text-xs text-navy-400 text-center">
+                {streak_days >= longest_streak
+                  ? '🎉 Vous etes a votre record !'
+                  : `Plus que ${longest_streak - streak_days} jour${longest_streak - streak_days > 1 ? 's' : ''} pour battre votre record !`}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Badges Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-purple-500" />
+                Badges ({badges_unlocked.length}/{BADGES.length})
+              </CardTitle>
+              <Link href="/progress" className="text-xs text-teal-500 hover:text-teal-600">
+                Tout voir
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {badges_unlocked.length === 0 ? (
+              <div className="text-center py-6">
+                <Sparkles className="h-10 w-10 text-navy-200 mx-auto mb-2" />
+                <p className="text-sm text-navy-400">Completez des exercices pour debloquer vos premiers badges !</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                {badges_unlocked.slice(-10).map(badgeId => {
+                  const badge = BADGES.find(b => b.id === badgeId);
+                  if (!badge) return null;
+                  const colors = RARITY_COLORS[badge.rarity];
+                  return (
+                    <div
+                      key={badgeId}
+                      className={cn(
+                        'flex flex-col items-center gap-1 p-2 rounded-xl border text-center',
+                        colors.bg, colors.border
+                      )}
+                      title={`${badge.name_fr} — ${badge.description_fr}`}
+                    >
+                      <span className="text-2xl">{badge.icon}</span>
+                      <span className={cn('text-[9px] font-medium leading-tight', colors.text)}>
+                        {badge.name_fr}
+                      </span>
                     </div>
-                    <p className="text-xs text-navy-400 truncate">
-                      {rec.subtitle}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-navy-300 group-hover:text-navy-500 shrink-0 transition-colors" />
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Next badges to unlock */}
+            <NextBadgesHint
+              currentBadges={badges_unlocked}
+              stats={useGamificationStore.getState().getStats()}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
+}
+
+// ─── Helper Components ──────────────────────────────────────────────────
+
+function QuickActionCard({ icon: Icon, title, subtitle, color }: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  subtitle: string;
+  color: 'teal' | 'blue' | 'purple';
+}) {
+  const bgColors = {
+    teal: 'bg-teal-50 hover:bg-teal-100',
+    blue: 'bg-blue-50 hover:bg-blue-100',
+    purple: 'bg-purple-50 hover:bg-purple-100',
+  };
+  const iconColors = {
+    teal: 'text-teal-600',
+    blue: 'text-blue-600',
+    purple: 'text-purple-600',
+  };
+
+  return (
+    <div className={cn(
+      'flex items-center gap-3 p-3.5 rounded-xl border border-transparent transition-all cursor-pointer group',
+      bgColors[color]
+    )}>
+      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow-sm shrink-0">
+        <Icon className={cn('h-5 w-5', iconColors[color])} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-navy-900">{title}</p>
+        <p className="text-[11px] text-navy-400 truncate">{subtitle}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-navy-300 group-hover:text-navy-500 shrink-0 transition-colors" />
+    </div>
+  );
+}
+
+// ─── Streak Calendar (mini GitHub-style) ─────────────────────────────────
+
+function StreakCalendar({ sessions }: { sessions: Array<{ date: string }> }) {
+  const dates = new Set(sessions.map(s => s.date));
+  const today = new Date();
+  const cells = [];
+
+  for (let i = 20; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const active = dates.has(dateStr);
+    cells.push(
+      <div
+        key={dateStr}
+        className={cn(
+          'w-3 h-3 rounded-sm transition-colors',
+          active ? 'bg-emerald-400' : 'bg-cream-100'
+        )}
+        title={`${dateStr}${active ? ' — Actif' : ''}`}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1 justify-end">
+      {cells}
+    </div>
+  );
+}
+
+// ─── Next Badges to unlock hint ──────────────────────────────────────────
+
+function NextBadgesHint({ currentBadges, stats }: {
+  currentBadges: string[];
+  stats: import('@/lib/gamification/badges').UserBadgeStats;
+}) {
+  const unlockedSet = new Set(currentBadges);
+  const nextBadges = BADGES
+    .filter(b => !unlockedSet.has(b.id) && !b.condition(stats))
+    .slice(0, 2);
+
+  if (nextBadges.length === 0) return null;
+
+  return (
+    <div className="mt-4 pt-3 border-t border-cream-100">
+      <p className="text-[10px] font-semibold text-navy-400 uppercase tracking-wider mb-2">
+        Prochains badges a debloquer
+      </p>
+      <div className="space-y-2">
+        {nextBadges.map(badge => (
+          <div key={badge.id} className="flex items-center gap-2.5 text-xs">
+            <span className="text-lg opacity-30">{badge.icon}</span>
+            <div className="flex-1">
+              <span className="font-medium text-navy-600">{badge.name_fr}</span>
+              <span className="text-navy-400 ml-1">— {badge.description_fr}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Utility: Get last N days activity ──────────────────────────────────
+
+function getLastNDaysActivity(sessions: Array<{ date: string; xp_earned: number; exercises_done: number }>, n: number) {
+  const today = new Date();
+  const dayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const result = [];
+
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayData = sessions.filter(s => s.date === dateStr);
+    const xp = dayData.reduce((s, e) => s + e.xp_earned, 0);
+    const exercises = dayData.reduce((s, e) => s + e.exercises_done, 0);
+
+    result.push({
+      date: dateStr,
+      label: dayLabels[d.getDay()],
+      xp,
+      exercises,
+    });
+  }
+
+  return result;
 }

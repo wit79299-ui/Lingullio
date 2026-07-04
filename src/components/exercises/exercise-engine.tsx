@@ -14,6 +14,13 @@ import type {
   Exercise, ExerciseAnswer, SessionState, SessionResults,
   ExerciseType,
 } from './types';
+import { useGamificationStore, type GamificationNotification } from '@/stores/gamification-store';
+import type { AttemptPayload, SessionSummary } from '@/lib/gamification/progress-service';
+import { XpBadgeInline } from '@/components/gamification/xp-bar';
+import { ConfettiBurst, LevelUpModal } from '@/components/gamification/xp-toast';
+import { BADGES, RARITY_COLORS } from '@/lib/gamification/badges';
+import { levelTitle } from '@/lib/gamification/xp-config';
+import { Flame, Award } from 'lucide-react';
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -108,6 +115,7 @@ const DIFFICULTY_COLORS = ['', 'text-emerald-500', 'text-amber-500', 'text-red-5
 
 export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, slug, lessonId, backHref }: ExerciseEngineProps) {
   const { playingId, play: playAudio } = useAudioPlayer();
+  const finishSessionLocal = useGamificationStore(s => s.finishSessionLocal);
 
   const [session, setSession] = useState<SessionState>({
     phase: 'intro',
@@ -116,6 +124,12 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
     startedAt: 0,
     exerciseStartedAt: 0,
   });
+
+  // Gamification state for results phase
+  const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState<{ level: number; title: string } | null>(null);
+  const gamificationProcessed = useRef(false);
 
   // Timer
   const [elapsed, setElapsed] = useState(0);
@@ -174,6 +188,10 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
       exerciseStartedAt: 0,
     });
     setElapsed(0);
+    setSessionSummary(null);
+    setShowConfetti(false);
+    setShowLevelUp(null);
+    gamificationProcessed.current = false;
   }, []);
 
   // ─── Current exercise ───────────────────────────────────────────────────
@@ -250,8 +268,47 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
   if (session.phase === 'results') {
     const results = calculateResults(exercises, session.answers, session.startedAt);
 
+    // Process gamification (once)
+    if (!gamificationProcessed.current) {
+      gamificationProcessed.current = true;
+      const attemptPayloads: AttemptPayload[] = session.answers.map((a, i) => ({
+        exercise_id: exercises[i]?.id ?? `ex-${i}`,
+        is_correct: a.isCorrect,
+        score: a.pointsEarned,
+        max_score: a.pointsMax,
+        time_spent_seconds: a.timeSpent,
+        user_answer: a.userAnswer,
+        exercise_type: exercises[i]?.exercise_type ?? 'mcq',
+        skill_tags: exercises[i]?.skill_tags ?? [],
+      }));
+      const summary = finishSessionLocal(attemptPayloads, results.timeElapsed);
+      setSessionSummary(summary);
+
+      // Confetti on pass or perfect
+      if (results.passed || summary.xp_earned >= 80) {
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+      }
+
+      // Level up modal
+      if (summary.level_up) {
+        setTimeout(() => {
+          setShowLevelUp({ level: summary.level_after, title: levelTitle(summary.level_after) });
+        }, 800);
+      }
+    }
+
     return (
       <div className="max-w-2xl mx-auto space-y-6">
+        <ConfettiBurst active={showConfetti} />
+        {showLevelUp && (
+          <LevelUpModal
+            level={showLevelUp.level}
+            title={showLevelUp.title}
+            onClose={() => setShowLevelUp(null)}
+          />
+        )}
+
         {/* Score hero */}
         <Card className="!py-0 overflow-hidden">
           <div className={cn(
@@ -274,8 +331,72 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
             <p className="text-sm opacity-80 mt-1">
               {results.percentage}% &mdash; {results.totalPoints}/{results.maxPoints} points bruts
             </p>
+            {/* XP earned floating badge */}
+            {sessionSummary && (
+              <div className="mt-3 animate-xp-count">
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-sm font-bold">
+                  <Zap className="h-4 w-4" />
+                  +{sessionSummary.xp_earned} XP
+                </span>
+              </div>
+            )}
           </div>
           <CardContent className="p-6 space-y-5">
+            {/* Gamification summary row */}
+            {sessionSummary && (
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Zap className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <p className="text-lg font-bold text-emerald-600 animate-xp-count">+{sessionSummary.xp_earned}</p>
+                  <p className="text-[10px] text-emerald-600/70">XP gagnes</p>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                  </div>
+                  <p className="text-lg font-bold text-orange-600">{sessionSummary.streak_days}</p>
+                  <p className="text-[10px] text-orange-600/70">Serie</p>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Award className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <p className="text-lg font-bold text-purple-600">{sessionSummary.new_badges.length > 0 ? `+${sessionSummary.new_badges.length}` : '-'}</p>
+                  <p className="text-[10px] text-purple-600/70">Badges</p>
+                </div>
+              </div>
+            )}
+
+            {/* New badges earned */}
+            {sessionSummary && sessionSummary.new_badges.length > 0 && (
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
+                <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-3">
+                  Nouveaux badges debloques !
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sessionSummary.new_badges.map(badgeId => {
+                    const badge = BADGES.find(b => b.id === badgeId);
+                    if (!badge) return null;
+                    const colors = RARITY_COLORS[badge.rarity];
+                    return (
+                      <div key={badgeId} className={cn(
+                        'flex items-center gap-2 px-3 py-2 rounded-xl border',
+                        colors.bg, colors.border
+                      )}>
+                        <span className="text-xl">{badge.icon}</span>
+                        <div>
+                          <p className={cn('text-xs font-bold', colors.text)}>{badge.name_fr}</p>
+                          <p className="text-[10px] text-navy-400">{badge.description_fr}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-4 text-center">
               <div className="bg-cream-25 rounded-xl p-3">

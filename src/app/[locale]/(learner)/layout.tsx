@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { Sidebar } from '@/components/layout/sidebar';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { TopBar } from '@/components/layout/top-bar';
+import { GamificationToastStack } from '@/components/gamification/xp-toast';
 
 type Props = {
   children: ReactNode;
@@ -17,6 +18,7 @@ export default async function LearnerLayout({ children, params }: Props) {
     <div className="min-h-screen">
       <Sidebar />
       <TopBar />
+      <GamificationToastStack />
       <main className="lg:pl-64 pb-20 lg:pb-0">
         <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
           {children}

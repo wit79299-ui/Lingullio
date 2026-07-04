@@ -84,6 +84,11 @@ export interface LearnerProfile {
   last_activity_at: string | null;
   onboarding_completed: boolean;
   diagnostic_completed: boolean;
+  // Gamification (migration 00003)
+  total_xp: number;
+  level: number;
+  perfect_sessions: number;
+  badges_unlocked: string[];
   created_at: string;
   updated_at: string;
 }
@@ -185,7 +190,33 @@ export interface Attempt {
   max_score: number | null;
   user_answer: unknown;
   ai_feedback: unknown;
+  metadata: Record<string, unknown>;
   created_at: string;
+}
+
+export interface LessonCompletion {
+  id: string;
+  user_id: string;
+  learner_profile_id: string;
+  lesson_id: string;
+  completed_at: string;
+  score_percentage: number | null;
+  time_spent_seconds: number | null;
+  xp_earned: number;
+}
+
+export interface DailyChallenge {
+  id: string;
+  user_id: string;
+  learner_profile_id: string;
+  challenge_date: string;
+  challenge_type: string;
+  target_exercises: number;
+  completed_exercises: number;
+  is_completed: boolean;
+  xp_reward: number;
+  created_at: string;
+  completed_at: string | null;
 }
 
 export interface ProgressSnapshot {

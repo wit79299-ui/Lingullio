@@ -19,6 +19,8 @@ import {
   LogOut,
 } from 'lucide-react';
 import { LanguageSwitcher } from './language-switcher';
+import { XpCardExpanded } from '@/components/gamification/xp-bar';
+import { DailyPlanCompact } from '@/components/gamification/daily-plan';
 
 const navItems = [
   { key: 'home', href: '/dashboard', icon: Home },
@@ -66,6 +68,16 @@ export function Sidebar() {
           <p className="text-xs text-white/50 truncate">{user.email}</p>
         </div>
       )}
+
+      {/* Gamification XP Card */}
+      <div className="px-3 pt-3">
+        <XpCardExpanded />
+      </div>
+
+      {/* Daily Plan Compact */}
+      <div className="px-3 pt-2">
+        <DailyPlanCompact className="bg-white/5 border border-white/10 [&_*]:text-white/70 [&_.text-navy-700]:text-white [&_.text-navy-500]:text-white/60 [&_.text-navy-400]:text-white/50 [&_.text-emerald-600]:text-emerald-400 [&_.text-teal-500]:text-teal-400 [&_.bg-cream-100]:bg-white/10 [&_.text-amber-400]:text-amber-300" />
+      </div>
 
       {/* Main nav */}
       <nav
