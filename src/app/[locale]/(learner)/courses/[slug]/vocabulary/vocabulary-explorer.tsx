@@ -68,10 +68,10 @@ export function VocabularyExplorer({
   }
 
   const MASTERY_BADGE: Record<MasteryLevel, { label: string; color: string; icon: typeof CheckCircle2 | typeof Eye | typeof Brain | null }> = {
-    mastered: { label: 'Maitrise', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
-    familiar: { label: 'Familier', color: 'bg-teal-50 text-teal-700 border-teal-200', icon: CheckCircle2 },
-    learning: { label: 'En cours', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: Brain },
-    seen: { label: 'Vu', color: 'bg-sky-50 text-sky-700 border-sky-200', icon: Eye },
+    mastered: { label: 'Mastered', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
+    familiar: { label: 'Familiar', color: 'bg-teal-50 text-teal-700 border-teal-200', icon: CheckCircle2 },
+    learning: { label: 'Learning', color: 'bg-amber-50 text-amber-700 border-amber-200', icon: Brain },
+    seen: { label: 'Seen', color: 'bg-sky-50 text-sky-700 border-sky-200', icon: Eye },
     unknown: { label: '', color: '', icon: null },
   };
 
@@ -226,11 +226,11 @@ export function VocabularyExplorer({
               {masteryStats.seen > 0 && <div className="bg-sky-300" style={{ width: `${(masteryStats.seen / words.length) * 100}%` }} />}
             </div>
             <div className="flex items-center gap-3 mt-1.5 text-[10px] text-navy-400 flex-wrap">
-              {masteryStats.mastered > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />{masteryStats.mastered} maitrise{masteryStats.mastered > 1 ? 's' : ''}</span>}
-              {masteryStats.familiar > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400" />{masteryStats.familiar} familier{masteryStats.familiar > 1 ? 's' : ''}</span>}
-              {masteryStats.learning > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />{masteryStats.learning} en cours</span>}
-              {masteryStats.seen > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-300" />{masteryStats.seen} vu{masteryStats.seen > 1 ? 's' : ''}</span>}
-              {masteryStats.unknown > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cream-200" />{masteryStats.unknown} pas vu{masteryStats.unknown > 1 ? 's' : ''}</span>}
+              {masteryStats.mastered > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400" />{masteryStats.mastered} mastered</span>}
+              {masteryStats.familiar > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400" />{masteryStats.familiar} familiar</span>}
+              {masteryStats.learning > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />{masteryStats.learning} learning</span>}
+              {masteryStats.seen > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-300" />{masteryStats.seen} seen</span>}
+              {masteryStats.unknown > 0 && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cream-200" />{masteryStats.unknown} not seen</span>}
             </div>
           </div>
         </div>
@@ -352,7 +352,7 @@ export function VocabularyExplorer({
                                   ? 'text-white bg-teal-500 animate-pulse'
                                   : 'text-teal-500 hover:text-teal-600 hover:bg-teal-50'
                               }`}
-                              aria-label={`Écouter ${word.simplified}`}
+                              aria-label={`Listen to ${word.simplified}`}
                             >
                               <Volume2 className="h-4 w-4" />
                             </button>
@@ -422,7 +422,7 @@ export function VocabularyExplorer({
             </p>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" className="mt-3" onClick={clearFilters}>
-                Effacer les filtres
+                Clear filters
               </Button>
             )}
           </CardContent>

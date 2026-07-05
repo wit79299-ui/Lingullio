@@ -58,21 +58,21 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
   };
 
   const hskLevels = [
-    { level: 1, label: 'HSK 1', words: 150, desc: 'Bases élémentaires' },
-    { level: 2, label: 'HSK 2', words: 150, desc: 'Communication simple' },
-    { level: 3, label: 'HSK 3', words: 300, desc: 'Conversations courantes' },
-    { level: 4, label: 'HSK 4', words: 600, desc: 'Discussions variées' },
-    { level: 5, label: 'HSK 5', words: 1300, desc: 'Lecture de journaux' },
-    { level: 6, label: 'HSK 6', words: 2500, desc: 'Expression fluide' },
-    { level: 7, label: 'HSK 7-9', words: 5000, desc: 'Niveau natif' },
+    { level: 1, label: 'HSK 1', words: 150, desc: 'Elementary basics' },
+    { level: 2, label: 'HSK 2', words: 150, desc: 'Simple communication' },
+    { level: 3, label: 'HSK 3', words: 300, desc: 'Everyday conversations' },
+    { level: 4, label: 'HSK 4', words: 600, desc: 'Varied discussions' },
+    { level: 5, label: 'HSK 5', words: 1300, desc: 'Reading newspapers' },
+    { level: 6, label: 'HSK 6', words: 2500, desc: 'Fluent expression' },
+    { level: 7, label: 'HSK 7-9', words: 5000, desc: 'Native level' },
   ];
 
   const deadlineOptions = [
-    { months: 3, label: '3 mois', intensity: 'Intensif' },
-    { months: 6, label: '6 mois', intensity: 'Soutenu' },
-    { months: 9, label: '9 mois', intensity: 'Modéré' },
-    { months: 12, label: '12 mois', intensity: 'Détendu' },
-    { months: 18, label: '18 mois', intensity: 'Tranquille' },
+    { months: 3, label: '3 months', intensity: 'Intensive' },
+    { months: 6, label: '6 months', intensity: 'Sustained' },
+    { months: 9, label: '9 months', intensity: 'Moderate' },
+    { months: 12, label: '12 months', intensity: 'Relaxed' },
+    { months: 18, label: '18 months', intensity: 'Easy-going' },
   ];
 
   return (
@@ -82,9 +82,9 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
         <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xl mx-auto mb-4">
           <Rocket className="h-8 w-8" />
         </div>
-        <h2 className="text-xl font-bold text-navy-900">Parcours Inversé</h2>
+        <h2 className="text-xl font-bold text-navy-900">Reverse Path</h2>
         <p className="text-sm text-navy-400 mt-1">
-          Déclare ton objectif, l'application calcule ta feuille de route
+          Set your goal, the app calculates your roadmap
         </p>
       </div>
 
@@ -115,10 +115,10 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
         <Card>
           <CardContent className="p-6">
             <h3 className="text-base font-bold text-navy-900 mb-1">
-              Quel est ton niveau actuel ?
+              What is your current level?
             </h3>
             <p className="text-sm text-navy-400 mb-4">
-              Sélectionne le niveau HSK que tu maîtrises déjà (même partiellement)
+              Select the HSK level you already know (even partially)
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -143,7 +143,7 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-navy-800">{hsk.label}</p>
-                    <p className="text-[11px] text-navy-400">{hsk.desc} · {hsk.words} mots</p>
+                    <p className="text-[11px] text-navy-400">{hsk.desc} · {hsk.words} words</p>
                   </div>
                 </button>
               ))}
@@ -164,15 +164,15 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                   0
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-navy-800">Débutant complet</p>
-                  <p className="text-[11px] text-navy-400">Je pars de zéro</p>
+                  <p className="text-sm font-semibold text-navy-800">Complete beginner</p>
+                  <p className="text-[11px] text-navy-400">Starting from scratch</p>
                 </div>
               </button>
             </div>
 
             <div className="flex justify-end mt-6">
               <Button onClick={() => setStep(2)} className="bg-violet-500 hover:bg-violet-600">
-                Suivant
+                Next
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
@@ -185,10 +185,10 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
         <Card>
           <CardContent className="p-6">
             <h3 className="text-base font-bold text-navy-900 mb-1">
-              Quel HSK veux-tu obtenir ?
+              Which HSK do you want to achieve?
             </h3>
             <p className="text-sm text-navy-400 mb-4">
-              Choisis ton objectif final
+              Choose your final goal
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -215,7 +215,7 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-navy-800">{hsk.label}</p>
-                      <p className="text-[11px] text-navy-400">{hsk.desc} · +{wordsNeeded} mots à apprendre</p>
+                      <p className="text-[11px] text-navy-400">{hsk.desc} · +{wordsNeeded} words to learn</p>
                     </div>
                   </button>
                 );
@@ -225,10 +225,10 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
             <div className="flex justify-between mt-6">
               <Button variant="secondary" onClick={() => setStep(1)}>
                 <ChevronLeft className="h-4 w-4 mr-1" />
-                Retour
+                Back
               </Button>
               <Button onClick={() => setStep(3)} className="bg-violet-500 hover:bg-violet-600">
-                Suivant
+                Next
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
@@ -242,10 +242,10 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
           <Card>
             <CardContent className="p-6">
               <h3 className="text-base font-bold text-navy-900 mb-1">
-                En combien de temps ?
+                How much time do you need?
               </h3>
               <p className="text-sm text-navy-400 mb-4">
-                Choisis ton échéance — l'application calcule le rythme nécessaire
+                Choose your deadline — the app calculates the necessary pace
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -270,10 +270,10 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                       <p className="text-lg font-bold text-navy-900">{opt.label}</p>
                       <p className="text-[11px] text-navy-400">{opt.intensity}</p>
                       <p className="text-[10px] mt-1 font-medium text-violet-600">
-                        ~{wpw} mots/sem
+                        ~{wpw} words/wk
                       </p>
                       {!isFeasible && (
-                        <p className="text-[10px] text-red-500 mt-0.5">Trop intense</p>
+                        <p className="text-[10px] text-red-500 mt-0.5">Too intense</p>
                       )}
                     </button>
                   );
@@ -283,7 +283,7 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
               <div className="flex justify-between mt-6">
                 <Button variant="secondary" onClick={() => setStep(2)}>
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Retour
+                  Back
                 </Button>
               </div>
             </CardContent>
@@ -294,31 +294,31 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
             <CardContent className="p-6">
               <h3 className="text-base font-bold text-navy-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-violet-500" />
-                Aperçu de ta feuille de route
+                Your roadmap preview
               </h3>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                 <SummaryCard
                   icon={Target}
-                  label="Objectif"
+                  label="Goal"
                   value={`HSK ${targetHsk}`}
                   color="violet"
                 />
                 <SummaryCard
                   icon={BookOpen}
-                  label="Mots à apprendre"
+                  label="Words to learn"
                   value={wordsToLearn.toLocaleString()}
                   color="teal"
                 />
                 <SummaryCard
                   icon={Calendar}
-                  label="Rythme"
-                  value={`${wordsPerWeek}/sem`}
+                  label="Pace"
+                  value={`${wordsPerWeek}/wk`}
                   color="amber"
                 />
                 <SummaryCard
                   icon={Clock}
-                  label="Par jour"
+                  label="Per day"
                   value={`~${dailyMinutes} min`}
                   color="blue"
                 />
@@ -329,8 +329,8 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                 <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-100 border border-amber-300 mb-4">
                   <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-800">
-                    <strong>Rythme soutenu :</strong> {wordsPerWeek} mots par semaine est ambitieux. 
-                    Assure-toi de pouvoir consacrer ~{dailyMinutes} min/jour à l'apprentissage.
+                    <strong>Sustained pace:</strong> {wordsPerWeek} words per week is ambitious. 
+                    Make sure you can dedicate ~{dailyMinutes} min/day to learning.
                   </p>
                 </div>
               )}
@@ -341,7 +341,7 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                 size="lg"
               >
                 <Rocket className="h-5 w-5 mr-2" />
-                Lancer mon Parcours Inversé
+                Launch my Reverse Path
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </CardContent>

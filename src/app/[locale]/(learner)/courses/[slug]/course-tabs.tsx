@@ -490,7 +490,7 @@ export function CourseTabs(props: CourseTabsProps) {
                         {wordChars.length > 0 && (
                           <div className="border-t border-cream-100 pt-3">
                             <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-2">
-                              {t('characterBreakdown') ?? 'Décomposition en caractères'}
+                              {t('characterBreakdown') ?? 'Character breakdown'}
                             </p>
                             <div className="flex flex-wrap gap-2">
                               {wordChars.map((ch) => (
@@ -629,7 +629,7 @@ export function CourseTabs(props: CourseTabsProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-300" />
               <input
                 type="text"
-                placeholder={t('searchCharPlaceholder') ?? 'Rechercher un caractère, pinyin...'}
+                placeholder={t('searchCharPlaceholder') ?? 'Search a character, pinyin...'}
                 value={charSearch}
                 onChange={(e) => setCharSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm text-navy-900 placeholder:text-navy-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
@@ -699,7 +699,7 @@ export function CourseTabs(props: CourseTabsProps) {
                           {c.mnemonic && (
                             <div className="bg-amber-50/60 rounded-lg p-3 mt-2">
                               <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
-                                {t('mnemonicLabel') ?? 'Astuce mémorisation'}
+                                {t('mnemonicLabel') ?? 'Memory tip'}
                               </p>
                               <p className="text-sm text-navy-700">{c.mnemonic}</p>
                             </div>

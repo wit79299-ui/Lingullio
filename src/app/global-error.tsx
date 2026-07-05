@@ -10,9 +10,9 @@ export default function GlobalError({
   return (
     <html>
       <body style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-        <h1 style={{ color: '#1a1a2e' }}>Erreur Application</h1>
+        <h1 style={{ color: '#1a1a2e' }}>Application Error</h1>
         <p style={{ color: '#666' }}>
-          {error.message || 'Une erreur inattendue est survenue.'}
+          {error.message || 'An unexpected error occurred.'}
         </p>
         <pre style={{
           background: '#f5f5f5',
@@ -37,7 +37,7 @@ export default function GlobalError({
               cursor: 'pointer',
             }}
           >
-            Réessayer
+            Retry
           </button>
           <a
             href="/login"
@@ -49,7 +49,7 @@ export default function GlobalError({
               borderRadius: '6px',
             }}
           >
-            Retour au login
+            Back to login
           </a>
         </div>
       </body>

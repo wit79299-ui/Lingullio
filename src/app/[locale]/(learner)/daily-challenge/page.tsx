@@ -12,7 +12,7 @@ export default function DailyChallengePage() {
         <Link href="/dashboard">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Retour
+            Back
           </Button>
         </Link>
       </div>

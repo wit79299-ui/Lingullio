@@ -706,13 +706,13 @@ export function MockExamRunner({ exam, locale }: Props) {
                 <div className="text-left">
                   <p className="text-sm font-medium text-navy-700">
                     {playingId === currentQuestion.id
-                      ? 'Lecture en cours...'
+                      ? 'Playing...'
                       : '\u00C9couter l\'audio'}
                   </p>
                   <p className="text-xs text-navy-400">
                     {audioData.repeat_count
                       ? `${audioData.repeat_count} \u00e9coute(s) autoris\u00e9e(s)`
-                      : `Cliquez pour ${playingId === currentQuestion.id ? 'arr\u00eater' : '\u00e9couter'}`}
+                      : `Click to ${playingId === currentQuestion.id ? 'arr\u00eater' : '\u00e9couter'}`}
                   </p>
                 </div>
                 {playingId === currentQuestion.id && (
@@ -980,7 +980,7 @@ export function MockExamRunner({ exam, locale }: Props) {
                 className="flex items-center gap-2 text-sm text-teal-600 hover:text-teal-700 font-medium"
               >
                 <Eye className="h-4 w-4" />
-                {showExplanation ? 'Masquer' : 'Voir'} l&apos;explication
+                {showExplanation ? 'Hide' : 'Show'} explanation
               </button>
               {showExplanation && currentQuestion.explanation && (
                 <div className="mt-2 p-3 rounded-lg bg-teal-50 border border-teal-200">
@@ -1041,12 +1041,12 @@ export function MockExamRunner({ exam, locale }: Props) {
           </Button>
         ) : isLastQuestion ? (
           <Button variant="primary" size="sm" onClick={handleSubmit}>
-            Terminer
+            Finish
             <CheckCircle2 className="h-4 w-4 ml-1" />
           </Button>
         ) : (
           <Button variant="primary" size="sm" onClick={goNext}>
-            Suivant
+            Next
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         )}
@@ -1055,7 +1055,7 @@ export function MockExamRunner({ exam, locale }: Props) {
       {!isReview && !isLastQuestion && (
         <div className="fixed bottom-20 right-4 lg:hidden z-30">
           <Button variant="danger" size="sm" onClick={handleSubmit} className="shadow-lg">
-            Terminer ({answeredCount}/{totalQuestions})
+            Finish ({answeredCount}/{totalQuestions})
           </Button>
         </div>
       )}
@@ -1099,16 +1099,16 @@ function IntroScreen({
         <CardContent className="pt-5">
           <h2 className="font-semibold text-navy-800 mb-4 flex items-center gap-2">
             <Target className="h-4 w-4 text-teal-500" />
-            Informations de l&apos;examen
+            Exam Information
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <InfoTile icon={<Clock className="h-5 w-5 text-navy-400" />} value={`${exam.total_duration_minutes} minutes`} label="Dur\u00e9e totale" />
-            <InfoTile icon={<Target className="h-5 w-5 text-navy-400" />} value={`${exam.total_points} points`} label="Score max" />
+            <InfoTile icon={<Target className="h-5 w-5 text-navy-400" />} value={`${exam.total_points} points`} label="Max Score" />
             <InfoTile icon={<Award className="h-5 w-5 text-gold-500" />} value={`${exam.scoring.pass_threshold} points`} label="Seuil de r\u00e9ussite" />
             <InfoTile
               icon={<BarChart3 className="h-5 w-5 text-navy-400" />}
               value={`${exam.sections.reduce((sum, s) => sum + s.questions.length, 0)} questions`}
-              label="Au total"
+              label="Total"
             />
           </div>
         </CardContent>
@@ -1164,7 +1164,7 @@ function IntroScreen({
       <div className="text-center pb-8">
         <Button variant="primary" size="xl" onClick={onStart} className="px-12">
           <Play className="h-5 w-5 mr-2" />
-          Commencer l&apos;examen
+          Start the exam
         </Button>
       </div>
     </div>
@@ -1315,10 +1315,10 @@ function ResultsScreen({
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bands = [
-    { min: 0, max: 39, label: 'Non acquis', color: 'text-red-600', bg: 'bg-red-50' },
+    { min: 0, max: 39, label: 'Not acquired', color: 'text-red-600', bg: 'bg-red-50' },
     { min: 40, max: 59, label: 'Presque pr\u00eat', color: 'text-amber-600', bg: 'bg-amber-50' },
     { min: 60, max: 74, label: 'R\u00e9ussite fragile', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { min: 75, max: 89, label: 'Bon niveau', color: 'text-teal-600', bg: 'bg-teal-50' },
+    { min: 75, max: 89, label: 'Good level', color: 'text-teal-600', bg: 'bg-teal-50' },
     { min: 90, max: 100, label: 'Tr\u00e8s solide', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
   const band = bands.find((b) => percent >= b.min && percent <= b.max) ?? bands[0];
@@ -1345,7 +1345,7 @@ function ResultsScreen({
           <span className="text-3xl font-bold">{results.passed ? '\uD83C\uDF89' : '\uD83D\uDCAA'}</span>
         </div>
         <h1 className="text-2xl font-bold text-navy-900 mb-1">
-          {results.passed ? 'F\u00e9licitations !' : 'Continue tes efforts !'}
+          {results.passed ? 'F\u00e9licitations !' : 'Keep up the effort!'}
         </h1>
         <p className="text-navy-400">{exam.title}</p>
         {/* XP earned floating badge */}
@@ -1511,11 +1511,11 @@ function ResultsScreen({
         </Button>
         <Button variant="secondary" size="lg" onClick={onRetry} className="w-full sm:w-auto">
           <RotateCcw className="h-4 w-4 mr-2" />
-          Recommencer
+          Retry
         </Button>
         <Button variant="ghost" size="lg" onClick={onHome} className="w-full sm:w-auto">
           <Home className="h-4 w-4 mr-2" />
-          Retour
+          Back
         </Button>
       </div>
     </div>

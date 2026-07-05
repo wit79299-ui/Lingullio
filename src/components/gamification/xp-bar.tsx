@@ -64,7 +64,7 @@ export function XpCardExpanded({ className }: { className?: string }) {
           </div>
           <div>
             <p className="text-sm font-bold">{levelInfo.title}</p>
-            <p className="text-[11px] text-white/60">Niveau {level}</p>
+            <p className="text-[11px] text-white/60">Level {level}</p>
           </div>
         </div>
 
@@ -74,7 +74,7 @@ export function XpCardExpanded({ className }: { className?: string }) {
             <Flame className="h-4 w-4 text-orange-400" />
             <span className="text-lg font-bold">{streak_days}</span>
           </div>
-          <p className="text-[10px] text-white/50">jours</p>
+          <p className="text-[10px] text-white/50">days</p>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export function XpCardExpanded({ className }: { className?: string }) {
       {/* Daily stats */}
       {daily_xp > 0 && (
         <p className="text-[10px] text-white/40 mt-2 text-center">
-          +{daily_xp} XP aujourd&apos;hui
+          +{daily_xp} XP today
         </p>
       )}
     </div>

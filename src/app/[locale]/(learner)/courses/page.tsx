@@ -68,13 +68,13 @@ export default async function CoursesPage({ params }: Props) {
               <Target className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold mb-1">Découvre ton niveau de chinois</h2>
+              <h2 className="text-lg font-bold mb-1">Discover your Chinese level</h2>
               <p className="text-sm text-white/80">
-                Test de positionnement adaptatif · ~16 min · Plan personnalisé offert
+                Adaptive placement test · ~16 min · Free personalized plan
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-1 text-sm font-medium text-white/90 group-hover:text-white shrink-0">
-              Passer le test
+              Take the test
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>

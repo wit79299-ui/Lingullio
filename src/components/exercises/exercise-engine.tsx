@@ -431,9 +431,9 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
               </div>
               <div className="bg-cream-25 rounded-xl p-3">
                 <p className={cn('text-lg font-bold', results.passed ? 'text-emerald-600' : 'text-red-500')}>
-                  {results.passed ? 'Admis' : `${120 - results.hskScore} pts manquants`}
+                  {results.passed ? 'Passed' : `${120 - results.hskScore} pts needed`}
                 </p>
-                <p className="text-xs text-navy-400">{results.passed ? 'Statut' : 'Pour reussir'}</p>
+                <p className="text-xs text-navy-400">{results.passed ? 'Status' : 'To pass'}</p>
               </div>
             </div>
 
@@ -560,7 +560,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
             )}
 
             <Button onClick={nextExercise} variant="teal" size="lg" className="w-full">
-              {answeredCount >= exercises.length ? 'Voir les resultats' : 'Question suivante'}
+              {answeredCount >= exercises.length ? 'See results' : 'Next question'}
               <ChevronRight className="h-4 w-4" />
             </Button>
           </CardContent>
@@ -681,7 +681,7 @@ function AnswerReview({ answers, exercises }: { answers: ExerciseAnswer[]; exerc
         <span className="text-xs font-semibold text-navy-500 uppercase tracking-wider">
           Revue des reponses ({answers.filter(a => a.isCorrect).length}/{answers.length} correctes)
         </span>
-        <span className="text-xs text-navy-400">{expanded ? 'Masquer' : 'Afficher'}</span>
+        <span className="text-xs text-navy-400">{expanded ? 'Hide' : 'Show'}</span>
       </button>
       {expanded && (
         <div className="space-y-2 mt-3 max-h-80 overflow-y-auto">
@@ -779,7 +779,7 @@ function HintToggle({ hint }: { hint: string | null | undefined }) {
       className="flex items-center gap-1.5 text-xs text-sky-500 hover:text-sky-600 transition-colors"
     >
       {show ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      {show ? hint : "Afficher l'indice"}
+      {show ? hint : "Show hint"}
     </button>
   );
 }
@@ -945,7 +945,7 @@ function DictationRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
 
   return (
     <div className="space-y-4">
-      <p className="text-lg font-medium text-navy-900 leading-relaxed">{exercise.prompt || 'Ecoutez et ecrivez ce que vous entendez'}</p>
+      <p className="text-lg font-medium text-navy-900 leading-relaxed">{exercise.prompt || 'Listen and write what you hear'}</p>
 
       <button
         type="button"
@@ -959,8 +959,8 @@ function DictationRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
       >
         <Volume2 className={cn('h-7 w-7', playingId === `dictation-${exercise.id}` && 'animate-pulse')} />
         <div className="text-left">
-          <span className="font-medium block">{playingId === `dictation-${exercise.id}` ? 'Lecture en cours...' : 'Ecouter l\'audio'}</span>
-          <span className="text-xs opacity-60">Ecoute {playCount > 0 ? `(${playCount}x)` : ''}</span>
+          <span className="font-medium block">{playingId === `dictation-${exercise.id}` ? 'Playing...' : 'Ecouter l\'audio'}</span>
+          <span className="text-xs opacity-60">Listen {playCount > 0 ? `(${playCount}x)` : ''}</span>
         </div>
       </button>
 
@@ -1003,7 +1003,7 @@ function TranslationRenderer({ exercise, meta, onSubmit }: {
 
   return (
     <div className="space-y-4">
-      <p className="text-lg font-medium text-navy-900 leading-relaxed">{exercise.prompt || 'Traduisez la phrase suivante'}</p>
+      <p className="text-lg font-medium text-navy-900 leading-relaxed">{exercise.prompt || 'Translate the following sentence'}</p>
 
       {sourceText && (
         <div className="bg-cream-25 rounded-xl p-4 border border-cream-100">
@@ -1349,7 +1349,7 @@ function ListeningRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
   return (
     <div className="space-y-4">
       <p className="text-lg font-medium text-navy-900 leading-relaxed">
-        {exercise.prompt?.replace(/^\[Audio\]\s*/i, '') || 'Ecoutez et choisissez la bonne reponse'}
+        {exercise.prompt?.replace(/^\[Audio\]\s*/i, '') || 'Listen and choose the correct answer'}
       </p>
 
       {/* Audio play button */}
@@ -1364,7 +1364,7 @@ function ListeningRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
         )}
       >
         <Volume2 className={cn('h-7 w-7', isPlaying && 'animate-pulse')} />
-        <span className="font-medium">{isPlaying ? 'Lecture en cours...' : 'Ecouter l\'audio'}</span>
+        <span className="font-medium">{isPlaying ? 'Playing...' : 'Ecouter l\'audio'}</span>
       </button>
 
       {/* Options */}

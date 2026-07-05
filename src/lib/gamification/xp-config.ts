@@ -48,14 +48,14 @@ export const MAX_LEVEL = 50;
 
 // Level titles
 export function levelTitle(level: number): string {
-  if (level <= 3) return 'Debutant';
-  if (level <= 7) return 'Apprenti';
-  if (level <= 12) return 'Intermediaire';
-  if (level <= 18) return 'Avance';
+  if (level <= 3) return 'Beginner';
+  if (level <= 7) return 'Apprentice';
+  if (level <= 12) return 'Intermediate';
+  if (level <= 18) return 'Advanced';
   if (level <= 25) return 'Expert';
-  if (level <= 35) return 'Maitre';
-  if (level <= 45) return 'Grand Maitre';
-  return 'Legendaire';
+  if (level <= 35) return 'Master';
+  if (level <= 45) return 'Grand Master';
+  return 'Legendary';
 }
 
 // Streak milestones for special rewards

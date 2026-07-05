@@ -17,10 +17,10 @@ export default function DashboardError({
     <div className="min-h-[50vh] flex items-center justify-center">
       <div className="text-center max-w-md mx-auto px-4">
         <h2 className="text-xl font-bold text-navy-900 mb-2">
-          Une erreur est survenue
+          An error occurred
         </h2>
         <p className="text-sm text-navy-400 mb-4">
-          {error.message || 'Erreur inattendue lors du chargement du dashboard.'}
+          {error.message || 'Unexpected error loading the dashboard.'}
         </p>
         <pre className="text-xs text-left bg-cream-50 border border-cream-200 rounded-lg p-3 mb-4 overflow-auto max-h-40">
           {error.stack || error.message}
@@ -29,7 +29,7 @@ export default function DashboardError({
           onClick={reset}
           className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
         >
-          Réessayer
+          Retry
         </button>
       </div>
     </div>

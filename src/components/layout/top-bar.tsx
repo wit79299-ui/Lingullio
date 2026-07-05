@@ -1,7 +1,6 @@
 'use client';
 
 import { Bell } from 'lucide-react';
-import { LanguageSwitcher } from './language-switcher';
 import { XpBarCompact } from '@/components/gamification/xp-bar';
 
 export function TopBar() {
@@ -14,7 +13,6 @@ export function TopBar() {
       />
       <div className="flex items-center gap-2">
         <XpBarCompact />
-        <LanguageSwitcher />
         <button
           type="button"
           className="relative flex items-center justify-center w-10 h-10 rounded-full text-navy-700 hover:bg-cream-50 transition-colors touch-target"

@@ -167,7 +167,7 @@ function generateDailyPlan(state: {
       xpEstimate: 40,
       durationMinutes: 10,
       priority: 3,
-      reason: `Precision actuelle : ${accuracy}%. Objectif : 80%+`,
+      reason: `Current accuracy: ${accuracy}%. Target: 80%+`,
     });
   }
 
@@ -272,7 +272,7 @@ export function DailyPlan({ className }: { className?: string }) {
           <AlertCircle className="h-5 w-5 text-blue-500 shrink-0" />
           <div className="flex-1">
             <p className="text-xs font-semibold text-blue-700">
-              {reviewSummary.due_count} mot{reviewSummary.due_count > 1 ? 's' : ''} a revoir
+              {reviewSummary.due_count} word{reviewSummary.due_count > 1 ? 's' : ''} to review
             </p>
             <p className="text-[10px] text-blue-600">
               {reviewSummary.urgent_items.slice(0, 3).map(w => w.display).join(' · ')}
@@ -395,14 +395,14 @@ export function DailyPlanCompact({ className }: { className?: string }) {
             />
           </div>
           <p className="text-[10px] text-navy-400 text-center">
-            {daily_xp_compact >= 100 ? 'Objectif atteint !' : `${100 - daily_xp_compact} XP pour l'objectif`}
+            {daily_xp_compact >= 100 ? 'Goal reached!' : `${100 - daily_xp_compact} XP to goal`}
           </p>
         </div>
       ) : (
         <Link href="/courses">
           <div className="flex items-center gap-2 text-[11px] text-navy-500 hover:text-teal-600 transition-colors cursor-pointer">
             <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span>Commencez votre session du jour</span>
+            <span>Start your daily session</span>
             <ChevronRight className="h-3 w-3 ml-auto" />
           </div>
         </Link>

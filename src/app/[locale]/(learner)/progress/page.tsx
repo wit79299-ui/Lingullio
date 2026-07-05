@@ -35,10 +35,10 @@ export default function ProgressPage() {
       <header>
         <h1 className="text-2xl font-bold text-navy-900 flex items-center gap-2">
           <TrendingUp className="h-6 w-6 text-teal-500" />
-          Ma progression
+          My progress
         </h1>
         <p className="text-sm text-navy-400 mt-1">
-          Suivez votre evolution dans le temps
+          Track your progress over time
         </p>
       </header>
 
@@ -59,14 +59,14 @@ export default function ProgressPage() {
         />
         <StatCard
           icon={Flame}
-          label="Serie"
+          label="Streak"
           value={`${streak_days}j`}
-          subtitle={`Record: ${longest_streak}j`}
+          subtitle={`Best: ${longest_streak}d`}
           color="orange"
         />
         <StatCard
           icon={Target}
-          label="Precision"
+          label="Accuracy"
           value={`${accuracy}%`}
           subtitle={`${total_correct}/${total_exercises}`}
           color="blue"
@@ -79,7 +79,7 @@ export default function ProgressPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-teal-500" />
-              Calendrier d&apos;activite
+              Activity calendar
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -92,7 +92,7 @@ export default function ProgressPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-teal-500" />
-              Progression XP (30 derniers jours)
+              XP Progress (last 30 days)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -106,7 +106,7 @@ export default function ProgressPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-500" />
-            Progression de niveau
+            Level progression
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -119,7 +119,7 @@ export default function ProgressPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-4 w-4 text-purple-500" />
-            Collection de badges ({badges_unlocked.length}/{BADGES.length})
+            Badge collection ({badges_unlocked.length}/{BADGES.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -135,19 +135,19 @@ export default function ProgressPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-4 w-4 text-teal-500" />
-            Statistiques detaillees
+            Detailed statistics
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <DetailStat label="Exercices faits" value={total_exercises} icon="📝" />
-            <DetailStat label="Reponses correctes" value={total_correct} icon="✅" />
-            <DetailStat label="Sessions parfaites" value={perfect_sessions} icon="✨" />
-            <DetailStat label="Temps d'etude" value={`${Math.floor(total_study_minutes / 60)}h${(total_study_minutes % 60).toString().padStart(2, '0')}`} icon="⏱️" />
-            <DetailStat label="Jours actifs" value={new Set(sessions_history.map(s => s.date)).size} icon="📅" />
-            <DetailStat label="Serie actuelle" value={`${streak_days} jours`} icon="🔥" />
-            <DetailStat label="Plus longue serie" value={`${longest_streak} jours`} icon="🏆" />
-            <DetailStat label="Badges debloques" value={badges_unlocked.length} icon="🏅" />
+            <DetailStat label="Exercises done" value={total_exercises} icon="📝" />
+            <DetailStat label="Correct answers" value={total_correct} icon="✅" />
+            <DetailStat label="Perfect sessions" value={perfect_sessions} icon="✨" />
+            <DetailStat label="Study time" value={`${Math.floor(total_study_minutes / 60)}h${(total_study_minutes % 60).toString().padStart(2, '0')}`} icon="⏱️" />
+            <DetailStat label="Active days" value={new Set(sessions_history.map(s => s.date)).size} icon="📅" />
+            <DetailStat label="Current streak" value={`${streak_days} days`} icon="🔥" />
+            <DetailStat label="Longest streak" value={`${longest_streak} days`} icon="🏆" />
+            <DetailStat label="Badges unlocked" value={badges_unlocked.length} icon="🏅" />
           </div>
         </CardContent>
       </Card>
@@ -255,13 +255,13 @@ function ActivityCalendar({ sessions }: { sessions: SessionHistoryEntry[] }) {
         </div>
       ))}
       <div className="flex items-center justify-center gap-2 mt-2">
-        <span className="text-[9px] text-navy-400">Moins</span>
+        <span className="text-[9px] text-navy-400">Less</span>
         {[0, 1, 2, 3, 4].map(i => (
           <div key={i} className={cn('w-3 h-3 rounded-sm', [
             'bg-cream-100', 'bg-emerald-200', 'bg-emerald-300', 'bg-emerald-400', 'bg-emerald-500'
           ][i])} />
         ))}
-        <span className="text-[9px] text-navy-400">Plus</span>
+        <span className="text-[9px] text-navy-400">More</span>
       </div>
     </div>
   );
@@ -310,13 +310,13 @@ function XpChart({ sessions }: { sessions: SessionHistoryEntry[] }) {
         })}
       </div>
       <div className="flex justify-between text-[9px] text-navy-400 mb-3">
-        <span>Il y a 30j</span>
-        <span>Aujourd&apos;hui</span>
+        <span>30 days ago</span>
+        <span>Today</span>
       </div>
       <div className="flex gap-4 text-xs">
-        <span className="text-navy-500"><strong className="text-navy-900">{totalXp}</strong> XP sur 30j</span>
-        <span className="text-navy-500"><strong className="text-navy-900">{activeDays}</strong> jours actifs</span>
-        <span className="text-navy-500"><strong className="text-navy-900">{activeDays > 0 ? Math.round(totalXp / activeDays) : 0}</strong> XP/jour actif</span>
+        <span className="text-navy-500"><strong className="text-navy-900">{totalXp}</strong> XP in 30d</span>
+        <span className="text-navy-500"><strong className="text-navy-900">{activeDays}</strong> active days</span>
+        <span className="text-navy-500"><strong className="text-navy-900">{activeDays > 0 ? Math.round(totalXp / activeDays) : 0}</strong> XP/active day</span>
       </div>
     </div>
   );
@@ -379,11 +379,11 @@ function BadgeGallery({ unlocked }: { unlocked: string[] }) {
   const unlockedSet = new Set(unlocked);
 
   const categories = [
-    { key: 'streak', label: 'Series', icon: '🔥' },
-    { key: 'practice', label: 'Pratique', icon: '📝' },
-    { key: 'mastery', label: 'Maitrise', icon: '🎓' },
-    { key: 'exam', label: 'Examens', icon: '📋' },
-    { key: 'milestone', label: 'Jalons', icon: '⭐' },
+    { key: 'streak', label: 'Streaks', icon: '🔥' },
+    { key: 'practice', label: 'Practice', icon: '📝' },
+    { key: 'mastery', label: 'Mastery', icon: '🎓' },
+    { key: 'exam', label: 'Exams', icon: '📋' },
+    { key: 'milestone', label: 'Milestones', icon: '⭐' },
   ];
 
   return (
@@ -463,10 +463,10 @@ function KnowledgeMapSection() {
       <Card className="border-dashed border-2 border-cream-200">
         <CardContent className="pt-5 text-center py-10">
           <Brain className="h-10 w-10 text-navy-200 mx-auto mb-3" />
-          <p className="text-sm font-medium text-navy-500">Memoire Vivante</p>
+          <p className="text-sm font-medium text-navy-500">Living Memory</p>
           <p className="text-xs text-navy-400 mt-1 max-w-xs mx-auto">
-            Commencez des exercices pour remplir votre carte de connaissances.
-            Chaque mot appris sera suivi ici.
+            Start exercises to fill your knowledge map.
+            Every word learned will be tracked here.
           </p>
         </CardContent>
       </Card>
@@ -474,11 +474,11 @@ function KnowledgeMapSection() {
   }
 
   const masteryColors: Record<MasteryLevel, { bg: string; text: string; label: string }> = {
-    mastered: { bg: 'bg-emerald-400', text: 'text-emerald-700', label: 'Maitrise' },
-    familiar: { bg: 'bg-teal-400', text: 'text-teal-700', label: 'Familier' },
-    learning: { bg: 'bg-amber-400', text: 'text-amber-700', label: 'En cours' },
-    seen: { bg: 'bg-cream-300', text: 'text-navy-500', label: 'Vu' },
-    unknown: { bg: 'bg-cream-100', text: 'text-navy-300', label: 'Inconnu' },
+    mastered: { bg: 'bg-emerald-400', text: 'text-emerald-700', label: 'Mastered' },
+    familiar: { bg: 'bg-teal-400', text: 'text-teal-700', label: 'Familiar' },
+    learning: { bg: 'bg-amber-400', text: 'text-amber-700', label: 'Learning' },
+    seen: { bg: 'bg-cream-300', text: 'text-navy-500', label: 'Seen' },
+    unknown: { bg: 'bg-cream-100', text: 'text-navy-300', label: 'Unknown' },
   };
 
   const totalSeen = stats.by_mastery.mastered + stats.by_mastery.familiar + stats.by_mastery.learning + stats.by_mastery.seen;
@@ -490,15 +490,15 @@ function KnowledgeMapSection() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-4 w-4 text-teal-500" />
-            Memoire Vivante
+            Living Memory
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Mastery bar */}
           <div>
             <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-navy-500">{totalSeen} elements rencontres</span>
-              <span className="font-bold text-emerald-600">{stats.by_mastery.mastered} maitrises</span>
+              <span className="text-navy-500">{totalSeen} items encountered</span>
+              <span className="font-bold text-emerald-600">{stats.by_mastery.mastered} mastered</span>
             </div>
             <div className="h-5 bg-cream-100 rounded-full overflow-hidden flex">
               {(['mastered', 'familiar', 'learning', 'seen'] as MasteryLevel[]).map((level) => {
@@ -534,7 +534,7 @@ function KnowledgeMapSection() {
             {(['vocabulary', 'character', 'grammar'] as ContentItemType[]).map((type) => {
               const count = stats.by_type[type];
               const icons = { vocabulary: '📝', character: '字', grammar: '📐' };
-              const labels = { vocabulary: 'Vocabulaire', character: 'Caracteres', grammar: 'Grammaire' };
+              const labels = { vocabulary: 'Vocabulary', character: 'Characters', grammar: 'Grammar' };
               return (
                 <div key={type} className="bg-cream-25 rounded-xl p-3 border border-cream-100 text-center">
                   <span className="text-lg">{icons[type]}</span>
@@ -547,7 +547,7 @@ function KnowledgeMapSection() {
 
           {/* HSK Heatmap */}
           <div>
-            <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">Maitrise par niveau HSK</p>
+            <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">Mastery by HSK level</p>
             <div className="space-y-2">
               {Object.entries(stats.by_hsk)
                 .sort(([a], [b]) => parseInt(a) - parseInt(b))
@@ -560,7 +560,7 @@ function KnowledgeMapSection() {
                       <div className="flex items-center justify-between text-xs mb-1">
                         <span className="font-medium text-navy-700">HSK {hsk}</span>
                         <span className="text-navy-400">
-                          {data.mastered}/{totalForHsk} maitrises ({masteredPct}%)
+                          {data.mastered}/{totalForHsk} mastered ({masteredPct}%)
                         </span>
                       </div>
                       <div className="h-2.5 bg-cream-100 rounded-full overflow-hidden flex">
@@ -585,9 +585,9 @@ function KnowledgeMapSection() {
               <AlertTriangle className="h-4 w-4 text-blue-500 shrink-0" />
               <div className="flex-1">
                 <p className="text-xs font-semibold text-blue-700">
-                  {stats.due_for_review} element{stats.due_for_review > 1 ? 's' : ''} a revoir
+                  {stats.due_for_review} item{stats.due_for_review > 1 ? 's' : ''} to review
                 </p>
-                <p className="text-[10px] text-blue-600">La revision SRS optimise la memorisation a long terme</p>
+                <p className="text-[10px] text-blue-600">SRS review optimizes long-term memorization</p>
               </div>
             </div>
           )}
@@ -600,7 +600,7 @@ function KnowledgeMapSection() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-500" />
-              Points faibles ({weakest.length})
+              Weak points ({weakest.length})
             </CardTitle>
           </CardHeader>
           <CardContent>

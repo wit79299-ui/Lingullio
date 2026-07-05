@@ -75,32 +75,32 @@ export function SettingsView() {
     {
       id: 'reset_knowledge',
       icon: Brain,
-      title: 'Reinitialiser la Memoire Vivante',
-      description: `Supprimer les ${knowledgeStats.total_items} mots enregistres, les niveaux de maitrise et la file de revision SRS.`,
+      title: 'Reset Living Memory',
+      description: `Delete ${knowledgeStats.total_items} recorded words, mastery levels and SRS review queue.`,
       danger: true,
       onConfirm: () => knowledgeReset(),
     },
     {
       id: 'reset_gamification',
       icon: Gauge,
-      title: 'Reinitialiser XP et badges',
-      description: `Remettre a zero les ${gamification_total_xp} XP, le niveau ${gamification_level}, la serie de ${gamification_streak_days} jours et tous les badges.`,
+      title: 'Reset XP & badges',
+      description: `Reset ${gamification_total_xp} XP, level ${gamification_level}, ${gamification_streak_days}-day streak and all badges.`,
       danger: true,
       onConfirm: () => gamificationReset(),
     },
     {
       id: 'reset_training',
       icon: RotateCcw,
-      title: 'Reinitialiser les modes d\'entrainement',
-      description: 'Quitter le Parcours Inverse ou le Coach Autonome et revenir au mode standard.',
+      title: 'Reset training modes',
+      description: 'Exit Reverse Path or Auto Coach and return to standard mode.',
       danger: false,
       onConfirm: () => trainingReset(),
     },
     {
       id: 'reset_placement',
       icon: AlertTriangle,
-      title: 'Effacer le resultat du test de placement',
-      description: 'Supprimer le resultat du test de placement pour pouvoir le repasser.',
+      title: 'Clear placement test result',
+      description: 'Delete placement test result to retake it.',
       danger: true,
       onConfirm: () => {
         try { localStorage.removeItem('lingullio_placement_result'); } catch {}
@@ -109,8 +109,8 @@ export function SettingsView() {
     {
       id: 'reset_all',
       icon: Trash2,
-      title: 'Reinitialisation complete',
-      description: 'Tout effacer : Memoire Vivante, XP, badges, modes, preferences. Retour a l\'etat initial.',
+      title: 'Full reset',
+      description: 'Erase everything: Living Memory, XP, badges, modes, preferences. Back to initial state.',
       danger: true,
       onConfirm: () => {
         knowledgeReset();
@@ -137,7 +137,7 @@ export function SettingsView() {
           {t('settings')}
         </h1>
         <p className="text-navy-400 mt-2 ml-[52px]">
-          Gerez vos preferences, donnees et compte
+          Manage your preferences, data and account
         </p>
       </header>
 
@@ -146,15 +146,15 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <BookOpen className="h-4 w-4 text-teal-500" />
-            Preferences d&apos;apprentissage
+            Learning preferences
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Audio auto-play */}
           <ToggleRow
             icon={preferences.autoPlayAudio ? Volume2 : VolumeX}
-            title="Lecture audio automatique"
-            description="Lire automatiquement l'audio quand une carte est affichee"
+            title="Auto audio playback"
+            description="Automatically play audio when a card is displayed"
             checked={preferences.autoPlayAudio}
             onChange={(v) => updatePreference('autoPlayAudio', v)}
           />
@@ -162,8 +162,8 @@ export function SettingsView() {
           {/* Show pinyin */}
           <ToggleRow
             icon={Eye}
-            title="Afficher le pinyin"
-            description="Montrer les transcriptions pinyin sous les caracteres"
+            title="Show pinyin"
+            description="Show pinyin transcriptions under characters"
             checked={preferences.showPinyin}
             onChange={(v) => updatePreference('showPinyin', v)}
           />
@@ -175,8 +175,8 @@ export function SettingsView() {
                 <Gauge className="h-4 w-4 text-teal-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-navy-900">Objectif quotidien</p>
-                <p className="text-xs text-navy-400">Nombre d&apos;exercices par jour</p>
+                <p className="text-sm font-medium text-navy-900">Daily goal</p>
+                <p className="text-xs text-navy-400">Number of exercises per day</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -210,15 +210,15 @@ export function SettingsView() {
         <CardContent className="space-y-1">
           <InfoRow
             icon={Globe}
-            title="Langue de l'interface"
-            value="Francais"
-            note="Geree automatiquement par votre navigateur"
+            title="Interface language"
+            value="English"
+            note="Automatically managed by your browser"
           />
           <InfoRow
             icon={Shield}
             title="Mode"
-            value="Demo (donnees locales)"
-            note="Vos donnees sont sauvegardees dans votre navigateur"
+            value="Production"
+            note="Your data is stored securely"
           />
         </CardContent>
       </Card>
@@ -228,7 +228,7 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Trash2 className="h-4 w-4 text-red-400" />
-            Donnees et reinitialisation
+            Data & reset
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
@@ -276,10 +276,10 @@ export function SettingsView() {
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50">
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               </div>
-              <h3 className="text-lg font-semibold text-navy-900">Confirmer</h3>
+              <h3 className="text-lg font-semibold text-navy-900">Confirm</h3>
             </div>
             <p className="text-sm text-navy-600">{confirmAction.description}</p>
-            <p className="text-xs text-red-500 font-medium">Cette action est irreversible.</p>
+            <p className="text-xs text-red-500 font-medium">This action is irreversible.</p>
             <div className="flex gap-3 pt-2">
               <Button
                 variant="secondary"
@@ -287,7 +287,7 @@ export function SettingsView() {
                 className="flex-1"
                 onClick={() => setConfirmAction(null)}
               >
-                Annuler
+                Cancel
               </Button>
               <Button
                 variant="danger"
@@ -295,7 +295,7 @@ export function SettingsView() {
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                 onClick={handleConfirm}
               >
-                Confirmer
+                Confirm
               </Button>
             </div>
           </div>

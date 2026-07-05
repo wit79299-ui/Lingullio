@@ -134,7 +134,7 @@ export function ObjectivesView() {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50">
               <Target className="h-5 w-5 text-navy-700" />
             </div>
-            {objective ? 'Modifier mon objectif' : 'Definir mon objectif'}
+            {objective ? 'Edit mon objectif' : 'Definir mon objectif'}
           </h1>
           <p className="text-navy-400 mt-2 ml-[52px]">
             {objective ? 'Ajustez votre plan de preparation' : 'Definissez votre examen cible et Lingullio adaptera votre parcours'}
@@ -222,12 +222,12 @@ export function ObjectivesView() {
             <div className="flex gap-3 pt-2">
               {objective && (
                 <Button variant="secondary" size="sm" className="flex-1" onClick={() => setIsEditing(false)}>
-                  Annuler
+                  Cancel
                 </Button>
               )}
               <Button variant="teal" size="sm" className="flex-1" onClick={handleSave}>
                 <Check className="h-4 w-4 mr-1" />
-                {objective ? 'Enregistrer' : 'Definir mon objectif'}
+                {objective ? 'Save' : 'Set my objective'}
               </Button>
             </div>
           </CardContent>
@@ -245,11 +245,11 @@ export function ObjectivesView() {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50">
               <Target className="h-5 w-5 text-navy-700" />
             </div>
-            Mon objectif
+            My objective
           </h1>
         </div>
         <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)}>
-          Modifier
+          Edit
         </Button>
       </header>
 
@@ -262,15 +262,15 @@ export function ObjectivesView() {
               <p className="text-3xl font-black">{HSK_LABELS[objective.targetExam]}</p>
             </div>
             <div className="text-right">
-              <p className="text-white/60 text-xs uppercase tracking-wider">Jour J</p>
-              <p className="text-2xl font-bold">{analysis!.daysLeft}<span className="text-sm font-normal text-white/60"> jours</span></p>
+              <p className="text-white/60 text-xs uppercase tracking-wider">Exam day</p>
+              <p className="text-2xl font-bold">{analysis!.daysLeft}<span className="text-sm font-normal text-white/60"> days</span></p>
             </div>
           </div>
 
           {/* Readiness gauge */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-[11px] text-white/60">
-              <span>Pret a {objective.targetScore}%</span>
+              <span>Ready at {objective.targetScore}%</span>
               <span>{analysis!.readiness}%</span>
             </div>
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
@@ -290,10 +290,10 @@ export function ObjectivesView() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard icon={BookOpen} label="Vocabulaire" value={`${analysis!.masteredCount}/${analysis!.targetVocab}`} sub={`${analysis!.vocabProgress}%`} color="teal" />
-        <StatCard icon={Calendar} label="Semaines restantes" value={String(analysis!.weeksLeft)} sub={`${analysis!.daysLeft}j`} color="blue" />
-        <StatCard icon={TrendingUp} label="Mots/semaine" value={String(analysis!.wordsPerWeek)} sub="rythme necessaire" color="amber" />
-        <StatCard icon={Clock} label="Minutes/jour" value={String(analysis!.minutesPerDay)} sub={`${objective.weeklyHours}h/sem`} color="purple" />
+        <StatCard icon={BookOpen} label="Vocabulary" value={`${analysis!.masteredCount}/${analysis!.targetVocab}`} sub={`${analysis!.vocabProgress}%`} color="teal" />
+        <StatCard icon={Calendar} label="Weeks remaining" value={String(analysis!.weeksLeft)} sub={`${analysis!.daysLeft}j`} color="blue" />
+        <StatCard icon={TrendingUp} label="Words/week" value={String(analysis!.wordsPerWeek)} sub="required pace" color="amber" />
+        <StatCard icon={Clock} label="Minutes/day" value={String(analysis!.minutesPerDay)} sub={`${objective.weeklyHours}h/sem`} color="purple" />
       </div>
 
       {/* Vocabulary progress */}
@@ -301,7 +301,7 @@ export function ObjectivesView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Brain className="h-4 w-4 text-teal-500" />
-            Progression vocabulaire {HSK_LABELS[objective.targetExam]}
+            Vocabulary progress {HSK_LABELS[objective.targetExam]}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -317,7 +317,7 @@ export function ObjectivesView() {
                 <div key={level}>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium text-navy-700">HSK {level}</span>
-                    <span className="text-navy-400">{mastered}/{target} maitrises ({pct}%)</span>
+                    <span className="text-navy-400">{mastered}/{target} mastered ({pct}%)</span>
                   </div>
                   <div className="flex h-2 rounded-full overflow-hidden bg-cream-100">
                     {mastered > 0 && <div className="bg-emerald-400" style={{ width: `${(mastered / target) * 100}%` }} />}
@@ -335,35 +335,35 @@ export function ObjectivesView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-teal-500" />
-            Plan d&apos;action
+            Action plan
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <PlanItem
             icon={BookOpen}
-            title="Etudier le vocabulaire"
-            description={`Apprendre ${analysis!.wordsPerWeek} nouveaux mots par semaine`}
+            title="Study vocabulary"
+            description={`Learn ${analysis!.wordsPerWeek} new words per week`}
             href="/courses"
             urgent={analysis!.vocabProgress < 50}
           />
           <PlanItem
             icon={Brain}
-            title="Revisions SRS quotidiennes"
-            description={`${knowledgeStats.due_for_review} mots a reviser maintenant`}
+            title="Daily SRS review"
+            description={`${knowledgeStats.due_for_review} words to review now`}
             href="/revisions"
             urgent={knowledgeStats.due_for_review > 10}
           />
           <PlanItem
             icon={Trophy}
-            title="Examens blancs"
-            description="Tester ses connaissances en conditions reelles"
+            title="Mock exams"
+            description="Test your knowledge in real exam conditions"
             href="/mock-exams"
             urgent={false}
           />
           <PlanItem
             icon={Flame}
-            title="Maintenir la serie"
-            description={`Serie actuelle : ${gamification_streak_days} jours`}
+            title="Maintain streak"
+            description={`Current streak: ${gamification_streak_days} days`}
             href="/daily-challenge"
             urgent={gamification_streak_days === 0}
           />

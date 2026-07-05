@@ -46,10 +46,10 @@ export default async function MockExamsPage({ params }: Props) {
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-navy-50">
             <FileText className="h-5 w-5 text-navy-700" />
           </div>
-          Examens blancs
+          Mock Exams
         </h1>
         <p className="text-navy-400 mt-2 ml-[52px]">
-          Entraîne-toi dans les conditions réelles de l&apos;examen HSK
+          Practice under real HSK exam conditions
         </p>
       </header>
 
@@ -60,11 +60,11 @@ export default async function MockExamsPage({ params }: Props) {
             <Award className="w-6 h-6 text-gold-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-navy-900 mb-1">Format officiel HSK 2026</h2>
+            <h2 className="font-semibold text-navy-900 mb-1">Official HSK 2026 Format</h2>
             <p className="text-sm text-navy-500">
-              Chaque examen blanc reproduit fidèlement le format, la durée et le barème
-              de l&apos;examen officiel. Chronomètre, sections écoute + lecture, et analyse
-              détaillée de tes résultats.
+              Each mock exam faithfully reproduces the format, duration and scoring
+              of the official exam. Timer, listening + reading sections, and detailed
+              analysis of your results.
             </p>
           </div>
         </div>
@@ -97,7 +97,7 @@ export default async function MockExamsPage({ params }: Props) {
                         <span className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} text-white font-bold text-sm`}>
                           {level}
                         </span>
-                        <Badge variant="published">Disponible</Badge>
+                        <Badge variant="published">Available</Badge>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-navy-400">
                         <Zap className="h-3.5 w-3.5" />
@@ -137,18 +137,18 @@ export default async function MockExamsPage({ params }: Props) {
                     <div className="flex gap-2 mb-4">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">
                         <Headphones className="h-3 w-3" />
-                        Écoute
+                        Listening
                       </span>
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 text-purple-600 text-xs font-medium">
                         <BookOpen className="h-3 w-3" />
-                        Lecture
+                        Reading
                       </span>
                     </div>
 
                     {/* CTA */}
                     <div className="flex items-center justify-between pt-3 border-t border-cream-100">
                       <span className="text-sm font-medium text-teal-600 group-hover:text-teal-700 transition-colors">
-                        Commencer l&apos;examen
+                        Start the exam
                       </span>
                       <ChevronRight className="h-4 w-4 text-teal-500 group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -161,8 +161,8 @@ export default async function MockExamsPage({ params }: Props) {
       ) : (
         <div className="text-center py-16">
           <FileText className="h-12 w-12 text-navy-200 mx-auto mb-4" />
-          <p className="text-navy-400">Aucun examen blanc disponible pour le moment.</p>
-          <p className="text-sm text-navy-300 mt-2">Les examens blancs seront bientôt disponibles.</p>
+          <p className="text-navy-400">No mock exams available at the moment.</p>
+          <p className="text-sm text-navy-300 mt-2">Mock exams will be available soon.</p>
         </div>
       )}
     </div>

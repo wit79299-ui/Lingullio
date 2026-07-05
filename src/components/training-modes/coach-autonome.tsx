@@ -88,12 +88,12 @@ function generatePrescribedSessions(
     sessions.push({
       id: 'coach-srs-urgent',
       type: 'revision',
-      title: 'Révision d\'urgence',
-      description: `Tu as oublié environ ${decayPercent}% de ton vocabulaire récent. Cette session rapide va réactiver ta mémoire.`,
+      title: 'Emergency Review',
+      description: `You\'ve forgotten about ${decayPercent}% of your recent vocabulary. This quick session will reactivate your memory.`,
       href: '/revisions',
       duration_minutes: 7,
       xp_estimate: 40,
-      reason: `${daysSinceActivity} jours sans révision = ~${decayPercent}% d'oubli (courbe d'Ebbinghaus)`,
+      reason: `${daysSinceActivity} days without review = ~${decayPercent}% forgotten (Ebbinghaus curve)`,
       urgency: 'critical',
       memory_decay_percent: decayPercent,
     });
@@ -103,12 +103,12 @@ function generatePrescribedSessions(
   sessions.push({
     id: 'coach-lesson-restart',
     type: 'lesson',
-    title: 'Micro-leçon de reprise',
-    description: 'Reprends doucement avec une leçon courte. L\'important c\'est de revenir.',
+    title: 'Restart Mini-Lesson',
+    description: 'Ease back in with a short lesson. The important thing is to get back on track.',
     href: '/courses',
     duration_minutes: 10,
     xp_estimate: 50,
-    reason: 'Reprendre un rythme d\'apprentissage régulier',
+    reason: 'Rebuild a regular learning routine',
     urgency: 'high',
     memory_decay_percent: 0,
   });
@@ -118,12 +118,12 @@ function generatePrescribedSessions(
     sessions.push({
       id: 'coach-practice',
       type: 'practice',
-      title: 'Entraînement ciblé',
-      description: `Ta précision était de ${accuracy}% avant la pause. Renforce tes points faibles.`,
+      title: 'Targeted Practice',
+      description: `Your accuracy was ${accuracy}% before the break. Strengthen your weak points.`,
       href: '/courses',
       duration_minutes: 10,
       xp_estimate: 35,
-      reason: `Précision à ${accuracy}% — objectif 80%+`,
+      reason: `Accuracy at ${accuracy}% — target 80%+`,
       urgency: 'medium',
       memory_decay_percent: 0,
     });
@@ -134,12 +134,12 @@ function generatePrescribedSessions(
     sessions.push({
       id: 'coach-mock-diagnostic',
       type: 'mock_exam',
-      title: 'Test diagnostique',
-      description: 'Un examen blanc rapide pour évaluer ton niveau réel après cette pause.',
+      title: 'Diagnostic Test',
+      description: 'A quick mock exam to assess your real level after this break.',
       href: '/mock-exams',
       duration_minutes: 20,
       xp_estimate: 100,
-      reason: `Après ${daysSinceActivity} jours d'absence, un diagnostic est recommandé`,
+      reason: `After ${daysSinceActivity} days away, a diagnostic is recommended`,
       urgency: 'medium',
       memory_decay_percent: 0,
     });
@@ -191,14 +191,14 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
                 </span>
               </h3>
               <p className="text-xs text-navy-500 mt-0.5">
-                Activé automatiquement — {daysSinceActivity} jours sans activité
+                Auto-activated — {daysSinceActivity} days of inactivity
               </p>
             </div>
           </div>
           <button
             onClick={dismissCoach}
             className="p-1.5 rounded-lg hover:bg-white/60 text-navy-400 hover:text-navy-600 transition-colors"
-            title="Reporter à demain"
+            title="Remind me tomorrow"
           >
             <X className="h-4 w-4" />
           </button>
@@ -212,7 +212,7 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
           <div className="flex items-center justify-between text-xs mb-1.5">
             <span className="text-navy-500 flex items-center gap-1">
               <TrendingDown className="h-3 w-3" />
-              Rétention mémoire estimée
+              Estimated memory retention
             </span>
             <span className={cn(
               'font-bold',
@@ -240,7 +240,7 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
         <Link href="/revisions">
           <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg">
             <Brain className="h-4 w-4 mr-2" />
-            Commencer la révision d'urgence — 7 min
+            Start emergency review — 7 min
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </Link>
@@ -251,14 +251,14 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
             onClick={dismissCoach}
             className="text-[11px] text-navy-400 hover:text-navy-600 transition-colors underline underline-offset-2"
           >
-            Rappelle-moi demain
+            Remind me tomorrow
           </button>
           <span className="text-navy-200">·</span>
           <button
             onClick={deactivateCoach}
             className="text-[11px] text-navy-400 hover:text-navy-600 transition-colors underline underline-offset-2"
           >
-            Désactiver le coach
+            Disable coach
           </button>
         </div>
       </div>
@@ -280,11 +280,11 @@ function AtRiskAlert({ daysSinceActivity, decayPercent }: { daysSinceActivity: n
         <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm text-navy-800 leading-relaxed">
-            Tu n'as pas révisé depuis <strong>{daysSinceActivity} jours</strong>.
-            D'après la courbe d'Ebbinghaus, tu as oublié environ{' '}
+            You haven't reviewed in <strong>{daysSinceActivity} days</strong>.
+            According to the Ebbinghaus forgetting curve, you've forgotten about{' '}
             <strong className="text-red-600">{decayPercent}%</strong>{' '}
-            de ton vocabulaire récent.
-            <span className="text-amber-700 font-medium"> Fais cette séance de 7 minutes maintenant.</span>
+            of your recent vocabulary.
+            <span className="text-amber-700 font-medium"> Do this 7-minute session now.</span>
           </p>
         </div>
       </div>
@@ -293,14 +293,14 @@ function AtRiskAlert({ daysSinceActivity, decayPercent }: { daysSinceActivity: n
       {atRiskItems.length > 0 && (
         <div className="pt-2 border-t border-amber-200/60">
           <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider mb-2">
-            Mots en train de s'effacer
+            Words fading from memory
           </p>
           <div className="flex flex-wrap gap-1.5">
             {atRiskItems.map((item) => (
               <span
                 key={item.item_id}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-xs"
-                title={`${item.pinyin} — ${item.meaning} (−${item.memory_decay_percent}% mémoire)`}
+                title={`${item.pinyin} — ${item.meaning} (−${item.memory_decay_percent}% memory)`}
               >
                 <span className="font-bold text-navy-900">{item.display}</span>
                 <span className="text-red-500 text-[10px]">−{item.memory_decay_percent}%</span>
@@ -326,7 +326,7 @@ function AtRiskWordsGrid() {
   return (
     <div className="mt-3 pt-3 border-t border-amber-200/60">
       <p className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2">
-        Vocabulaire en danger ({atRiskItems.length} mots)
+        Vocabulary at risk ({atRiskItems.length} words)
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {atRiskItems.map((item) => {
@@ -404,12 +404,12 @@ export function CoachAutonomeView({ className }: { className?: string }) {
             Coach Autonome
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            Programme de reprise personnalisé — {days} jours d'absence détectés
+            Personalized recovery program — {days} days of absence detected
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={deactivateCoach}>
           <X className="h-4 w-4 mr-1" />
-          Retour au dashboard standard
+          Back to standard dashboard
         </Button>
       </header>
 
@@ -421,12 +421,12 @@ export function CoachAutonomeView({ className }: { className?: string }) {
               <TrendingDown className="h-7 w-7 text-red-500" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-navy-900 mb-1">Diagnostic de mémoire</h3>
+              <h3 className="font-bold text-navy-900 mb-1">Memory Diagnostic</h3>
               <p className="text-sm text-navy-600 leading-relaxed mb-3">
-                Après <strong>{days} jours</strong> sans révision, la courbe d'oubli d'Ebbinghaus 
-                estime que tu as perdu environ <strong className="text-red-600">{decayPercent}%</strong> de 
-                la rétention de ton vocabulaire récent. La bonne nouvelle : quelques sessions ciblées 
-                peuvent restaurer ta mémoire rapidement.
+                After <strong>{days} days</strong> without review, the Ebbinghaus forgetting curve 
+                estimates you've lost about <strong className="text-red-600">{decayPercent}%</strong> of 
+                your recent vocabulary retention. The good news: a few targeted sessions 
+                can restore your memory quickly.
               </p>
 
               {/* At-risk words detail in full view */}
@@ -435,11 +435,11 @@ export function CoachAutonomeView({ className }: { className?: string }) {
               {/* Memory bar */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-navy-400">Mémoire estimée</span>
+                  <span className="text-navy-400">Estimated memory</span>
                   <span className={cn(
                     'font-bold',
                     decayPercent > 50 ? 'text-red-600' : 'text-amber-600'
-                  )}>{100 - decayPercent}% retenu</span>
+                  )}>{100 - decayPercent}% retained</span>
                 </div>
                 <div className="h-4 bg-white rounded-full overflow-hidden border border-cream-200">
                   <div
@@ -465,7 +465,7 @@ export function CoachAutonomeView({ className }: { className?: string }) {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-navy-900 flex items-center gap-2">
             <Calendar className="h-4 w-4 text-amber-500" />
-            Programme de reprise prescrit
+            Prescribed recovery program
           </h2>
           <span className="text-xs text-navy-400">
             ~{totalMinutes} min · ~{totalXpEstimate} XP
@@ -491,7 +491,7 @@ export function CoachAutonomeView({ className }: { className?: string }) {
                   {/* Step number + Icon */}
                   <div className="flex flex-col items-center gap-1.5">
                     <span className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full', colors.badge)}>
-                      {session.urgency === 'critical' ? 'urgent' : session.urgency === 'high' ? 'important' : 'conseil'}
+                      {session.urgency === 'critical' ? 'urgent' : session.urgency === 'high' ? 'important' : 'advice'}
                     </span>
                     <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white shadow-sm">
                       <SessionIcon className={cn('h-5 w-5', colors.text)} />
@@ -504,7 +504,7 @@ export function CoachAutonomeView({ className }: { className?: string }) {
                       <p className="text-sm font-bold text-navy-900">{session.title}</p>
                       {session.memory_decay_percent > 0 && (
                         <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">
-                          -{session.memory_decay_percent}% mémoire
+                          -{session.memory_decay_percent}% memory
                         </span>
                       )}
                     </div>
@@ -539,12 +539,12 @@ export function CoachAutonomeView({ className }: { className?: string }) {
         <CardContent className="p-4">
           <h3 className="text-sm font-bold text-navy-800 mb-2 flex items-center gap-2">
             <Shield className="h-4 w-4 text-sky-500" />
-            Conseil du coach
+            Coach's advice
           </h3>
           <p className="text-xs text-navy-600 leading-relaxed">
-            Après une pause prolongée, ne cherche pas à tout rattraper en un jour. 
-            Commence par la <strong>révision d'urgence</strong> (7 min), puis fais une leçon courte. 
-            L'important, c'est de reconstruire l'habitude. La mémoire revient vite avec la pratique régulière.
+            After a long break, don't try to catch up in one day. 
+            Start with the <strong>emergency review</strong> (7 min), then do a short lesson. 
+            The important thing is to rebuild the habit. Memory comes back quickly with regular practice.
           </p>
         </CardContent>
       </Card>

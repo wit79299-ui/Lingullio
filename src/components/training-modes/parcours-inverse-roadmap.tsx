@@ -66,10 +66,10 @@ export function ParcoursInverseView({ className }: { className?: string }) {
   ));
 
   const riskConfig = {
-    on_track: { color: 'text-emerald-600', bg: 'bg-emerald-100', border: 'border-emerald-300', label: 'En bonne voie', icon: CheckCircle2 },
-    slight_delay: { color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-300', label: 'Léger retard', icon: Clock },
-    at_risk: { color: 'text-orange-600', bg: 'bg-orange-100', border: 'border-orange-300', label: 'Risque de retard', icon: AlertTriangle },
-    critical: { color: 'text-red-600', bg: 'bg-red-100', border: 'border-red-300', label: 'Retard critique', icon: TrendingDown },
+    on_track: { color: 'text-emerald-600', bg: 'bg-emerald-100', border: 'border-emerald-300', label: 'On track', icon: CheckCircle2 },
+    slight_delay: { color: 'text-amber-600', bg: 'bg-amber-100', border: 'border-amber-300', label: 'Slight delay', icon: Clock },
+    at_risk: { color: 'text-orange-600', bg: 'bg-orange-100', border: 'border-orange-300', label: 'At risk', icon: AlertTriangle },
+    critical: { color: 'text-red-600', bg: 'bg-red-100', border: 'border-red-300', label: 'Critical delay', icon: TrendingDown },
   };
   const risk = riskConfig[roadmap.delay_risk];
   const RiskIcon = risk.icon;
@@ -83,22 +83,22 @@ export function ParcoursInverseView({ className }: { className?: string }) {
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg">
               <Rocket className="h-5 w-5" />
             </div>
-            Parcours Inversé
+            Reverse Path
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            Objectif HSK {parcours_config.target_level} avant le{' '}
-            {new Date(parcours_config.deadline_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            Goal: HSK {parcours_config.target_level} by{' '}
+            {new Date(parcours_config.deadline_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-sm">
             <Flame className="h-5 w-5 text-orange-500" />
             <span className="font-bold text-navy-900">{streak_days}</span>
-            <span className="text-navy-400">jours</span>
+            <span className="text-navy-400">days</span>
           </div>
           <Button variant="secondary" size="sm" onClick={resetToStandard}>
             <X className="h-4 w-4 mr-1" />
-            Quitter le parcours
+            Leave path
           </Button>
         </div>
       </header>
@@ -108,7 +108,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
         <div className="bg-gradient-to-br from-violet-600 to-purple-700 px-6 py-5 text-white">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs text-white/60 uppercase tracking-wider font-medium">Progression globale</p>
+              <p className="text-xs text-white/60 uppercase tracking-wider font-medium">Overall progress</p>
               <p className="text-3xl font-black mt-1">{overallProgress}%</p>
             </div>
             <div className="text-right">
@@ -116,7 +116,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
                 <RiskIcon className="h-3.5 w-3.5" />
                 {risk.label}
               </div>
-              <p className="text-xs text-white/50 mt-1">{daysUntilDeadline} jours restants</p>
+              <p className="text-xs text-white/50 mt-1">{daysUntilDeadline} days left</p>
             </div>
           </div>
 
@@ -131,8 +131,8 @@ export function ParcoursInverseView({ className }: { className?: string }) {
               </div>
             </div>
             <div className="flex justify-between text-[11px] text-white/50">
-              <span>HSK {parcours_config.current_level || 'Début'}</span>
-              <span>{wordsLearned} / {roadmap.total_words_needed} mots</span>
+              <span>HSK {parcours_config.current_level || 'Start'}</span>
+              <span>{wordsLearned} / {roadmap.total_words_needed} words</span>
               <span>HSK {parcours_config.target_level}</span>
             </div>
           </div>
@@ -140,10 +140,10 @@ export function ParcoursInverseView({ className }: { className?: string }) {
 
         <CardContent className="p-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatBox icon={BookOpen} label="Mots / semaine" value={roadmap.words_per_week.toString()} color="teal" />
-            <StatBox icon={GraduationCap} label="Leçons / semaine" value={roadmap.lessons_per_week.toString()} color="violet" />
-            <StatBox icon={Brain} label="Révisions / semaine" value={roadmap.revisions_per_week.toString()} color="blue" />
-            <StatBox icon={Clock} label="Étude / jour" value={`${roadmap.daily_study_minutes} min`} color="amber" />
+            <StatBox icon={BookOpen} label="Words / week" value={roadmap.words_per_week.toString()} color="teal" />
+            <StatBox icon={GraduationCap} label="Lessons / week" value={roadmap.lessons_per_week.toString()} color="violet" />
+            <StatBox icon={Brain} label="Reviews / week" value={roadmap.revisions_per_week.toString()} color="blue" />
+            <StatBox icon={Clock} label="Study / day" value={`${roadmap.daily_study_minutes} min`} color="amber" />
           </div>
         </CardContent>
       </Card>
@@ -155,7 +155,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
         <div className="lg:col-span-2 space-y-4">
           <h2 className="text-sm font-bold text-navy-900 flex items-center gap-2">
             <Target className="h-4 w-4 text-violet-500" />
-            Actions du jour
+            Today's actions
           </h2>
 
           <TodaysActions roadmap={roadmap} />
@@ -169,12 +169,12 @@ export function ParcoursInverseView({ className }: { className?: string }) {
               <RiskIcon className={cn('h-5 w-5 shrink-0 mt-0.5', risk.color)} />
               <div>
                 <p className={cn('text-sm font-bold', risk.color)}>
-                  {roadmap.delay_risk === 'critical' ? 'Retard critique détecté' : 'Attention — retard en formation'}
+                  {roadmap.delay_risk === 'critical' ? 'Critical delay detected' : 'Warning — falling behind'}
                 </p>
                 <p className="text-xs text-navy-600 mt-1 leading-relaxed">
                   {roadmap.delay_risk === 'critical'
-                    ? `Tu es significativement en dessous de ton objectif. Il reste ${roadmap.words_remaining} mots à apprendre en ${daysUntilDeadline} jours. Augmente ton rythme ou ajuste ton échéance.`
-                    : `Tu prends un léger retard. Essaie d'ajouter ${Math.ceil(roadmap.words_per_week * 0.2)} mots de plus cette semaine pour rattraper.`
+                    ? `You're significantly behind your goal. ${roadmap.words_remaining} words remain to learn in ${daysUntilDeadline} days. Increase your pace or adjust your deadline.`
+                    : `You're falling slightly behind. Try adding ${Math.ceil(roadmap.words_per_week * 0.2)} more words this week to catch up.`
                   }
                 </p>
               </div>
@@ -186,7 +186,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
         <div>
           <h2 className="text-sm font-bold text-navy-900 flex items-center gap-2 mb-4">
             <MapPin className="h-4 w-4 text-violet-500" />
-            Feuille de route
+            Roadmap
           </h2>
           <RoadmapTimeline roadmap={roadmap} currentWeek={roadmap.weeks_elapsed} />
         </div>
@@ -213,8 +213,8 @@ function TodaysActions({ roadmap }: { roadmap: ParcoursInverseRoadmap }) {
     {
       id: 'lesson',
       icon: BookOpen,
-      title: 'Leçon du jour',
-      subtitle: `Apprends ~${Math.ceil(roadmap.words_per_week / 7)} nouveaux mots`,
+      title: 'Today's lesson',
+      subtitle: `Learn ~${Math.ceil(roadmap.words_per_week / 7)} new words`,
       href: '/courses',
       color: 'teal',
       duration: Math.ceil(roadmap.daily_study_minutes * 0.6),
@@ -223,8 +223,8 @@ function TodaysActions({ roadmap }: { roadmap: ParcoursInverseRoadmap }) {
     {
       id: 'revision',
       icon: Brain,
-      title: 'Révision SRS',
-      subtitle: 'Consolide les mots appris récemment',
+      title: 'SRS Review',
+      subtitle: 'Consolidate recently learned words',
       href: '/revisions',
       color: 'blue',
       duration: Math.ceil(roadmap.daily_study_minutes * 0.3),
@@ -233,8 +233,8 @@ function TodaysActions({ roadmap }: { roadmap: ParcoursInverseRoadmap }) {
     ...(roadmap.mock_exams_schedule.includes(roadmap.weeks_elapsed + 1) ? [{
       id: 'mock',
       icon: Trophy,
-      title: 'Examen blanc cette semaine',
-      subtitle: 'Évalue ton niveau avant de continuer',
+      title: 'Mock exam this week',
+      subtitle: 'Assess your level before continuing',
       href: '/mock-exams',
       color: 'purple' as const,
       duration: 25,
@@ -285,7 +285,7 @@ function TodaysActions({ roadmap }: { roadmap: ParcoursInverseRoadmap }) {
         <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           <p className="text-xs text-emerald-700 font-medium">
-            Tu as déjà fait {dailyExercises} exercice{dailyExercises > 1 ? 's' : ''} aujourd'hui. Continue !
+            You've already done {dailyExercises} exercise{dailyExercises > 1 ? 's' : ''} today. Keep going!
           </p>
         </div>
       )}
@@ -362,7 +362,7 @@ function RoadmapTimeline({ roadmap, currentWeek }: {
                       </span>
                       {isCurrent && (
                         <span className="text-[9px] font-bold bg-violet-200 text-violet-700 px-1.5 py-0.5 rounded-full uppercase">
-                          Maintenant
+                          Now
                         </span>
                       )}
                     </div>
@@ -373,7 +373,7 @@ function RoadmapTimeline({ roadmap, currentWeek }: {
                       {week.description}
                     </p>
                     <p className="text-[10px] text-navy-300 mt-0.5">
-                      {week.target_words_cumulative} mots cumulés
+                      {week.target_words_cumulative} cumulative words
                     </p>
                   </div>
                 </div>
@@ -388,9 +388,9 @@ function RoadmapTimeline({ roadmap, currentWeek }: {
             className="flex items-center justify-center gap-1 w-full mt-3 pt-2 border-t border-cream-100 text-[11px] text-navy-400 hover:text-navy-600 transition-colors"
           >
             {expanded ? (
-              <>Réduire <ChevronUp className="h-3 w-3" /></>
+              <>Collapse <ChevronUp className="h-3 w-3" /></>
             ) : (
-              <>Voir tout ({roadmap.total_weeks} semaines) <ChevronDown className="h-3 w-3" /></>
+              <>View all ({roadmap.total_weeks} weeks) <ChevronDown className="h-3 w-3" /></>
             )}
           </button>
         )}
@@ -420,7 +420,7 @@ function HskCheckpoints({ currentHsk, targetHsk, wordsLearned, wordsKnownAtStart
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm">
           <GraduationCap className="h-4 w-4 text-violet-500" />
-          Étapes HSK
+          HSK Milestones
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -458,7 +458,7 @@ function HskCheckpoints({ currentHsk, targetHsk, wordsLearned, wordsKnownAtStart
           ))}
         </div>
         <p className="text-[10px] text-navy-400 text-center mt-2">
-          {wordsLearned} mots appris sur {cumulativeWordsForHsk(targetHsk)} nécessaires
+          {wordsLearned} words learned out of {cumulativeWordsForHsk(targetHsk)} needed
         </p>
       </CardContent>
     </Card>

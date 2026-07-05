@@ -7,10 +7,10 @@ import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useRouter } from '@/i18n/navigation';
 import {
   type PlacementTestData,
-  type ProfileAnswer,
+  type ProfileeAnswer,
   type DiagnosticAnswer,
   type ProductionAnswer,
-  type ProfileQuestion,
+  type ProfileeQuestion,
   type DiagnosticQuestion,
   type ProductionTask,
   type PlacementResult,
@@ -71,11 +71,11 @@ const BAND_LABELS: Record<string, string> = {
 };
 
 const SKILL_LABELS: Record<string, { label: string; icon: typeof BookOpen }> = {
-  vocabulary: { label: 'Vocabulaire', icon: BookOpen },
-  grammar: { label: 'Grammaire', icon: PenTool },
-  reading: { label: 'Lecture', icon: BookOpen },
-  listening: { label: 'Écoute', icon: Headphones },
-  characters: { label: 'Caractères', icon: Star },
+  vocabulary: { label: 'Vocabulary', icon: BookOpen },
+  grammar: { label: 'Grammar', icon: PenTool },
+  reading: { label: 'Reading', icon: BookOpen },
+  listening: { label: 'Listening', icon: Headphones },
+  characters: { label: 'Characters', icon: Star },
   micro_production: { label: 'Production', icon: PenTool },
 };
 
@@ -89,9 +89,9 @@ export function PlacementTest() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Profile
-  const [profileAnswers, setProfileAnswers] = useState<ProfileAnswer[]>([]);
-  const [profileIndex, setProfileIndex] = useState(0);
+  // Profilee
+  const [profileAnswers, setProfileeAnswers] = useState<ProfileeAnswer[]>([]);
+  const [profileIndex, setProfileeIndex] = useState(0);
 
   // Diagnostic
   const [diagnosticAnswers, setDiagnosticAnswers] = useState<DiagnosticAnswer[]>([]);
@@ -130,7 +130,7 @@ export function PlacementTest() {
         setLoading(false);
       })
       .catch(() => {
-        setError('Impossible de charger le test. Réessaie.');
+        setError('Unable to load the test. Please try again.');
         setLoading(false);
       });
   }, []);
@@ -144,10 +144,10 @@ export function PlacementTest() {
     }
   }, [phase, startTime]);
 
-  // ─── Profile handlers ──────────────────────────────────────────────────
-  const handleProfileAnswer = useCallback(
+  // ─── Profilee handlers ──────────────────────────────────────────────────
+  const handleProfileeAnswer = useCallback(
     (questionId: string, selectedIds: string[]) => {
-      setProfileAnswers((prev) => {
+      setProfileeAnswers((prev) => {
         const filtered = prev.filter((a) => a.questionId !== questionId);
         return [...filtered, { questionId, selectedIds }];
       });
@@ -155,18 +155,18 @@ export function PlacementTest() {
     []
   );
 
-  const goNextProfile = useCallback(() => {
+  const goNextProfilee = useCallback(() => {
     if (!testData) return;
     if (profileIndex < testData.profile_questions.length - 1) {
-      setProfileIndex((i) => i + 1);
+      setProfileeIndex((i) => i + 1);
     } else {
       setPhase('diagnostic');
       setStartTime(Date.now());
     }
   }, [testData, profileIndex]);
 
-  const goPrevProfile = useCallback(() => {
-    if (profileIndex > 0) setProfileIndex((i) => i - 1);
+  const goPrevProfilee = useCallback(() => {
+    if (profileIndex > 0) setProfileeIndex((i) => i - 1);
   }, [profileIndex]);
 
   // ─── Diagnostic handlers ──────────────────────────────────────────────
@@ -278,7 +278,7 @@ export function PlacementTest() {
                     estimatedHsk: 'Pre-HSK',
                     estimatedCefr: 'A0',
                     recommendedStart: 'HSK 1 – Module 1',
-                    trainingLevel: 'Fondations chinoises puis HSK 1',
+                    trainingLevel: 'Chinese foundations then HSK 1',
                     totalPercent: 0,
                     profileTags: ['beginner_skip'],
                     planIntensity: 'standard',
@@ -297,16 +297,16 @@ export function PlacementTest() {
         )}
 
         {phase === 'profile' && (
-          <ProfilePhase
+          <ProfileePhase
             question={testData.profile_questions[profileIndex]}
             index={profileIndex}
             total={testData.profile_questions.length}
             currentAnswer={profileAnswers.find(
               (a) => a.questionId === testData.profile_questions[profileIndex].id
             )}
-            onAnswer={handleProfileAnswer}
-            onNext={goNextProfile}
-            onPrev={goPrevProfile}
+            onAnswer={handleProfileeAnswer}
+            onNext={goNextProfilee}
+            onPrev={goPrevProfilee}
           />
         )}
 
@@ -363,7 +363,7 @@ function ProgressBar({
 
   const phaseLabel =
     phase === 'profile'
-      ? 'Profil'
+      ? 'Profile'
       : phase === 'diagnostic'
         ? 'Diagnostic'
         : phase === 'production'
@@ -414,37 +414,37 @@ function WelcomeScreen({
       </div>
 
       <h1 className="text-3xl sm:text-4xl font-bold text-navy-900 mb-3">
-        Test de positionnement
+        Placement Test
       </h1>
       <p className="text-navy-500 text-lg mb-8 max-w-md">
-        Découvre ton niveau actuel, tes forces, tes lacunes et ton meilleur
-        point de départ pour préparer le HSK.
+        Discover your current level, strengths, gaps and best
+        starting point for HSK preparation.
       </p>
 
       {/* Info cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mb-8">
-        <InfoCard icon={Clock} label="~16 min" sublabel="Durée estimée" />
-        <InfoCard icon={Zap} label="Adaptatif" sublabel="S'adapte à ton niveau" />
-        <InfoCard icon={Shield} label="Sans stress" sublabel="Pas de piège" />
+        <InfoCard icon={Clock} label="~16 min" sublabel="Estimated duration" />
+        <InfoCard icon={Zap} label="Adaptive" sublabel="Adapts to your level" />
+        <InfoCard icon={Shield} label="Stress-free" sublabel="No tricks" />
       </div>
 
       {/* Steps preview */}
       <Card className="w-full mb-8">
         <CardContent className="py-6">
           <h3 className="text-sm font-semibold text-navy-700 uppercase tracking-wider mb-4">
-            Comment ça marche
+            How it works
           </h3>
           <div className="space-y-3">
-            <StepPreview n={1} text="5 questions sur ton profil" />
-            <StepPreview n={2} text="Questions de diagnostic adaptatives" />
-            <StepPreview n={3} text="2 mini-exercices de production" />
-            <StepPreview n={4} text="Ton bilan personnalisé avec plan d'action" />
+            <StepPreview n={1} text="5 questions about your profile" />
+            <StepPreview n={2} text="Adaptive diagnostic questions" />
+            <StepPreview n={3} text="2 mini production exercises" />
+            <StepPreview n={4} text="Your personalized assessment with action plan" />
           </div>
         </CardContent>
       </Card>
 
       <Button variant="teal" size="xl" onClick={onStart} className="w-full sm:w-auto">
-        Commencer le test
+        Start the test
         <ArrowRight className="w-5 h-5 ml-1" />
       </Button>
 
@@ -455,7 +455,7 @@ function WelcomeScreen({
             onClick={() => setShowSkipConfirm(true)}
             className="text-sm text-navy-400 hover:text-navy-600 transition-colors underline underline-offset-4 decoration-dashed"
           >
-            Je suis totalement débutant en chinois
+            I'm a complete beginner in Chinese
           </button>
         ) : (
           <div className="p-5 rounded-xl bg-cream-50 border border-cream-200 animate-fade-in max-w-md mx-auto">
@@ -464,12 +464,12 @@ function WelcomeScreen({
                 <Sparkles className="w-5 h-5 text-amber-500" />
               </div>
               <p className="text-sm text-navy-700 text-left">
-                Pas de souci ! Tu commenceras directement par les <strong>fondations</strong> du chinois, puis le <strong>HSK 1</strong>.
+                No worries! You'll start directly with the <strong>foundations</strong> of Chinese, then <strong>HSK 1</strong>.
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Button variant="primary" size="sm" onClick={onSkipBeginner}>
-                Commencer depuis zéro
+                Start from zero
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
               <Button
@@ -477,7 +477,7 @@ function WelcomeScreen({
                 size="sm"
                 onClick={() => setShowSkipConfirm(false)}
               >
-                Annuler
+                Cancel
               </Button>
             </div>
           </div>
@@ -520,7 +520,7 @@ function StepPreview({ n, text }: { n: number; text: string }) {
 // PROFILE PHASE
 // ═══════════════════════════════════════════════════════════════════════════
 
-function ProfilePhase({
+function ProfileePhase({
   question,
   index,
   total,
@@ -529,10 +529,10 @@ function ProfilePhase({
   onNext,
   onPrev,
 }: {
-  question: ProfileQuestion;
+  question: ProfileeQuestion;
   index: number;
   total: number;
-  currentAnswer?: ProfileAnswer;
+  currentAnswer?: ProfileeAnswer;
   onAnswer: (qId: string, selectedIds: string[]) => void;
   onNext: () => void;
   onPrev: () => void;
@@ -570,7 +570,7 @@ function ProfilePhase({
           <Star className="w-3.5 h-3.5 text-indigo-500" />
         </div>
         <span className="text-xs font-medium text-indigo-500 uppercase tracking-wider">
-          Profil · {index + 1}/{total}
+          Profile · {index + 1}/{total}
         </span>
       </div>
 
@@ -579,10 +579,10 @@ function ProfilePhase({
       </h2>
 
       {question.type === 'multi_choice' && (
-        <p className="text-sm text-navy-400 mb-6">Plusieurs réponses possibles</p>
+        <p className="text-sm text-navy-400 mb-6">Multiple answers possible</p>
       )}
       {question.type === 'single_choice' && (
-        <p className="text-sm text-navy-400 mb-6">Choisis une réponse</p>
+        <p className="text-sm text-navy-400 mb-6">Choose one answer</p>
       )}
 
       <div className="space-y-3 mb-8">
@@ -620,10 +620,10 @@ function ProfilePhase({
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onPrev} disabled={index === 0}>
             <ChevronLeft className="w-4 h-4 mr-1" />
-            Retour
+            Back
           </Button>
           <Button variant="teal" onClick={onNext} disabled={!canProceed}>
-            Continuer
+            Continue
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
@@ -884,7 +884,7 @@ function AudioButton({
             <Volume2 className="w-5 h-5" />
           )}
           <span className="text-sm font-medium">
-            {isPlaying ? 'Écoute en cours…' : remaining > 0 ? 'Réécouter' : 'Écoutes épuisées'}
+            {isPlaying ? 'Listening...' : remaining > 0 ? 'Listen again' : 'Listens exhausted'}
           </span>
         </button>
         <span className="text-xs text-navy-400">
@@ -896,7 +896,7 @@ function AudioButton({
       {/* Hint for listening questions */}
       <p className="mt-2 text-xs text-navy-400 flex items-center gap-1.5">
         <Headphones className="w-3.5 h-3.5" />
-        Écoute attentivement puis choisis la bonne réponse
+        Listen carefully then choose the correct answer
       </p>
     </div>
   );
@@ -951,7 +951,7 @@ function OrderingRenderer({
         }`}
       >
         {selectedOrder.length === 0 && (
-          <span className="text-sm text-navy-300 italic">Clique sur les mots pour construire la phrase…</span>
+          <span className="text-sm text-navy-300 italic">Click on words to build the sentence...</span>
         )}
         {selectedOrder.map((block, i) => (
           <button
@@ -993,13 +993,13 @@ function OrderingRenderer({
             onClick={onSubmit}
             disabled={selectedOrder.length === 0}
           >
-            Valider
+            Submit
             <Check className="w-4 h-4 ml-1" />
           </Button>
           {selectedOrder.length > 0 && (
             <Button variant="ghost" size="sm" onClick={resetOrder}>
               <RotateCcw className="w-4 h-4 mr-1" />
-              Recommencer
+              Start over
             </Button>
           )}
         </div>
@@ -1008,7 +1008,7 @@ function OrderingRenderer({
       {/* Show correct answer if wrong */}
       {showFeedback && !isCorrect && (
         <div className="mt-3 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-          <p className="text-xs text-emerald-600 font-medium mb-1">Réponse correcte :</p>
+          <p className="text-xs text-emerald-600 font-medium mb-1">Correct answer:</p>
           <p className="text-sm text-emerald-800 font-medium">{correctOrder.join('')}</p>
         </div>
       )}
@@ -1041,7 +1041,7 @@ function FeedbackMessage({
         )}
         <div>
           <p className={`text-sm font-medium mb-1 ${isCorrect ? 'text-emerald-700' : 'text-amber-700'}`}>
-            {isCorrect ? 'Bravo !' : 'Pas tout à fait…'}
+            {isCorrect ? 'Well done!' : 'Not quite...'}
           </p>
           <p className="text-xs text-navy-600">{explanation}</p>
         </div>
@@ -1136,7 +1136,7 @@ function SentenceReconstructionTask({
         }`}
       >
         {order.length === 0 && (
-          <span className="text-sm text-navy-300 italic">Reconstitue la phrase…</span>
+          <span className="text-sm text-navy-300 italic">Reconstruct the sentence...</span>
         )}
         {order.map((block, i) => (
           <button
@@ -1178,13 +1178,13 @@ function SentenceReconstructionTask({
             onClick={handleSubmit}
             disabled={order.length !== blocks.length}
           >
-            Valider
+            Submit
             <Check className="w-4 h-4 ml-1" />
           </Button>
           {order.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setOrder([])}>
               <RotateCcw className="w-4 h-4 mr-1" />
-              Recommencer
+              Start over
             </Button>
           )}
         </div>
@@ -1284,7 +1284,7 @@ function OpenTextTask({
           }}
           disabled={submitted}
           rows={5}
-          placeholder="Écris ta réponse en chinois ici…"
+          placeholder="Write your answer in Chinese here..."
           className={`w-full p-4 rounded-xl border-2 text-base resize-none transition-colors focus:outline-none ${
             submitted
               ? 'border-cream-100 bg-cream-50 text-navy-500'
@@ -1299,7 +1299,7 @@ function OpenTextTask({
 
       {text.length > 0 && text.length < minChars && !submitted && (
         <p className="text-xs text-amber-500 mb-4">
-          Minimum {minChars} caractères ({minChars - text.length} restants)
+          Minimum {minChars} characters ({minChars - text.length} remaining)
         </p>
       )}
 
@@ -1309,7 +1309,7 @@ function OpenTextTask({
           onClick={handleSubmit}
           disabled={text.trim().length < minChars}
         >
-          Soumettre
+          Submit
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
       )}
@@ -1319,7 +1319,7 @@ function OpenTextTask({
           <div className="flex items-center gap-2">
             <Check className="w-5 h-5 text-teal-500" />
             <p className="text-sm font-medium text-teal-700">
-              Réponse enregistrée. Merci !
+              Answer recorded. Thank you!
             </p>
           </div>
         </div>
@@ -1335,9 +1335,9 @@ function OpenTextTask({
 function ComputingScreen() {
   const [step, setStep] = useState(0);
   const steps = [
-    'Analyse de tes réponses…',
-    'Calcul de ton profil de compétences…',
-    'Préparation de ton plan personnalisé…',
+    'Analyzing your answers...',
+    'Computing your skill profile...',
+    'Preparing your personalized plan...',
   ];
 
   useEffect(() => {
@@ -1423,7 +1423,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
         <CardContent className="py-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-navy-700 uppercase tracking-wider">
-              Score global
+              Overall Score
             </h3>
             <span className="text-2xl font-bold text-teal-600">
               {result.totalScore}/{result.totalMax}
@@ -1443,7 +1443,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
       <Card>
         <CardContent className="py-6">
           <h3 className="text-sm font-semibold text-navy-700 uppercase tracking-wider mb-4">
-            Scores par niveau
+            Scores by Level
           </h3>
           <div className="space-y-3">
             {result.bandScores.map((bs) => (
@@ -1457,7 +1457,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
       <Card>
         <CardContent className="py-6">
           <h3 className="text-sm font-semibold text-navy-700 uppercase tracking-wider mb-4">
-            Compétences
+            Skills
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {result.skillScores
@@ -1477,7 +1477,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
-                  Tes points forts
+                  Your Strengths
                 </h3>
                 <div className="space-y-2">
                   {result.strengths.map((s, i) => (
@@ -1494,7 +1494,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
               <div>
                 <h3 className="text-sm font-semibold text-amber-600 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Target className="w-4 h-4" />
-                  Axes de travail
+                  Areas to Improve
                 </h3>
                 <div className="space-y-2">
                   {result.weaknesses.map((w, i) => (
@@ -1516,7 +1516,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-amber-700 mb-1">Conseil important</p>
+              <p className="text-sm font-medium text-amber-700 mb-1">Important Advice</p>
               <p className="text-xs text-navy-600">{result.avoidAdvice}</p>
             </div>
           </div>
@@ -1529,7 +1529,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
           <CardContent className="py-6">
             <h3 className="text-sm font-semibold text-navy-700 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-teal-500" />
-              Ton plan sur 4 semaines
+              Your 4-week Plan
             </h3>
             <div className="space-y-4">
               {result.fourWeekPlan.map((week, i) => (
@@ -1561,7 +1561,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-navy-700 flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-teal-500" />
-                  Modules de révision recommandés
+                  Recommended Review Modules
                 </h3>
                 <ChevronRight
                   className={`w-5 h-5 text-navy-400 transition-transform ${showDetails ? 'rotate-90' : ''}`}
@@ -1759,11 +1759,11 @@ function ResultCTA({ result, diagnosticAnswers, diagnosticQuestions }: {
   return (
     <div className="text-center pt-4 pb-8">
       <Button variant="teal" size="xl" onClick={handleStart} disabled={saving}>
-        {saving ? 'Préparation…' : 'Commencer mon apprentissage'}
+        {saving ? 'Loading...' : 'Start my learning'}
         <ArrowRight className="w-5 h-5 ml-1" />
       </Button>
       <p className="text-xs text-navy-400 mt-3">
-        Cours recommandé : <span className="font-medium text-navy-600">{result.trainingLevel}</span>
+        Recommended course: <span className="font-medium text-navy-600">{result.trainingLevel}</span>
       </p>
     </div>
   );
@@ -1780,7 +1780,7 @@ function LoadingScreen() {
         <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center animate-pulse mb-4">
           <Target className="w-6 h-6 text-teal-500" />
         </div>
-        <p className="text-sm text-navy-400">Chargement du test…</p>
+        <p className="text-sm text-navy-400">Loading the test...</p>
       </div>
     </div>
   );
@@ -1791,7 +1791,7 @@ function ErrorScreen({ message }: { message: string }) {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cream-50 via-white to-teal-50/30">
       <div className="text-center">
         <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-        <p className="text-navy-700 font-medium mb-2">Oups !</p>
+        <p className="text-navy-700 font-medium mb-2">Oops!</p>
         <p className="text-sm text-navy-400">{message}</p>
       </div>
     </div>

@@ -63,7 +63,7 @@ export function DashboardView() {
           className="mb-2"
         >
           <ChevronRight className="h-4 w-4 mr-1 rotate-180" />
-          Retour au dashboard
+          Back to dashboard
         </Button>
         <ParcoursInverseSetup onComplete={() => setShowParcoursSetup(false)} />
       </div>
@@ -87,23 +87,23 @@ export function DashboardView() {
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy-900">
-            {t('welcome', { name: 'Apprenant' })}
+            {t('welcome', { name: 'Learner' })}
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            {levelTitle(level)} &middot; Niveau {level} &middot; {total_xp} XP
+            {levelTitle(level)} &middot; Level {level} &middot; {total_xp} XP
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 text-sm">
             <Flame className="h-5 w-5 text-orange-500 animate-streak-fire" />
             <span className="font-bold text-navy-900">{streak_days}</span>
-            <span className="text-navy-400">jours</span>
+            <span className="text-navy-400">days</span>
           </div>
           {daily_xp > 0 && (
             <div className="flex items-center gap-1 text-sm">
               <Zap className="h-4 w-4 text-emerald-500" />
               <span className="font-semibold text-emerald-600">+{daily_xp}</span>
-              <span className="text-navy-400">aujourd&apos;hui</span>
+              <span className="text-navy-400">today</span>
             </div>
           )}
         </div>
@@ -155,8 +155,8 @@ export function DashboardView() {
             {/* XP Progress */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-[11px] text-white/60">
-                <span>Niveau {level}</span>
-                <span>Niveau {level + 1}</span>
+                <span>Level {level}</span>
+                <span>Level {level + 1}</span>
               </div>
               <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                 <div
@@ -173,15 +173,15 @@ export function DashboardView() {
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
                 <p className="text-lg font-bold text-navy-900">{total_exercises}</p>
-                <p className="text-[10px] text-navy-400">Exercices</p>
+                <p className="text-[10px] text-navy-400">Exercises</p>
               </div>
               <div>
                 <p className="text-lg font-bold text-emerald-600">{accuracy}%</p>
-                <p className="text-[10px] text-navy-400">Precision</p>
+                <p className="text-[10px] text-navy-400">Accuracy</p>
               </div>
               <div>
                 <p className="text-lg font-bold text-navy-900">{Math.floor(total_study_minutes / 60)}h{total_study_minutes % 60 > 0 ? total_study_minutes % 60 : ''}</p>
-                <p className="text-[10px] text-navy-400">Etude</p>
+                <p className="text-[10px] text-navy-400">Study</p>
               </div>
             </div>
           </CardContent>
@@ -193,7 +193,7 @@ export function DashboardView() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-teal-500" />
-                Cette semaine
+                This week
               </CardTitle>
               <span className="text-sm font-bold text-emerald-600">+{weeklyXp} XP</span>
             </div>
@@ -226,17 +226,17 @@ export function DashboardView() {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-cream-25 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-navy-900">{weeklyExercises}</p>
-                <p className="text-[10px] text-navy-400">Exercices</p>
+                <p className="text-[10px] text-navy-400">Exercises</p>
               </div>
               <div className="bg-cream-25 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold text-navy-900">{perfect_sessions}</p>
-                <p className="text-[10px] text-navy-400">Sessions parfaites</p>
+                <p className="text-[10px] text-navy-400">Perfect sessions</p>
               </div>
             </div>
 
             <Link href="/progress">
               <Button variant="ghost" size="sm" className="w-full mt-3 text-teal-600 hover:text-teal-700">
-                Voir toute la progression
+                View full progress
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -248,7 +248,7 @@ export function DashboardView() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-4 w-4 text-teal-500" />
-              Actions rapides
+              Quick actions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -258,24 +258,24 @@ export function DashboardView() {
             <Link href="/courses">
               <QuickActionCard
                 icon={BookOpen}
-                title="Continuer les cours"
-                subtitle="Reprendre la ou vous en etes"
+                title="Continue courses"
+                subtitle="Pick up where you left off"
                 color="teal"
               />
             </Link>
             <Link href="/revisions">
               <QuickActionCard
                 icon={RefreshCw}
-                title="Revisions SRS"
-                subtitle="Cartes a reviser avec la repetition espacee"
+                title="SRS Review"
+                subtitle="Flashcards with spaced repetition"
                 color="blue"
               />
             </Link>
             <Link href="/mock-exams">
               <QuickActionCard
                 icon={Trophy}
-                title="Examen blanc"
-                subtitle="Testez vos connaissances en conditions reelles"
+                title="Mock exam"
+                subtitle="Test your knowledge in real exam conditions"
                 color="purple"
               />
             </Link>
@@ -291,7 +291,7 @@ export function DashboardView() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Flame className="h-5 w-5 text-orange-500" />
-              Serie d&apos;apprentissage
+              Learning streak
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -300,13 +300,13 @@ export function DashboardView() {
                 <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 text-white mb-2 shadow-lg">
                   <span className="text-2xl font-black">{streak_days}</span>
                 </div>
-                <p className="text-xs text-navy-400">Actuel</p>
+                <p className="text-xs text-navy-400">Current</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-cream-50 border border-cream-200 text-navy-700 mb-2">
                   <span className="text-2xl font-bold">{longest_streak}</span>
                 </div>
-                <p className="text-xs text-navy-400">Record</p>
+                <p className="text-xs text-navy-400">Best</p>
               </div>
               <div className="flex-1">
                 <StreakCalendar sessions={sessions_history} />
@@ -315,8 +315,8 @@ export function DashboardView() {
             {streak_days > 0 && (
               <p className="text-xs text-navy-400 text-center">
                 {streak_days >= longest_streak
-                  ? '🎉 Vous etes a votre record !'
-                  : `Plus que ${longest_streak - streak_days} jour${longest_streak - streak_days > 1 ? 's' : ''} pour battre votre record !`}
+                  ? '🎉 You are at your best streak!'
+                  : `${longest_streak - streak_days} more day${longest_streak - streak_days > 1 ? 's' : ''} to beat your record!`}
               </p>
             )}
           </CardContent>
@@ -331,7 +331,7 @@ export function DashboardView() {
                 Badges ({badges_unlocked.length}/{BADGES.length})
               </CardTitle>
               <Link href="/progress" className="text-xs text-teal-500 hover:text-teal-600">
-                Tout voir
+                View all
               </Link>
             </div>
           </CardHeader>
@@ -339,7 +339,7 @@ export function DashboardView() {
             {badges_unlocked.length === 0 ? (
               <div className="text-center py-6">
                 <Sparkles className="h-10 w-10 text-navy-200 mx-auto mb-2" />
-                <p className="text-sm text-navy-400">Completez des exercices pour debloquer vos premiers badges !</p>
+                <p className="text-sm text-navy-400">Complete exercises to unlock your first badges!</p>
               </div>
             ) : (
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
@@ -433,7 +433,7 @@ function StreakCalendar({ sessions }: { sessions: Array<{ date: string }> }) {
           'w-3 h-3 rounded-sm transition-colors',
           active ? 'bg-emerald-400' : 'bg-cream-100'
         )}
-        title={`${dateStr}${active ? ' — Actif' : ''}`}
+        title={`${dateStr}${active ? ' — Active' : ''}`}
       />
     );
   }
@@ -461,7 +461,7 @@ function NextBadgesHint({ currentBadges, stats }: {
   return (
     <div className="mt-4 pt-3 border-t border-cream-100">
       <p className="text-[10px] font-semibold text-navy-400 uppercase tracking-wider mb-2">
-        Prochains badges a debloquer
+        Next badges to unlock
       </p>
       <div className="space-y-2">
         {nextBadges.map(badge => (
@@ -482,7 +482,7 @@ function NextBadgesHint({ currentBadges, stats }: {
 
 function getLastNDaysActivity(sessions: Array<{ date: string; xp_earned: number; exercises_done: number }>, n: number) {
   const today = new Date();
-  const dayLabels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const result = [];
 
   for (let i = n - 1; i >= 0; i--) {
@@ -514,7 +514,7 @@ function TrainingModeSelector({ onStartParcours }: { onStartParcours: () => void
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto pb-1">
-      <span className="text-[11px] text-navy-400 shrink-0 font-medium">Modes :</span>
+      <span className="text-[11px] text-navy-400 shrink-0 font-medium">Modes:</span>
       <button
         onClick={onStartParcours}
         className={cn(
@@ -524,11 +524,11 @@ function TrainingModeSelector({ onStartParcours }: { onStartParcours: () => void
         )}
       >
         <Rocket className="h-3 w-3" />
-        Parcours Inverse
+        Reverse Path
       </button>
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border border-cream-200 bg-cream-25 text-navy-400">
         <BellRing className="h-3 w-3" />
-        Coach Autonome
+        Auto Coach
         <span className="text-[9px] text-navy-300">(auto)</span>
       </div>
     </div>
@@ -554,20 +554,20 @@ function KnowledgeMapWidget() {
         <div className="flex-1 p-5">
           <div className="flex items-center gap-2 mb-3">
             <Brain className="h-4 w-4 text-teal-500" />
-            <h3 className="text-sm font-semibold text-navy-900">Memoire Vivante</h3>
+            <h3 className="text-sm font-semibold text-navy-900">Living Memory</h3>
           </div>
           <div className="grid grid-cols-3 gap-4 mb-3">
             <div>
               <p className="text-2xl font-bold text-navy-900">{stats.total_items}</p>
-              <p className="text-[10px] text-navy-400">mots rencontres</p>
+              <p className="text-[10px] text-navy-400">words encountered</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-emerald-600">{stats.mastered_count}</p>
-              <p className="text-[10px] text-navy-400">maitrises ({masteredPct}%)</p>
+              <p className="text-[10px] text-navy-400">mastered ({masteredPct}%)</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-blue-600">{stats.due_for_review}</p>
-              <p className="text-[10px] text-navy-400">a reviser</p>
+              <p className="text-[10px] text-navy-400">to review</p>
             </div>
           </div>
           {/* Mastery bar */}
@@ -584,7 +584,7 @@ function KnowledgeMapWidget() {
             <div className="text-center px-3">
               <AlertCircle className="h-5 w-5 text-blue-500 mx-auto mb-1" />
               <p className="text-lg font-bold text-blue-600">{reviewSummary.due_count}</p>
-              <p className="text-[10px] text-navy-400">mots a reviser</p>
+              <p className="text-[10px] text-navy-400">words to review</p>
             </div>
           </Link>
         )}

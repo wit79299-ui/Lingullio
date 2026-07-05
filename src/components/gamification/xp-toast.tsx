@@ -184,7 +184,7 @@ export function LevelUpModal({ level, title, onClose }: {
           {level}
           <div className="absolute inset-0 rounded-full animate-ping bg-amber-400/30" />
         </div>
-        <h2 className="text-2xl font-bold text-navy-900 mb-1">Niveau {level} !</h2>
+        <h2 className="text-2xl font-bold text-navy-900 mb-1">Level {level}!</h2>
         <p className="text-navy-500 text-sm mb-4">{title}</p>
         <button
           onClick={() => {
@@ -193,7 +193,7 @@ export function LevelUpModal({ level, title, onClose }: {
           }}
           className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm hover:shadow-lg transition-all"
         >
-          Continuer
+          Continue
         </button>
       </div>
     </div>
