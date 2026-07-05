@@ -37,8 +37,9 @@ export function LoginForm() {
       return;
     }
 
-    router.push('/dashboard');
-    router.refresh();
+    // Use hard redirect to avoid client-side hydration issues
+    // between (auth) and (learner) layout groups
+    window.location.href = '/dashboard';
   }
 
   return (
