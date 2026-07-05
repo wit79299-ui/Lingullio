@@ -282,9 +282,9 @@ export default function SetupPage() {
               </div>
               <p className="success-title">Credentials saved</p>
               <p className="success-text">
-                Les informations Supabase ont ete ecrites dans le fichier de configuration serveur.<br />
+                The Supabase credentials have been written to the server configuration file.<br />
                 The access token for this page has been revoked.<br />
-                Le serveur va redemarrer automatiquement.
+                The server will restart automatically.
               </p>
             </div>
           )}
@@ -299,7 +299,7 @@ export default function SetupPage() {
               <h1>Configuration Supabase</h1>
               <p className="subtitle">
                 Saisissez vos credentials Supabase ci-dessous.<br />
-                Les valeurs sont envoyees directement au serveur via HTTPS et ecrites dans le fichier de configuration local. Elles ne sont jamais stockees dans le navigateur.
+                Values are sent directly to the server via HTTPS and written to the local configuration file. They are never stored in the browser.
               </p>
 
               <div className="security-badges">

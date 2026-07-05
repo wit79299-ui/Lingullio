@@ -467,7 +467,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
 
             {/* By type */}
             <div className="border-t border-cream-100 pt-4">
-              <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">Par type</p>
+              <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">By type</p>
               <div className="grid grid-cols-2 gap-2">
                 {results.byType.map(t => {
                   const pct = t.total > 0 ? Math.round((t.correct / t.total) * 100) : 0;
@@ -1031,7 +1031,7 @@ function TranslationRenderer({ exercise, meta, onSubmit }: {
         value={value}
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && value.trim()) checkAnswer(); }}
-        placeholder="Votre traduction..."
+        placeholder="Your translation..."
         className="w-full px-4 py-3.5 rounded-xl border-2 border-cream-200 bg-white text-navy-900 text-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all"
         autoFocus
         autoComplete="off"
@@ -1320,14 +1320,14 @@ function FlashcardRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
             className="border-2 border-red-200 text-red-500 hover:bg-red-50"
           >
             <XCircle className="h-5 w-5" />
-            Je ne savais pas
+            I didn't know
           </Button>
           <Button
             onClick={() => onSubmit(true, 'knew')}
             variant="teal" size="lg"
           >
             <CheckCircle2 className="h-5 w-5" />
-            Je savais !
+            I knew it!
           </Button>
         </div>
       )}

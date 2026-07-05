@@ -68,7 +68,7 @@ function generateDailyPlan(state: {
     title: isNewUser ? 'Start courses' : 'Continue courses',
     subtitle: isNewUser
       ? 'Discover your first HSK lesson'
-      : 'Reprenez la ou vous en etiez',
+      : 'Pick up where you left off',
     href: '/courses',
     icon: BookOpen,
     color: 'text-teal-600',
@@ -79,7 +79,7 @@ function generateDailyPlan(state: {
     priority: hasStudiedToday ? 3 : 1,
     reason: isNewUser
       ? 'The best time to start is now!'
-      : 'La regularite est la cle de la reussite',
+      : 'Consistency is the key to success',
   });
 
   // ── 2. SRS Revisions (connected to real Knowledge Map data) ──
@@ -104,7 +104,7 @@ function generateDailyPlan(state: {
       priority: dueCount >= 10 ? 0 : isStruggling ? 1 : 2,
       reason: dueCount > 0
         ? `${dueCount} words are waiting for SRS review — memory fades without practice`
-        : 'La repetition espacee optimise la memorisation a long terme',
+        : 'Spaced repetition optimizes long-term memorization',
     });
   }
 
@@ -113,10 +113,10 @@ function generateDailyPlan(state: {
     items.push({
       id: 'mock-exam',
       type: 'mock_exam',
-      title: 'Examen blanc',
+      title: 'Mock exam',
       subtitle: isExcelling
-        ? 'Votre niveau est excellent, tentez l\'examen !'
-        : 'Evaluez-vous en conditions reelles',
+        ? 'Your level is excellent, try the exam!'
+        : 'Test yourself in real conditions',
       href: '/mock-exams',
       icon: Trophy,
       color: 'text-purple-600',
@@ -127,7 +127,7 @@ function generateDailyPlan(state: {
       priority: isExcelling ? 2 : 4,
       reason: isExcelling
         ? 'With ' + recentAvgAccuracy + '% accuracy, you are ready for the test'
-        : 'Les examens blancs preparent efficacement au vrai HSK',
+        : 'Mock exams effectively prepare you for the real HSK',
     });
   }
 
@@ -136,7 +136,7 @@ function generateDailyPlan(state: {
     items.push({
       id: 'daily-challenge',
       type: 'challenge',
-      title: 'Defi du jour',
+      title: 'Daily challenge',
       subtitle: 'A quick mini-exercise to maintain your streak',
       href: '/daily-challenge',
       icon: Target,

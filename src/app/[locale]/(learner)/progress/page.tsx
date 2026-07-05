@@ -225,7 +225,7 @@ function ActivityCalendar({ sessions }: { sessions: SessionHistoryEntry[] }) {
   return (
     <div className="space-y-2">
       <div className="flex gap-1.5 justify-center">
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
           <span key={i} className="w-6 text-[9px] text-navy-400 text-center">{d}</span>
         ))}
       </div>

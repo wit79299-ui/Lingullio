@@ -306,7 +306,7 @@ export function CourseTabs(props: CourseTabsProps) {
             ? 'text-white bg-teal-500 shadow-sm animate-pulse'
             : 'text-teal-500 bg-teal-50 hover:bg-teal-100 active:bg-teal-200'
         )}
-        aria-label={`Écouter ${text}`}
+        aria-label={`Listen to ${text}`}
       >
         <Volume2 className={iconSize} />
       </button>
@@ -640,7 +640,7 @@ export function CourseTabs(props: CourseTabsProps) {
             <MasteryProgressBar stats={masteryStats.characters} />
 
             <p className="text-xs text-navy-400">
-              {filteredChars.length} {t('charactersShowing') ?? 'caractères'}
+              {filteredChars.length} {t('charactersShowing') ?? 'characters'}
             </p>
 
             {filteredChars.length > 0 ? (
@@ -693,7 +693,7 @@ export function CourseTabs(props: CourseTabsProps) {
                           </p>
                           {c.frequency_rank && (
                             <p className="text-sm text-navy-400">
-                              <span className="font-medium">{t('frequency', { rank: c.frequency_rank }) ?? `Fréquence #${c.frequency_rank}`}</span>
+                              <span className="font-medium">{t('frequency', { rank: c.frequency_rank }) ?? `Frequency #${c.frequency_rank}`}</span>
                             </p>
                           )}
                           {c.mnemonic && (

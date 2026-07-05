@@ -75,7 +75,7 @@ export default function DeployPage() {
         updateStep(key, {
           status: 'error',
           message: 'Invalid Supabase URL',
-          detail: 'Le format attendu est https://xxxxx.supabase.co',
+          detail: 'Expected format: https://xxxxx.supabase.co',
         });
         return;
       }
@@ -226,7 +226,7 @@ export default function DeployPage() {
         updateStep('schema', {
           status: 'success',
           message: 'Tables verifiees avec succes',
-          detail: 'La table "courses" est accessible via l\'API REST.',
+          detail: 'The "courses" table is accessible via the REST API.',
         });
         // Also verify RLS and seed
         const usersResp = await fetch(
@@ -257,7 +257,7 @@ export default function DeployPage() {
         updateStep('schema', {
           status: 'error',
           message: 'Tables non trouvees',
-          detail: err.message || 'Les tables n\'existent pas encore. Executez le SQL.',
+          detail: err.message || 'Tables do not exist yet. Run the SQL.',
         });
       }
     } catch (err) {
@@ -513,7 +513,7 @@ export default function DeployPage() {
                 <div className="verified-banner">
                   <h3>Base de donnees deployee avec succes</h3>
                   <p>
-                    Toutes les tables sont accessibles. Vous pouvez fermer cette page
+                    All tables are accessible. You can close this page
                     et retourner a l'application.
                   </p>
                 </div>

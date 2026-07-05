@@ -87,7 +87,7 @@ export default async function AnalyticsPage({ params }: Props) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center h-40 border-2 border-dashed border-navy-100 rounded-lg text-sm text-navy-400">
-              Bientôt disponible
+              Coming soon
             </div>
           </CardContent>
         </Card>
@@ -98,7 +98,7 @@ export default async function AnalyticsPage({ params }: Props) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center h-40 border-2 border-dashed border-navy-100 rounded-lg text-sm text-navy-400">
-              Bientôt disponible
+              Coming soon
             </div>
           </CardContent>
         </Card>
