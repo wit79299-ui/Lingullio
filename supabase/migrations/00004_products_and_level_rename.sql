@@ -176,32 +176,32 @@ CREATE POLICY "sku_mappings_admin_write" ON public.shopify_sku_mappings FOR ALL 
 -- 8. SEED: Create Lingullio HSK product & link courses
 -- ============================================================
 INSERT INTO public.products (id, code, exam_type, target_language, status, sort_order)
-VALUES ('p0000000-0000-0000-0000-000000000001', 'LINGULLIO-HSK', 'HSK', 'zh', 'published', 1)
+VALUES ('f0000000-0000-0000-0000-000000000001', 'LINGULLIO-HSK', 'HSK', 'zh', 'published', 1)
 ON CONFLICT (code) DO NOTHING;
 
 -- Translations
 INSERT INTO public.product_translations (product_id, locale, name, description, tagline) VALUES
-('p0000000-0000-0000-0000-000000000001', 'fr', 'Lingullio HSK — Chinois', 'Préparation complète aux examens HSK du niveau 1 au niveau 6. Vocabulaire, grammaire, caractères, exercices interactifs et examens blancs.', 'Maîtrisez le HSK de 1 à 6'),
-('p0000000-0000-0000-0000-000000000001', 'en', 'Lingullio HSK — Chinese', 'Complete HSK exam preparation from level 1 to level 6. Vocabulary, grammar, characters, interactive exercises and mock exams.', 'Master HSK from level 1 to 6')
+('f0000000-0000-0000-0000-000000000001', 'fr', 'Lingullio HSK — Chinois', 'Préparation complète aux examens HSK du niveau 1 au niveau 6. Vocabulaire, grammaire, caractères, exercices interactifs et examens blancs.', 'Maîtrisez le HSK de 1 à 6'),
+('f0000000-0000-0000-0000-000000000001', 'en', 'Lingullio HSK — Chinese', 'Complete HSK exam preparation from level 1 to level 6. Vocabulary, grammar, characters, interactive exercises and mock exams.', 'Master HSK from level 1 to 6')
 ON CONFLICT (product_id, locale) DO NOTHING;
 
 -- Link all HSK courses to the product
-UPDATE public.courses SET product_id = 'p0000000-0000-0000-0000-000000000001'
+UPDATE public.courses SET product_id = 'f0000000-0000-0000-0000-000000000001'
 WHERE exam_type = 'HSK' AND product_id IS NULL;
 
 -- Shopify SKU mappings
 -- HSK-MASTERY = full product access (all levels)
 INSERT INTO public.shopify_sku_mappings (sku, product_id, grants_full_product) VALUES
-('HSK-MASTERY', 'p0000000-0000-0000-0000-000000000001', true)
+('HSK-MASTERY', 'f0000000-0000-0000-0000-000000000001', true)
 ON CONFLICT (sku) DO NOTHING;
 
 -- Individual level SKUs
 INSERT INTO public.shopify_sku_mappings (sku, course_id, product_id, grants_full_product) VALUES
-('HSK-1', 'a0000000-0000-0000-0000-000000000001', 'p0000000-0000-0000-0000-000000000001', false),
-('HSK-2', 'a0000000-0000-0000-0000-000000000002', 'p0000000-0000-0000-0000-000000000001', false),
-('HSK-3', 'a0000000-0000-0000-0000-000000000003', 'p0000000-0000-0000-0000-000000000001', false),
-('HSK-4', 'a0000000-0000-0000-0000-000000000004', 'p0000000-0000-0000-0000-000000000001', false),
-('HSK-5', 'a0000000-0000-0000-0000-000000000005', 'p0000000-0000-0000-0000-000000000001', false),
-('HSK-6', 'a0000000-0000-0000-0000-000000000006', 'p0000000-0000-0000-0000-000000000001', false),
-('HSK-7-9', 'a0000000-0000-0000-0000-000000000079', 'p0000000-0000-0000-0000-000000000001', false)
+('HSK-1', 'a0000000-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001', false),
+('HSK-2', 'a0000000-0000-0000-0000-000000000002', 'f0000000-0000-0000-0000-000000000001', false),
+('HSK-3', 'a0000000-0000-0000-0000-000000000003', 'f0000000-0000-0000-0000-000000000001', false),
+('HSK-4', 'a0000000-0000-0000-0000-000000000004', 'f0000000-0000-0000-0000-000000000001', false),
+('HSK-5', 'a0000000-0000-0000-0000-000000000005', 'f0000000-0000-0000-0000-000000000001', false),
+('HSK-6', 'a0000000-0000-0000-0000-000000000006', 'f0000000-0000-0000-0000-000000000001', false),
+('HSK-7-9', 'a0000000-0000-0000-0000-000000000079', 'f0000000-0000-0000-0000-000000000001', false)
 ON CONFLICT (sku) DO NOTHING;
