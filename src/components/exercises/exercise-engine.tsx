@@ -99,10 +99,10 @@ const TYPE_LABELS: Record<string, string> = {
   fill_blank: 'Texte a trous',
   matching: 'Associations',
   reorder: 'Remise en ordre',
-  character_recognition: 'Reconnaissance',
+  character_recognition: 'Recognition',
   flashcard: 'Flashcard',
   listening_comprehension: 'Comprehension orale',
-  dictation: 'Dictee',
+  dictation: 'Dictation',
   controlled_translation: 'Traduction',
   reading_comprehension: 'Lecture',
 };
@@ -224,11 +224,11 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
               </div>
               <div className="bg-cream-25 rounded-xl p-3">
                 <p className="text-2xl font-bold text-navy-900">{totalPoints}</p>
-                <p className="text-xs text-navy-400">Points max</p>
+                <p className="text-xs text-navy-400">Max points</p>
               </div>
               <div className="bg-cream-25 rounded-xl p-3">
                 <p className="text-2xl font-bold text-teal-600">120/200</p>
-                <p className="text-xs text-navy-400">Score HSK requis</p>
+                <p className="text-xs text-navy-400">HSK score required</p>
               </div>
             </div>
 
@@ -237,15 +237,14 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
               <div className="flex items-start gap-2">
                 <BarChart3 className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
                 <div className="text-sm text-navy-700">
-                  <p className="font-semibold text-sky-700 mb-1">Bareme HSK officiel</p>
-                  <p>Votre score brut est converti sur <strong>200 points</strong> (bareme HSK).
-                  Il faut obtenir au minimum <strong>120/200</strong> (60%) pour valider le niveau.</p>
+                  <p className="font-semibold text-sky-700 mb-1">HSK scoring scale</p>
+                  <p>Your raw score is converted to <strong>200 points</strong> (HSK scale). You need at least <strong>120/200</strong> (60%) to pass the level.</p>
                 </div>
               </div>
             </div>
 
             <div className="border-t border-cream-100 pt-4">
-              <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-2">Types d&apos;exercices</p>
+              <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-2">Exercise types</p>
               <div className="flex flex-wrap gap-2">
                 {Array.from(typeBreakdown.entries()).map(([type, count]) => (
                   <span key={type} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-cream-50 text-xs text-navy-600 border border-cream-200">
@@ -257,7 +256,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
 
             <Button onClick={startSession} variant="teal" size="lg" className="w-full mt-2">
               <Zap className="h-5 w-5" />
-              Commencer l&apos;exercice
+              Start exercises
             </Button>
           </CardContent>
         </Card>
@@ -346,10 +345,10 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
               {results.hskScore}<span className="text-3xl opacity-70">/200</span>
             </p>
             <p className="text-xl font-semibold mt-2">
-              {results.passed ? 'Felicitations, niveau valide !' : 'Pas encore, continuez vos efforts !'}
+              {results.passed ? 'Congratulations, level passed!' : 'Not yet, keep practicing!'}
             </p>
             <p className="text-sm opacity-80 mt-1">
-              {results.percentage}% &mdash; {results.totalPoints}/{results.maxPoints} points bruts
+              {results.percentage}% &mdash; {results.totalPoints}/{results.maxPoints} raw points
             </p>
             {/* XP earned floating badge */}
             {sessionSummary && (
@@ -370,14 +369,14 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
                     <Zap className="h-4 w-4 text-emerald-500" />
                   </div>
                   <p className="text-lg font-bold text-emerald-600 animate-xp-count">+{sessionSummary.xp_earned}</p>
-                  <p className="text-[10px] text-emerald-600/70">XP gagnes</p>
+                  <p className="text-[10px] text-emerald-600/70">XP earned</p>
                 </div>
                 <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Flame className="h-4 w-4 text-orange-500" />
                   </div>
                   <p className="text-lg font-bold text-orange-600">{sessionSummary.streak_days}</p>
-                  <p className="text-[10px] text-orange-600/70">Serie</p>
+                  <p className="text-[10px] text-orange-600/70">Streak</p>
                 </div>
                 <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
                   <div className="flex items-center justify-center gap-1 mb-1">
@@ -393,7 +392,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
             {sessionSummary && sessionSummary.new_badges.length > 0 && (
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200">
                 <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-3">
-                  Nouveaux badges debloques !
+                  New badges unlocked!
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {sessionSummary.new_badges.map(badgeId => {
@@ -423,11 +422,11 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
                 <p className="text-lg font-bold text-navy-900">
                   {session.answers.filter(a => a.isCorrect).length}/{session.answers.length}
                 </p>
-                <p className="text-xs text-navy-400">Correctes</p>
+                <p className="text-xs text-navy-400">Correct</p>
               </div>
               <div className="bg-cream-25 rounded-xl p-3">
                 <p className="text-lg font-bold text-navy-900">{formatTime(results.timeElapsed)}</p>
-                <p className="text-xs text-navy-400">Temps</p>
+                <p className="text-xs text-navy-400">Time</p>
               </div>
               <div className="bg-cream-25 rounded-xl p-3">
                 <p className={cn('text-lg font-bold', results.passed ? 'text-emerald-600' : 'text-red-500')}>
@@ -439,7 +438,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
 
             {/* By difficulty */}
             <div className="border-t border-cream-100 pt-4">
-              <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">Par difficulte</p>
+              <p className="text-xs font-semibold text-navy-500 uppercase tracking-wider mb-3">By difficulty</p>
               <div className="space-y-2.5">
                 {results.byDifficulty.map(d => {
                   const pct = d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0;
@@ -509,7 +508,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
             <div className="flex gap-3">
               <Button onClick={restartSession} variant="teal" size="lg" className="flex-1">
                 <RotateCcw className="h-4 w-4" />
-                Recommencer
+                Restart
               </Button>
             </div>
           </CardContent>
@@ -660,7 +659,7 @@ function CorrectAnswerDisplay({ exercise }: { exercise: Exercise }) {
 
   return (
     <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
-      <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1">Bonne reponse</p>
+      <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1">Correct answer</p>
       <p className="text-base font-medium text-emerald-900">{display}</p>
     </div>
   );
@@ -679,7 +678,7 @@ function AnswerReview({ answers, exercises }: { answers: ExerciseAnswer[]; exerc
         className="flex items-center justify-between w-full text-left"
       >
         <span className="text-xs font-semibold text-navy-500 uppercase tracking-wider">
-          Revue des reponses ({answers.filter(a => a.isCorrect).length}/{answers.length} correctes)
+          Review answers ({answers.filter(a => a.isCorrect).length}/{answers.length} correct)
         </span>
         <span className="text-xs text-navy-400">{expanded ? 'Hide' : 'Show'}</span>
       </button>
@@ -905,7 +904,7 @@ function FillBlankRenderer({ exercise, meta, onSubmit }: {
         value={value}
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && value.trim()) checkAnswer(); }}
-        placeholder="Votre reponse..."
+        placeholder="Your answer..."
         className="w-full px-4 py-3.5 rounded-xl border-2 border-cream-200 bg-white text-navy-900 text-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all"
         autoFocus
         autoComplete="off"

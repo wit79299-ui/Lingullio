@@ -523,7 +523,7 @@ export function DailyChallengeWidget({ className }: { className?: string }) {
             ? 'Come back tomorrow for a new challenge'
             : streakDays > 0
               ? `Keep your streak of ${streakDays}j !`
-              : '3 quick questions pour gagner des XP'
+              : '3 quick questions to earn XP'
           }
         </p>
       </div>

@@ -137,7 +137,7 @@ export function ObjectivesView() {
             {objective ? 'Edit mon objectif' : 'Definir mon objectif'}
           </h1>
           <p className="text-navy-400 mt-2 ml-[52px]">
-            {objective ? 'Ajustez votre plan de preparation' : 'Definissez votre examen cible et Lingullio adaptera votre parcours'}
+            {objective ? 'Adjust your preparation plan' : 'Set your target exam and Lingullio will adapt your learning path'}
           </p>
         </header>
 
@@ -201,7 +201,7 @@ export function ObjectivesView() {
             {/* Weekly hours */}
             <div>
               <label className="text-sm font-medium text-navy-900 mb-2 block">
-                Temps d&apos;etude hebdomadaire : <span className="text-teal-600">{formHours}h/semaine</span>
+                Weekly study time: <span className="text-teal-600">{formHours}h/week</span>
               </label>
               <input
                 type="range"

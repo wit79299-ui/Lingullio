@@ -546,7 +546,7 @@ export default function ReviewsPage() {
               </div>
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">2</span>
-                <p>Les cards due sont priorisees : les mots que vous oubliez le plus vite apparaissent en premier.</p>
+                <p>Due cards are prioritized: words you forget fastest appear first.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">3</span>
@@ -554,7 +554,7 @@ export default function ReviewsPage() {
               </div>
               <div className="flex gap-3">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold shrink-0">4</span>
-                <p>Gagnez <strong>{XP_CONFIG.srs_review_correct} XP</strong> per correct answer and <strong>{XP_CONFIG.srs_review_incorrect} XP</strong> for participation!</p>
+                <p>Earn <strong>{XP_CONFIG.srs_review_correct} XP</strong> per correct answer and <strong>{XP_CONFIG.srs_review_incorrect} XP</strong> for participation!</p>
               </div>
             </div>
           </CardContent>

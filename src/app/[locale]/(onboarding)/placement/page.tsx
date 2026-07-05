@@ -8,7 +8,7 @@ type Props = {
 
 export const metadata: Metadata = {
   title: 'Test de positionnement',
-  description: 'Découvre ton niveau de chinois et obtiens un plan d\'apprentissage personnalisé.',
+  description: 'Discover your Chinese level and get a personalized learning plan.',
 };
 
 export default async function PlacementPage({ params }: Props) {

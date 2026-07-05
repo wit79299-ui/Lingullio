@@ -24,7 +24,7 @@ const STEPS = [
   {
     key: 'seed',
     title: 'Etape 3 : Donnees initiales',
-    description: 'Insere les cours HSK, vocabulaire, exercices de test',
+    description: 'Insert HSK courses, vocabulary, and test exercises',
   },
 ] as const;
 
@@ -66,7 +66,7 @@ export default function DeployPage() {
     const sql = sqlParts[key];
     if (!sql || !supabaseUrl || !serviceRoleKey) return;
 
-    updateStep(key, { status: 'loading', message: 'Execution en cours...', detail: '' });
+    updateStep(key, { status: 'loading', message: 'Running...', detail: '' });
 
     try {
       // Extract project ref from URL
@@ -74,7 +74,7 @@ export default function DeployPage() {
       if (!urlMatch) {
         updateStep(key, {
           status: 'error',
-          message: 'URL Supabase invalide',
+          message: 'Invalid Supabase URL',
           detail: 'Le format attendu est https://xxxxx.supabase.co',
         });
         return;
@@ -114,7 +114,7 @@ export default function DeployPage() {
         if (result.error) {
           updateStep(key, {
             status: 'error',
-            message: 'Erreur SQL',
+            message: 'SQL error',
             detail: typeof result.error === 'string' ? result.error : JSON.stringify(result.error),
           });
         } else {
@@ -157,12 +157,12 @@ export default function DeployPage() {
       updateStep(key, {
         status: 'error',
         message: `L'execution automatique n'est pas disponible (HTTP ${pgResponse.status})`,
-        detail: 'Utilisez le bouton "Copier" ci-dessous pour copier le SQL, puis collez-le manuellement dans le SQL Editor de Supabase.',
+        detail: 'Use the "Copy" button below to copy the SQL, then paste it manually into the Supabase SQL Editor.',
       });
     } catch (err) {
       updateStep(key, {
         status: 'error',
-        message: 'Erreur de connexion',
+        message: 'Connection error',
         detail: String(err),
       });
     }
@@ -208,7 +208,7 @@ export default function DeployPage() {
   async function verifyTables() {
     if (!supabaseUrl || !serviceRoleKey) return;
 
-    updateStep('schema', { ...steps.schema, detail: 'Verification en cours...' });
+    updateStep('schema', { ...steps.schema, detail: 'Verifying...' });
 
     try {
       const response = await fetch(

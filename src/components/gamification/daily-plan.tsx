@@ -65,9 +65,9 @@ function generateDailyPlan(state: {
   items.push({
     id: 'continue-lesson',
     type: 'lesson',
-    title: isNewUser ? 'Commencer les cours' : 'Continuer les cours',
+    title: isNewUser ? 'Start courses' : 'Continue courses',
     subtitle: isNewUser
-      ? 'Decouvrez votre premiere lecon HSK'
+      ? 'Discover your first HSK lesson'
       : 'Reprenez la ou vous en etiez',
     href: '/courses',
     icon: BookOpen,
@@ -78,7 +78,7 @@ function generateDailyPlan(state: {
     durationMinutes: 15,
     priority: hasStudiedToday ? 3 : 1,
     reason: isNewUser
-      ? 'Le meilleur moment pour commencer, c\'est maintenant !'
+      ? 'The best time to start is now!'
       : 'La regularite est la cle de la reussite',
   });
 
@@ -90,10 +90,10 @@ function generateDailyPlan(state: {
     items.push({
       id: 'srs-review',
       type: 'revision',
-      title: dueCount > 0 ? `Revisions SRS (${dueCount} mots)` : 'Revisions SRS',
+      title: dueCount > 0 ? `SRS Review (${dueCount} words)` : 'SRS Review',
       subtitle: dueCount > 0
-        ? urgentWords ? `A revoir : ${urgentWords}...` : `${dueCount} elements en attente de revision`
-        : isStruggling ? 'Renforcez vos points faibles' : 'Consolidez vos acquis',
+        ? urgentWords ? `To review: ${urgentWords}...` : `${dueCount} items due for review`
+        : isStruggling ? 'Strengthen your weak points' : 'Consolidate what you know',
       href: '/revisions',
       icon: Brain,
       color: 'text-blue-600',
@@ -103,7 +103,7 @@ function generateDailyPlan(state: {
       durationMinutes: Math.max(5, Math.ceil(dueCount * 0.5)),
       priority: dueCount >= 10 ? 0 : isStruggling ? 1 : 2,
       reason: dueCount > 0
-        ? `${dueCount} mots attendent leur revision SRS — la memoire s'efface sans pratique`
+        ? `${dueCount} words are waiting for SRS review — memory fades without practice`
         : 'La repetition espacee optimise la memorisation a long terme',
     });
   }
@@ -126,7 +126,7 @@ function generateDailyPlan(state: {
       durationMinutes: 30,
       priority: isExcelling ? 2 : 4,
       reason: isExcelling
-        ? 'Avec ' + recentAvgAccuracy + '% de precision, vous etes pret(e) pour le test'
+        ? 'With ' + recentAvgAccuracy + '% accuracy, you are ready for the test'
         : 'Les examens blancs preparent efficacement au vrai HSK',
     });
   }
@@ -137,7 +137,7 @@ function generateDailyPlan(state: {
       id: 'daily-challenge',
       type: 'challenge',
       title: 'Defi du jour',
-      subtitle: 'Un mini-exercice rapide pour maintenir votre serie',
+      subtitle: 'A quick mini-exercise to maintain your streak',
       href: '/daily-challenge',
       icon: Target,
       color: 'text-amber-600',
@@ -147,8 +147,8 @@ function generateDailyPlan(state: {
       durationMinutes: 3,
       priority: state.streak_days > 0 ? 0 : 5, // Top priority if streak at risk!
       reason: state.streak_days > 0
-        ? `Maintenez votre serie de ${state.streak_days} jours !`
-        : 'Un exercice rapide pour bien demarrer',
+        ? `Maintain your ${state.streak_days}-day streak!`
+        : 'A quick exercise to get started',
     });
   }
 
@@ -158,7 +158,7 @@ function generateDailyPlan(state: {
       id: 'focused-practice',
       type: 'practice',
       title: 'Entrainement cible',
-      subtitle: 'Travaillez les points ou vous hesitez',
+      subtitle: 'Work on areas where you struggle',
       href: '/courses',
       icon: Target,
       color: 'text-rose-600',
@@ -294,7 +294,7 @@ export function DailyPlan({ className }: { className?: string }) {
               Serie en danger !
             </p>
             <p className="text-[10px] text-orange-600">
-              Completez au moins 1 exercice pour maintenir votre serie de {streak_days} jours
+              Complete at least 1 exercise to maintain your {streak_days}-day streak
             </p>
           </div>
         </div>
@@ -348,24 +348,24 @@ function PlanItemCard({ item, index }: { item: PlanItem; index: number }) {
 
 function getMotivationalMessage(streakDays: number, dailyXp: number, level: number): string {
   if (dailyXp > 100) {
-    return 'Journee exceptionnelle ! Vous avez deja gagne plus de 100 XP. Continuez sur cette lancee !';
+    return 'Exceptional day! You have already earned over 100 XP. Keep it up!';
   }
   if (dailyXp > 50) {
-    return 'Beau travail aujourd\'hui ! Encore un petit effort pour une journee parfaite.';
+    return 'Great work today! Just a little more effort for a perfect day.';
   }
   if (streakDays >= 30) {
-    return `${streakDays} jours de suite ! Vous faites preuve d'une discipline remarquable. Votre chinois progresse rapidement.`;
+    return `${streakDays} days in a row! Your discipline is remarkable. Your Chinese is progressing fast.`;
   }
   if (streakDays >= 7) {
-    return `Bravo pour cette serie de ${streakDays} jours ! La regularite paie : votre cerveau forme de nouvelles connexions chaque jour.`;
+    return `Great job on your ${streakDays}-day streak! Consistency pays off: your brain forms new connections every day.`;
   }
   if (streakDays > 0 && dailyXp === 0) {
-    return `N'oubliez pas votre session du jour pour garder votre serie de ${streakDays} jours ! Meme 5 minutes comptent.`;
+    return `Don't forget your daily session to keep your ${streakDays}-day streak! Even 5 minutes count.`;
   }
   if (level <= 2) {
-    return 'Chaque expert etait autrefois debutant. Commencez par les bases et progressez a votre rythme !';
+    return 'Every expert was once a beginner. Start with the basics and progress at your own pace!';
   }
-  return 'Un peu chaque jour vaut mieux que beaucoup rarement. Le chinois s\'apprend mot par mot, caractere par caractere.';
+  return 'A little every day is better than a lot rarely. Chinese is learned word by word, character by character.';
 }
 
 // ─── Compact variant for sidebar ─────────────────────────────────────────

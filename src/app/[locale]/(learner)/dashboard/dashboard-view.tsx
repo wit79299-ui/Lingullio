@@ -96,7 +96,7 @@ export function DashboardView() {
 
   // ─── Standard Dashboard ────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -157,7 +157,7 @@ export function DashboardView() {
                 </div>
                 <div>
                   <p className="font-bold">{levelTitle(level)}</p>
-                  <p className="text-xs text-white/60">Niveau {level}</p>
+                  <p className="text-xs text-white/60">Level {level}</p>
                 </div>
               </div>
               <div className="text-right">
@@ -228,7 +228,7 @@ export function DashboardView() {
                           : 'bg-cream-100'
                       )}
                       style={{ height: `${height}%` }}
-                      title={`${day.label}: ${day.xp} XP, ${day.exercises} exercices`}
+                      title={`${day.label}: ${day.xp} XP, ${day.exercises} exercises`}
                     />
                     <span className="text-[9px] text-navy-400">{day.label}</span>
                   </div>

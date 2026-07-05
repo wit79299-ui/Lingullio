@@ -16,13 +16,13 @@ export default async function SettingsPage({ params }: Props) {
       icon: Globe,
       title: 'Langues et locales',
       description: 'Configurer les langues disponibles pour les apprenants et les contenus',
-      status: 'Actif',
+      status: 'Active',
     },
     {
       icon: ShoppingCart,
       title: 'Intégration Shopify',
       description: 'Clé API, webhook URL, configuration du store Shopify',
-      status: 'Configuré',
+      status: 'Configured',
     },
     {
       icon: Bell,
@@ -34,13 +34,13 @@ export default async function SettingsPage({ params }: Props) {
       icon: Shield,
       title: 'Sécurité & accès',
       description: "Gestion des rôles, permissions et politique d'accès",
-      status: 'Actif',
+      status: 'Active',
     },
     {
       icon: Database,
       title: 'Base de données',
       description: 'Informations Supabase, migrations, état des tables',
-      status: 'Connecté',
+      status: 'Connected',
     },
   ];
 
@@ -66,7 +66,7 @@ export default async function SettingsPage({ params }: Props) {
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-navy-900">{section.title}</h3>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      section.status === 'Actif' || section.status === 'Configuré' || section.status === 'Connecté'
+                      section.status === 'Active' || section.status === 'Configured' || section.status === 'Connected'
                         ? 'bg-teal-100 text-teal-700'
                         : 'bg-gold-100 text-gold-700'
                     }`}>

@@ -265,10 +265,10 @@ export default function SetupPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-7a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="success-title">Configuration deja effectuee</p>
+              <p className="success-title">Configuration already done</p>
               <p className="success-text">
-                Les credentials ont deja ete enregistres.<br />
-                Cette page n'est plus accessible.
+                The credentials have already been saved.<br />
+                This page is no longer accessible.
               </p>
             </div>
           )}
@@ -280,10 +280,10 @@ export default function SetupPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="success-title">Credentials enregistres</p>
+              <p className="success-title">Credentials saved</p>
               <p className="success-text">
                 Les informations Supabase ont ete ecrites dans le fichier de configuration serveur.<br />
-                Le token d'acces a cette page a ete supprime.<br />
+                The access token for this page has been revoked.<br />
                 Le serveur va redemarrer automatiquement.
               </p>
             </div>
@@ -304,7 +304,7 @@ export default function SetupPage() {
 
               <div className="security-badges">
                 <span className="badge">HTTPS uniquement</span>
-                <span className="badge">Ecriture serveur</span>
+                <span className="badge">Server write</span>
                 <span className="badge">Token usage unique</span>
                 <span className="badge">Pas de log</span>
                 <span className="badge">autocomplete off</span>
@@ -323,10 +323,10 @@ export default function SetupPage() {
                     data-1p-ignore="true"
                     data-lpignore="true"
                     data-form-type="other"
-                    placeholder="Collez le token fourni"
+                    placeholder="Paste the provided token"
                     className={showKeys ? 'visible' : ''}
                   />
-                  <p className="hint">Le token a usage unique fourni par le developpeur</p>
+                  <p className="hint">The one-time token provided by the developer</p>
                 </div>
 
                 <hr className="separator" />
@@ -390,7 +390,7 @@ export default function SetupPage() {
                   className="toggle-vis"
                   onClick={() => setShowKeys(!showKeys)}
                 >
-                  {showKeys ? 'Masquer les valeurs' : 'Afficher les valeurs'}
+                  {showKeys ? 'Hide values' : 'Show values'}
                 </button>
 
                 {error && <div className="error">{error}</div>}
@@ -402,8 +402,8 @@ export default function SetupPage() {
                     disabled={status === 'submitting'}
                   >
                     {status === 'submitting'
-                      ? 'Enregistrement...'
-                      : 'Enregistrer les credentials'}
+                      ? 'Saving...'
+                      : 'Save credentials'}
                   </button>
                 </div>
               </form>
@@ -412,7 +412,7 @@ export default function SetupPage() {
 
           {status === 'error' && (
             <div className="expired-box">
-              <p className="success-title">Erreur de verification</p>
+              <p className="success-title">Verification error</p>
               <p className="success-text">
                 Impossible de contacter le serveur. Rechargez la page.
               </p>

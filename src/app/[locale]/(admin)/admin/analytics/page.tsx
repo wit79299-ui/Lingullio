@@ -70,7 +70,7 @@ export default async function AnalyticsPage({ params }: Props) {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-navy-500" />
-            Tendances d&apos;inscription
+            Registration trends
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -83,7 +83,7 @@ export default async function AnalyticsPage({ params }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Taux de complétion par niveau</CardTitle>
+            <CardTitle className="text-base">Completion rate by level</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center h-40 border-2 border-dashed border-navy-100 rounded-lg text-sm text-navy-400">
@@ -94,7 +94,7 @@ export default async function AnalyticsPage({ params }: Props) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Temps d&apos;étude moyen</CardTitle>
+            <CardTitle className="text-base">Average study time</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center h-40 border-2 border-dashed border-navy-100 rounded-lg text-sm text-navy-400">

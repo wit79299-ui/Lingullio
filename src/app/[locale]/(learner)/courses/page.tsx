@@ -170,7 +170,7 @@ export default async function CoursesPage({ params }: Props) {
       {courses.length === 0 && (
         <div className="text-center py-16">
           <GraduationCap className="h-12 w-12 text-navy-200 mx-auto mb-4" />
-          <p className="text-navy-400">Aucun parcours disponible pour le moment.</p>
+          <p className="text-navy-400">No courses available at the moment.</p>
         </div>
       )}
     </div>

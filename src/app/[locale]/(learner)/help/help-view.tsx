@@ -26,21 +26,21 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'what-is',
     question: 'Qu\'est-ce que Lingullio ?',
-    answer: 'Lingullio est une plateforme d\'apprentissage du chinois mandarin specialisee dans la preparation aux examens HSK (niveaux 1 a 6). Elle combine des cours structures, des exercices interactifs, un systeme de repetition espacee (SRS) et de la gamification pour optimiser votre apprentissage.',
+    answer: 'Lingullio is a Mandarin Chinese learning platform specialized in HSK exam preparation (levels 1 to 6). It combines structured courses, interactive exercises, a spaced repetition system (SRS), and gamification to optimize your learning.',
     category: 'general',
     icon: BookOpen,
   },
   {
     id: 'demo-mode',
     question: 'Le mode demo, c\'est quoi ?',
-    answer: 'En mode demo, vos donnees sont sauvegardees localement dans votre navigateur (localStorage). Aucun compte n\'est necessaire. Attention : si vous videz le cache de votre navigateur, vos donnees seront perdues. Utilisez les Settings pour exporter vos donnees si besoin.',
+    answer: 'In demo mode, your data is saved locally in your browser (localStorage). No account is needed. Warning: if you clear your browser cache, your data will be lost. Use the Settings page to export your data if needed.',
     category: 'general',
     icon: Settings,
   },
   {
     id: 'data-loss',
     question: 'How to avoid losing my data?',
-    answer: 'En mode demo, vos donnees sont dans le navigateur. Evitez de vider le cache, d\'utiliser la navigation privee, ou de changer de navigateur. All vos progressions (XP, badges, Living Memory, resultats d\'examens) sont dans le meme navigateur.',
+    answer: 'In demo mode, your data is stored in the browser. Avoid clearing the cache, using private browsing, or switching browsers. All your progress (XP, badges, Living Memory, exam results) is in the same browser.',
     category: 'general',
     icon: HelpCircle,
   },
@@ -48,7 +48,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'km-what',
     question: 'Qu\'est-ce que la Living Memory ?',
-    answer: 'La Living Memory (Knowledge Map) est le systeme central qui trace chaque mot, caractere et point de grammaire que vous rencontrez. Elle utilise l\'algorithme SM-2 de repetition espacee pour planifier vos revisions au moment optimal, juste avant que vous oubliiez.',
+    answer: 'The Living Memory (Knowledge Map) is the central system that tracks every word, character, and grammar point you encounter. It uses the SM-2 spaced repetition algorithm to schedule your reviews at the optimal time, just before you forget.',
     category: 'knowledge',
     icon: Brain,
   },
@@ -62,7 +62,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'km-srs',
     question: 'How does spaced repetition (SRS) work?',
-    answer: 'L\'algorithme SM-2 calcule le moment ideal pour reviser chaque mot. Si vous repondez correctement, l\'intervalle augmente (1j -> 3j -> 7j -> 14j -> 30j...). Si vous faites une erreur, l\'intervalle se reduit. Rendez-vous dans l\'onglet Revisions pour voir vos cartes a reviser.',
+    answer: 'The SM-2 algorithm calculates the ideal time to review each word. If you answer correctly, the interval increases (1d -> 3d -> 7d -> 14d -> 30d...). If you make a mistake, the interval decreases. Go to the Reviews tab to see your cards due for review.',
     category: 'knowledge',
     icon: RotateCcw,
   },
@@ -70,7 +70,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'xp-system',
     question: 'How does the XP system work?',
-    answer: 'Vous gagnez de l\'XP en completant des exercices (10-15 XP par exercice correct), des defis quotidiens (50 XP bonus), et des sessions parfaites (25 XP bonus). Les niveaux suivent une courbe exponentielle (100 * 1.4^(niveau-2)), jusqu\'au niveau 50 maximum.',
+    answer: 'You earn XP by completing exercises (10-15 XP per correct exercise), daily challenges (50 XP bonus), and perfect sessions (25 XP bonus). Levels follow an exponential curve (100 * 1.4^(level-2)), up to level 50 maximum.',
     category: 'gamification',
     icon: Zap,
   },
@@ -84,7 +84,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'badges',
     question: 'How to unlock badges?',
-    answer: 'Il y a 25+ badges repartis en 4 niveaux de rarete (Commun, Rare, Epique, Legendaire). Ils se debloquent automatiquement en atteignant certains jalons : nombre d\'exercices, precision, serie de jours, mots maitrises, etc. Consultez la page Progression pour les voir tous.',
+    answer: 'There are 25+ badges across 4 rarity levels (Common, Rare, Epic, Legendary). They unlock automatically when you reach certain milestones: number of exercises, accuracy, day streaks, mastered words, etc. Check the Progress page to see them all.',
     category: 'gamification',
     icon: Award,
   },
@@ -99,7 +99,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'mock-exams',
     question: 'How do mock exams work?',
-    answer: 'Mock exams reproduce the official HSK format: same duration, same question types (listening + reading), same scoring. You receive a detailed analysis of your results by section. Your answers are also recorded in the Living Memory.',
+    answer: 'Mock exams reproduce the standard HSK format: same duration, same question types (listening + reading), same scoring. You receive a detailed analysis of your results by section. Your answers are also recorded in the Living Memory.',
     category: 'features',
     icon: Trophy,
   },
@@ -113,14 +113,14 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     id: 'coach-autonome',
     question: 'Qu\'est-ce que le Coach Autonome ?',
-    answer: 'Le Coach Autonome s\'active automatiquement si vous etes inactif pendant 15+ jours. Il analyse votre courbe d\'oubli (formule d\'Ebbinghaus) et vous propose un plan de revision d\'urgence pour recuperer les mots en danger d\'etre oublies.',
+    answer: 'The Autonomous Coach activates automatically if you are inactive for 15+ days. It analyzes your forgetting curve (Ebbinghaus formula) and proposes an emergency review plan to recover words at risk of being forgotten.',
     category: 'features',
     icon: Brain,
   },
   {
     id: 'parcours-inverse',
     question: 'Qu\'est-ce que le Parcours Inverse ?',
-    answer: 'Le Parcours Inverse est un mode d\'entrainement qui part de votre objectif (ex: HSK 4 dans 3 mois) et construit un plan de travail a rebours. Il calcule le nombre de mots a apprendre par semaine et vous guide etape par etape.',
+    answer: 'The Reverse Path is a training mode that starts from your goal (e.g., HSK 4 in 3 months) and builds a work plan backwards. It calculates the number of words to learn per week and guides you step by step.',
     category: 'features',
     icon: ArrowRight,
   },

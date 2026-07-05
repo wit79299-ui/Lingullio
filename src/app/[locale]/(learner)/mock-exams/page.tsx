@@ -60,10 +60,10 @@ export default async function MockExamsPage({ params }: Props) {
             <Award className="w-6 h-6 text-gold-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-navy-900 mb-1">Official HSK 2026 Format</h2>
+            <h2 className="font-semibold text-navy-900 mb-1">HSK 2026 Format</h2>
             <p className="text-sm text-navy-500">
               Each mock exam faithfully reproduces the format, duration and scoring
-              of the official exam. Timer, listening + reading sections, and detailed
+              of the real exam. Timer, listening + reading sections, and detailed
               analysis of your results.
             </p>
           </div>

@@ -819,19 +819,19 @@ export function MockExamRunner({ exam, locale }: Props) {
                 <PenLine className="h-4 w-4 text-amber-600" />
                 <span className="text-sm font-medium text-amber-800">
                   {examType === 'summary_rewrite_memory_based'
-                    ? 'R\u00e9sum\u00e9 / R\u00e9\u00e9criture'
-                    : 'Expression \u00e9crite'}
+                    ? 'Summary / Rewrite'
+                    : 'Written expression'}
                 </span>
               </div>
               <p className="text-sm text-amber-700">
-                Cette question n\u00e9cessite une r\u00e9ponse \u00e9crite. En conditions d&apos;examen, utilisez la feuille de r\u00e9ponse.
+                This question requires a written answer. In exam conditions, use the answer sheet.
               </p>
               {currentQuestion.image_url && (
                 <div className="mt-3 flex justify-center">
                   <div className="relative w-full max-w-md aspect-[3/4] rounded-lg overflow-hidden border border-amber-300 bg-white">
                     <Image
                       src={currentQuestion.image_url}
-                      alt="Feuille de r\u00e9ponse"
+                      alt="Answer sheet"
                       fill
                       className="object-contain"
                       sizes="(max-width: 640px) 100vw, 448px"
@@ -1104,7 +1104,7 @@ function IntroScreen({
           <div className="grid grid-cols-2 gap-4">
             <InfoTile icon={<Clock className="h-5 w-5 text-navy-400" />} value={`${exam.total_duration_minutes} minutes`} label="Dur\u00e9e totale" />
             <InfoTile icon={<Target className="h-5 w-5 text-navy-400" />} value={`${exam.total_points} points`} label="Max Score" />
-            <InfoTile icon={<Award className="h-5 w-5 text-gold-500" />} value={`${exam.scoring.pass_threshold} points`} label="Seuil de r\u00e9ussite" />
+            <InfoTile icon={<Award className="h-5 w-5 text-gold-500" />} value={`${exam.scoring.pass_threshold} points`} label="Pass threshold" />
             <InfoTile
               icon={<BarChart3 className="h-5 w-5 text-navy-400" />}
               value={`${exam.sections.reduce((sum, s) => sum + s.questions.length, 0)} questions`}
@@ -1149,14 +1149,14 @@ function IntroScreen({
         <CardContent className="pt-5">
           <h2 className="font-semibold text-navy-800 mb-3 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-amber-500" />
-            R&egrave;gles de l&apos;examen
+            Exam rules
           </h2>
           <ul className="space-y-2 text-sm text-navy-600">
-            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>Le chronom\u00e8tre d\u00e9marre d\u00e8s que tu cliques sur &laquo; Commencer &raquo;.</li>
-            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>Tu peux naviguer librement entre les questions.</li>
-            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>Les questions d&apos;\u00e9coute utilisent un audio g\u00e9n\u00e9r\u00e9 (TTS chinois haute qualit\u00e9).</li>
-            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>L&apos;examen se termine automatiquement quand le temps est \u00e9coul\u00e9.</li>
-            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>Un r\u00e9sultat d\u00e9taill\u00e9 et des explications sont fournis \u00e0 la fin.</li>
+            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>The timer starts as soon as you click &ldquo;Start&rdquo;.</li>
+            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>You can navigate freely between questions.</li>
+            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>Listening questions use high-quality Chinese TTS audio.</li>
+            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>The exam ends automatically when time runs out.</li>
+            <li className="flex items-start gap-2"><span className="text-teal-500 mt-0.5">&bull;</span>Detailed results and explanations are provided at the end.</li>
           </ul>
         </CardContent>
       </Card>
@@ -1316,10 +1316,10 @@ function ResultsScreen({
 
   const bands = [
     { min: 0, max: 39, label: 'Not acquired', color: 'text-red-600', bg: 'bg-red-50' },
-    { min: 40, max: 59, label: 'Presque pr\u00eat', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { min: 60, max: 74, label: 'R\u00e9ussite fragile', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { min: 40, max: 59, label: 'Almost ready', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { min: 60, max: 74, label: 'Borderline pass', color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { min: 75, max: 89, label: 'Good level', color: 'text-teal-600', bg: 'bg-teal-50' },
-    { min: 90, max: 100, label: 'Tr\u00e8s solide', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { min: 90, max: 100, label: 'Excellent', color: 'text-indigo-600', bg: 'bg-indigo-50' },
   ];
   const band = bands.find((b) => percent >= b.min && percent <= b.max) ?? bands[0];
 
@@ -1345,7 +1345,7 @@ function ResultsScreen({
           <span className="text-3xl font-bold">{results.passed ? '\uD83C\uDF89' : '\uD83D\uDCAA'}</span>
         </div>
         <h1 className="text-2xl font-bold text-navy-900 mb-1">
-          {results.passed ? 'F\u00e9licitations !' : 'Keep up the effort!'}
+          {results.passed ? 'Congratulations!' : 'Keep up the effort!'}
         </h1>
         <p className="text-navy-400">{exam.title}</p>
         {/* XP earned floating badge */}
@@ -1388,7 +1388,7 @@ function ResultsScreen({
             <div
               className="absolute top-0 h-4 w-0.5 bg-navy-400"
               style={{ left: `${(exam.scoring.pass_threshold / exam.total_points) * 100}%` }}
-              title={`Seuil : ${exam.scoring.pass_threshold}`}
+              title={`Threshold: ${exam.scoring.pass_threshold}`}
             />
             <div
               className="absolute -bottom-5 text-[10px] text-navy-400 -translate-x-1/2"
@@ -1406,14 +1406,14 @@ function ResultsScreen({
                   <Zap className="h-4 w-4 text-emerald-500" />
                 </div>
                 <p className="text-lg font-bold text-emerald-600 animate-xp-count">+{sessionSummary.xp_earned}</p>
-                <p className="text-[10px] text-emerald-600/70">XP gagn&eacute;s</p>
+                <p className="text-[10px] text-emerald-600/70">XP earned</p>
               </div>
               <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Flame className="h-4 w-4 text-orange-500" />
                 </div>
                 <p className="text-lg font-bold text-orange-600">{sessionSummary.streak_days}</p>
-                <p className="text-[10px] text-orange-600/70">S&eacute;rie</p>
+                <p className="text-[10px] text-orange-600/70">Streak</p>
               </div>
               <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
                 <div className="flex items-center justify-center gap-1 mb-1">
@@ -1430,7 +1430,7 @@ function ResultsScreen({
             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200 mb-4">
               <p className="text-xs font-semibold text-purple-700 uppercase tracking-wider mb-3">
                 <Sparkles className="h-3.5 w-3.5 inline mr-1" />
-                Nouveaux badges d&eacute;bloqu&eacute;s !
+                New badges unlocked!
               </p>
               <div className="flex flex-wrap gap-2">
                 {sessionSummary.new_badges.map(badgeId => {
@@ -1457,7 +1457,7 @@ function ResultsScreen({
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-cream-100">
             <div className="text-center">
               <p className="text-lg font-semibold text-navy-800">{results.totalCorrect}/{totalQuestions}</p>
-              <p className="text-xs text-navy-400">Bonnes r\u00e9ponses</p>
+              <p className="text-xs text-navy-400">Correct answers</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-semibold text-navy-800">{percent}%</p>
@@ -1465,7 +1465,7 @@ function ResultsScreen({
             </div>
             <div className="text-center">
               <p className="text-lg font-semibold text-navy-800">{timeFormatted}</p>
-              <p className="text-xs text-navy-400">Temps</p>
+              <p className="text-xs text-navy-400">Time</p>
             </div>
           </div>
         </CardContent>
@@ -1473,7 +1473,7 @@ function ResultsScreen({
 
       <Card>
         <CardContent className="pt-5">
-          <h2 className="font-semibold text-navy-800 mb-4">D\u00e9tail par section</h2>
+          <h2 className="font-semibold text-navy-800 mb-4">Results by section</h2>
           <div className="space-y-4">
             {results.sectionResults.map((sr) => {
               const sPercent = sr.totalPoints > 0 ? Math.round((sr.earnedPoints / sr.totalPoints) * 100) : 0;
@@ -1495,7 +1495,7 @@ function ResultsScreen({
                     />
                   </div>
                   <p className="text-xs text-navy-400 mt-1">
-                    {sr.correct}/{sr.total} bonnes r\u00e9ponses · {sPercent}%
+                    {sr.correct}/{sr.total} correct answers · {sPercent}%
                   </p>
                 </div>
               );
@@ -1507,7 +1507,7 @@ function ResultsScreen({
       <div className="flex flex-col sm:flex-row items-center gap-3 pb-8">
         <Button variant="primary" size="lg" onClick={onReview} className="w-full sm:w-auto">
           <Eye className="h-4 w-4 mr-2" />
-          Revoir les r\u00e9ponses
+          Review answers
         </Button>
         <Button variant="secondary" size="lg" onClick={onRetry} className="w-full sm:w-auto">
           <RotateCcw className="h-4 w-4 mr-2" />

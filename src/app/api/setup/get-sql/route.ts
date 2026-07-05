@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       default:
         content = [
           '-- ============================================================',
-          '-- LINGULLIO - DEPLOIEMENT COMPLET',
+          '-- LINGULLIO - FULL DEPLOYMENT',
           '-- 33 tables + RLS + seed data',
           '-- ============================================================',
           '',

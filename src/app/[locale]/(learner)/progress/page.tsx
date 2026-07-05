@@ -52,7 +52,7 @@ export default function ProgressPage() {
         />
         <StatCard
           icon={Star}
-          label="Niveau"
+          label="Level"
           value={`${level}`}
           subtitle={levelTitle(level)}
           color="amber"
@@ -248,7 +248,7 @@ function ActivityCalendar({ sessions }: { sessions: SessionHistoryEntry[] }) {
                   colors[intensity],
                   day.isToday && 'ring-2 ring-teal-500 ring-offset-1'
                 )}
-                title={`${day.date}: ${day.xp} XP, ${day.exercises} exercices`}
+                title={`${day.date}: ${day.xp} XP, ${day.exercises} exercises`}
               />
             );
           })}

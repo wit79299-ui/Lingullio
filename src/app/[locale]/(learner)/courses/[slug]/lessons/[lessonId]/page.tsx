@@ -142,17 +142,17 @@ export default async function LessonPage({ params }: Props) {
             </div>
             <div className="flex-1 text-center sm:text-left">
               <h3 className="text-lg font-bold text-navy-900">
-                Testez vos connaissances
+                Test your knowledge
               </h3>
               <p className="text-sm text-navy-500 mt-1">
-                {lesson.exercise_count} exercices interactifs &mdash; QCM, dictee, traduction, associations et plus.
-                Score calcule sur le bareme HSK officiel (120/200 pour valider).
+                {lesson.exercise_count} interactive exercises &mdash; MCQ, dictation, translation, matching and more.
+                Score calculated on the HSK scale (120/200 to pass).
               </p>
             </div>
             <Link href={`/courses/${slug}/lessons/${lessonId}/exercises`}>
               <Button variant="teal" size="lg" className="whitespace-nowrap">
                 <Zap className="h-5 w-5" />
-                Lancer les exercices
+                Start exercises
               </Button>
             </Link>
           </div>
