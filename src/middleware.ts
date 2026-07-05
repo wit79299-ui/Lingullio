@@ -30,15 +30,26 @@ export async function middleware(request: NextRequest) {
   // Run intl middleware first to handle locale
   const intlResponse = intlMiddleware(request);
 
-  // DEMO MODE: skip auth checks for development preview
-  // Activated when: Supabase not configured OR NEXT_PUBLIC_DEMO_MODE=true
+  // DEMO MODE: skip auth checks ONLY in local development
+  // PRODUCTION SAFETY: demo mode requires EXPLICIT opt-in via NEXT_PUBLIC_DEMO_MODE=true
+  // If Supabase URL is missing in production, we redirect to an error rather than exposing all routes
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const isDemoMode =
-    !supabaseUrl ||
-    supabaseUrl.includes('placeholder') ||
-    process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   if (isDemoMode) {
+    return intlResponse;
+  }
+
+  // If Supabase is not configured and NOT in demo mode, block protected routes
+  if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    const cleanPathCheck = getPathnameWithoutLocale(request.nextUrl.pathname, routing.locales);
+    const needsAuth = protectedPrefixes.some(p => cleanPathCheck.startsWith(p)) ||
+                      adminPrefixes.some(p => cleanPathCheck.startsWith(p));
+    if (needsAuth) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('error', 'config');
+      return NextResponse.redirect(loginUrl);
+    }
     return intlResponse;
   }
 
