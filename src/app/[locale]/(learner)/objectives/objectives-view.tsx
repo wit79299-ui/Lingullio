@@ -45,9 +45,14 @@ export function ObjectivesView() {
   const [formScore, setFormScore] = useState(70);
   const [formHours, setFormHours] = useState(5);
 
-  // Stores
-  const knowledgeStats = useUserKnowledgeStore(s => s.getStats());
-  const gamification = useGamificationStore();
+  // Stores (use individual selectors to avoid infinite re-renders)
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const knowledgeStats = useMemo(() => useUserKnowledgeStore.getState().getStats(), [knowledgeItems, knowledgeLastUpdated]);
+
+  const gamification_total_exercises = useGamificationStore(s => s.total_exercises);
+  const gamification_total_study_minutes = useGamificationStore(s => s.total_study_minutes);
+  const gamification_streak_days = useGamificationStore(s => s.streak_days);
 
   // Load from localStorage
   useEffect(() => {
@@ -110,15 +115,15 @@ export function ObjectivesView() {
     // Readiness score (simplified)
     const readiness = Math.min(100, Math.round(
       (vocabProgress * 0.5) +
-      (Math.min(100, (gamification.total_exercises / Math.max(1, targetVocab * 2)) * 100) * 0.3) +
-      (Math.min(100, (gamification.total_study_minutes / Math.max(1, daysLeft * minutesPerDay)) * 100) * 0.2)
+      (Math.min(100, (gamification_total_exercises / Math.max(1, targetVocab * 2)) * 100) * 0.3) +
+      (Math.min(100, (gamification_total_study_minutes / Math.max(1, daysLeft * minutesPerDay)) * 100) * 0.2)
     ));
 
     return {
       targetVocab, masteredCount, totalKnown, vocabProgress, vocabRemaining,
       daysLeft, weeksLeft, wordsPerWeek, minutesPerDay, readiness, hskNum,
     };
-  }, [objective, knowledgeStats, gamification]);
+  }, [objective, knowledgeStats, gamification_total_exercises, gamification_total_study_minutes]);
 
   // ── Editing / Setup form
   if (!objective || isEditing) {
@@ -358,9 +363,9 @@ export function ObjectivesView() {
           <PlanItem
             icon={Flame}
             title="Maintenir la serie"
-            description={`Serie actuelle : ${gamification.streak_days} jours`}
+            description={`Serie actuelle : ${gamification_streak_days} jours`}
             href="/daily-challenge"
-            urgent={gamification.streak_days === 0}
+            urgent={gamification_streak_days === 0}
           />
         </CardContent>
       </Card>

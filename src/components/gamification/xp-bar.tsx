@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { useGamificationStore } from '@/stores/gamification-store';
 import { Flame, Star, Zap } from 'lucide-react';
@@ -7,8 +8,10 @@ import { Flame, Star, Zap } from 'lucide-react';
 // ─── Compact XP Bar (for topbar / mobile) ──────────────────────────────
 
 export function XpBarCompact({ className }: { className?: string }) {
-  const { total_xp, level, streak_days } = useGamificationStore();
-  const levelInfo = useGamificationStore(s => s.getLevelInfo());
+  const total_xp = useGamificationStore(s => s.total_xp);
+  const level = useGamificationStore(s => s.level);
+  const streak_days = useGamificationStore(s => s.streak_days);
+  const levelInfo = useMemo(() => useGamificationStore.getState().getLevelInfo(), [level, total_xp]);
 
   return (
     <div className={cn('flex items-center gap-3', className)}>
@@ -42,8 +45,11 @@ export function XpBarCompact({ className }: { className?: string }) {
 // ─── Expanded XP Card (for sidebar / dashboard) ────────────────────────
 
 export function XpCardExpanded({ className }: { className?: string }) {
-  const { total_xp, level, streak_days, longest_streak, daily_xp } = useGamificationStore();
-  const levelInfo = useGamificationStore(s => s.getLevelInfo());
+  const total_xp = useGamificationStore(s => s.total_xp);
+  const level = useGamificationStore(s => s.level);
+  const streak_days = useGamificationStore(s => s.streak_days);
+  const daily_xp = useGamificationStore(s => s.daily_xp);
+  const levelInfo = useMemo(() => useGamificationStore.getState().getLevelInfo(), [level, total_xp]);
 
   return (
     <div className={cn('rounded-2xl bg-gradient-to-br from-navy-800 to-navy-900 p-4 text-white', className)}>

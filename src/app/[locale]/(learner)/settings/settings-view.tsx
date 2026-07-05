@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,12 +31,18 @@ export function SettingsView() {
   const [completedActions, setCompletedActions] = useState<Set<string>>(new Set());
   const [showSuccess, setShowSuccess] = useState<string | null>(null);
 
-  // ── Stores
+  // ── Stores (use individual selectors to avoid infinite re-renders)
   const gamificationReset = useGamificationStore(s => s.reset);
   const knowledgeReset = useUserKnowledgeStore(s => s.reset);
   const trainingReset = useTrainingModeStore(s => s.resetToStandard);
-  const knowledgeStats = useUserKnowledgeStore(s => s.getStats());
-  const gamification = useGamificationStore();
+
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const knowledgeStats = useMemo(() => useUserKnowledgeStore.getState().getStats(), [knowledgeItems, knowledgeLastUpdated]);
+
+  const gamification_total_xp = useGamificationStore(s => s.total_xp);
+  const gamification_level = useGamificationStore(s => s.level);
+  const gamification_streak_days = useGamificationStore(s => s.streak_days);
 
   // ── Preferences (localStorage)
   const [preferences, setPreferences] = useState(() => {
@@ -78,7 +84,7 @@ export function SettingsView() {
       id: 'reset_gamification',
       icon: Gauge,
       title: 'Reinitialiser XP et badges',
-      description: `Remettre a zero les ${gamification.total_xp} XP, le niveau ${gamification.level}, la serie de ${gamification.streak_days} jours et tous les badges.`,
+      description: `Remettre a zero les ${gamification_total_xp} XP, le niveau ${gamification_level}, la serie de ${gamification_streak_days} jours et tous les badges.`,
       danger: true,
       onConfirm: () => gamificationReset(),
     },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ export function DashboardView() {
   // Auto-activate Coach Autonome after 15 days inactivity
   useCoachAutoActivation();
 
-  const levelInfo = useGamificationStore(s => s.getLevelInfo());
+  const levelInfo = useMemo(() => useGamificationStore.getState().getLevelInfo(), [level, total_xp]);
   const accuracy = total_exercises > 0 ? Math.round((total_correct / total_exercises) * 100) : 0;
 
   // Recent activity (last 7 days)
@@ -538,8 +538,9 @@ function TrainingModeSelector({ onStartParcours }: { onStartParcours: () => void
 // ─── Knowledge Map Dashboard Widget ────────────────────────────────────
 
 function KnowledgeMapWidget() {
-  const stats = useUserKnowledgeStore(s => s.getStats());
   const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const stats = useMemo(() => useUserKnowledgeStore.getState().getStats(), [knowledgeItems, knowledgeLastUpdated]);
   const reviewSummary = useMemo(() => getReviewSummary(), [knowledgeLastUpdated]);
 
   if (stats.total_items === 0) return null;

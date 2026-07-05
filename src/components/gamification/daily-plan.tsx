@@ -181,7 +181,17 @@ function generateDailyPlan(state: {
 // ─── Daily Plan Component ────────────────────────────────────────────────
 
 export function DailyPlan({ className }: { className?: string }) {
-  const state = useGamificationStore();
+  // Use individual selectors to avoid re-renders from unrelated store changes
+  const total_xp = useGamificationStore(s => s.total_xp);
+  const level = useGamificationStore(s => s.level);
+  const streak_days = useGamificationStore(s => s.streak_days);
+  const total_exercises = useGamificationStore(s => s.total_exercises);
+  const total_correct = useGamificationStore(s => s.total_correct);
+  const daily_exercises = useGamificationStore(s => s.daily_exercises);
+  const daily_xp = useGamificationStore(s => s.daily_xp);
+  const sessions_history = useGamificationStore(s => s.sessions_history);
+  const perfect_sessions = useGamificationStore(s => s.perfect_sessions);
+  const total_study_minutes = useGamificationStore(s => s.total_study_minutes);
 
   // Get Knowledge Map review data
   const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
@@ -190,31 +200,31 @@ export function DailyPlan({ className }: { className?: string }) {
   }, [knowledgeLastUpdated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const planItems = useMemo(() => generateDailyPlan({
-    total_xp: state.total_xp,
-    level: state.level,
-    streak_days: state.streak_days,
-    total_exercises: state.total_exercises,
-    total_correct: state.total_correct,
-    daily_exercises: state.daily_exercises,
-    daily_xp: state.daily_xp,
-    sessions_history: state.sessions_history,
-    perfect_sessions: state.perfect_sessions,
-    total_study_minutes: state.total_study_minutes,
+    total_xp,
+    level,
+    streak_days,
+    total_exercises,
+    total_correct,
+    daily_exercises,
+    daily_xp,
+    sessions_history,
+    perfect_sessions,
+    total_study_minutes,
     reviewSummary,
   }), [
-    state.total_xp, state.level, state.streak_days,
-    state.total_exercises, state.total_correct,
-    state.daily_exercises, state.daily_xp,
-    state.sessions_history, state.perfect_sessions, state.total_study_minutes,
+    total_xp, level, streak_days,
+    total_exercises, total_correct,
+    daily_exercises, daily_xp,
+    sessions_history, perfect_sessions, total_study_minutes,
     reviewSummary,
   ]);
 
   const totalXpEstimate = planItems.reduce((s, i) => s + i.xpEstimate, 0);
   const totalMinutes = planItems.reduce((s, i) => s + i.durationMinutes, 0);
-  const completedToday = state.daily_exercises;
+  const completedToday = daily_exercises;
 
   // Motivational message
-  const motivMessage = getMotivationalMessage(state.streak_days, state.daily_xp, state.level);
+  const motivMessage = getMotivationalMessage(streak_days, daily_xp, level);
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -276,7 +286,7 @@ export function DailyPlan({ className }: { className?: string }) {
       )}
 
       {/* Streak protection reminder */}
-      {state.streak_days > 0 && state.daily_exercises === 0 && (
+      {streak_days > 0 && daily_exercises === 0 && (
         <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-orange-50 border border-orange-200">
           <Flame className="h-5 w-5 text-orange-500 animate-streak-fire shrink-0" />
           <div className="flex-1">
@@ -284,7 +294,7 @@ export function DailyPlan({ className }: { className?: string }) {
               Serie en danger !
             </p>
             <p className="text-[10px] text-orange-600">
-              Completez au moins 1 exercice pour maintenir votre serie de {state.streak_days} jours
+              Completez au moins 1 exercice pour maintenir votre serie de {streak_days} jours
             </p>
           </div>
         </div>
@@ -361,8 +371,9 @@ function getMotivationalMessage(streakDays: number, dailyXp: number, level: numb
 // ─── Compact variant for sidebar ─────────────────────────────────────────
 
 export function DailyPlanCompact({ className }: { className?: string }) {
-  const state = useGamificationStore();
-  const hasStudiedToday = state.daily_exercises > 0;
+  const daily_exercises_compact = useGamificationStore(s => s.daily_exercises);
+  const daily_xp_compact = useGamificationStore(s => s.daily_xp);
+  const hasStudiedToday = daily_exercises_compact > 0;
 
   return (
     <div className={cn('rounded-xl p-3', className)}>
@@ -374,17 +385,17 @@ export function DailyPlanCompact({ className }: { className?: string }) {
       {hasStudiedToday ? (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="text-navy-500">{state.daily_exercises} exercices</span>
-            <span className="text-emerald-600 font-bold">+{state.daily_xp} XP</span>
+            <span className="text-navy-500">{daily_exercises_compact} exercices</span>
+            <span className="text-emerald-600 font-bold">+{daily_xp_compact} XP</span>
           </div>
           <div className="h-1.5 bg-cream-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full transition-all"
-              style={{ width: `${Math.min(100, (state.daily_xp / 100) * 100)}%` }}
+              style={{ width: `${Math.min(100, (daily_xp_compact / 100) * 100)}%` }}
             />
           </div>
           <p className="text-[10px] text-navy-400 text-center">
-            {state.daily_xp >= 100 ? 'Objectif atteint !' : `${100 - state.daily_xp} XP pour l'objectif`}
+            {daily_xp_compact >= 100 ? 'Objectif atteint !' : `${100 - daily_xp_compact} XP pour l'objectif`}
           </p>
         </div>
       ) : (

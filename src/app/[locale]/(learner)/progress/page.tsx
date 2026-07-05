@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGamificationStore, type SessionHistoryEntry } from '@/stores/gamification-store';
 import { BADGES, RARITY_COLORS, type BadgeDefinition } from '@/lib/gamification/badges';
@@ -14,9 +15,19 @@ import { useUserKnowledgeStore, type KnowledgeItem, type MasteryLevel, type Cont
 import { HSK_VOCAB_COUNTS } from '@/stores/training-mode-store';
 
 export default function ProgressPage() {
-  const store = useGamificationStore();
-  const levelInfo = store.getLevelInfo();
-  const accuracy = store.total_exercises > 0 ? Math.round((store.total_correct / store.total_exercises) * 100) : 0;
+  const total_xp = useGamificationStore(s => s.total_xp);
+  const level = useGamificationStore(s => s.level);
+  const streak_days = useGamificationStore(s => s.streak_days);
+  const longest_streak = useGamificationStore(s => s.longest_streak);
+  const badges_unlocked = useGamificationStore(s => s.badges_unlocked);
+  const perfect_sessions = useGamificationStore(s => s.perfect_sessions);
+  const total_exercises = useGamificationStore(s => s.total_exercises);
+  const total_correct = useGamificationStore(s => s.total_correct);
+  const total_study_minutes = useGamificationStore(s => s.total_study_minutes);
+  const sessions_history = useGamificationStore(s => s.sessions_history);
+
+  const levelInfo = useMemo(() => useGamificationStore.getState().getLevelInfo(), [level, total_xp]);
+  const accuracy = total_exercises > 0 ? Math.round((total_correct / total_exercises) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -36,28 +47,28 @@ export default function ProgressPage() {
         <StatCard
           icon={Zap}
           label="XP Total"
-          value={store.total_xp.toLocaleString()}
+          value={total_xp.toLocaleString()}
           color="emerald"
         />
         <StatCard
           icon={Star}
           label="Niveau"
-          value={`${store.level}`}
-          subtitle={levelTitle(store.level)}
+          value={`${level}`}
+          subtitle={levelTitle(level)}
           color="amber"
         />
         <StatCard
           icon={Flame}
           label="Serie"
-          value={`${store.streak_days}j`}
-          subtitle={`Record: ${store.longest_streak}j`}
+          value={`${streak_days}j`}
+          subtitle={`Record: ${longest_streak}j`}
           color="orange"
         />
         <StatCard
           icon={Target}
           label="Precision"
           value={`${accuracy}%`}
-          subtitle={`${store.total_correct}/${store.total_exercises}`}
+          subtitle={`${total_correct}/${total_exercises}`}
           color="blue"
         />
       </div>
@@ -72,7 +83,7 @@ export default function ProgressPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ActivityCalendar sessions={store.sessions_history} />
+            <ActivityCalendar sessions={sessions_history} />
           </CardContent>
         </Card>
 
@@ -85,7 +96,7 @@ export default function ProgressPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <XpChart sessions={store.sessions_history} />
+            <XpChart sessions={sessions_history} />
           </CardContent>
         </Card>
       </div>
@@ -99,7 +110,7 @@ export default function ProgressPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <LevelTimeline currentLevel={store.level} totalXp={store.total_xp} />
+          <LevelTimeline currentLevel={level} totalXp={total_xp} />
         </CardContent>
       </Card>
 
@@ -108,11 +119,11 @@ export default function ProgressPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-4 w-4 text-purple-500" />
-            Collection de badges ({store.badges_unlocked.length}/{BADGES.length})
+            Collection de badges ({badges_unlocked.length}/{BADGES.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <BadgeGallery unlocked={store.badges_unlocked} />
+          <BadgeGallery unlocked={badges_unlocked} />
         </CardContent>
       </Card>
 
@@ -129,14 +140,14 @@ export default function ProgressPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <DetailStat label="Exercices faits" value={store.total_exercises} icon="📝" />
-            <DetailStat label="Reponses correctes" value={store.total_correct} icon="✅" />
-            <DetailStat label="Sessions parfaites" value={store.perfect_sessions} icon="✨" />
-            <DetailStat label="Temps d'etude" value={`${Math.floor(store.total_study_minutes / 60)}h${(store.total_study_minutes % 60).toString().padStart(2, '0')}`} icon="⏱️" />
-            <DetailStat label="Jours actifs" value={new Set(store.sessions_history.map(s => s.date)).size} icon="📅" />
-            <DetailStat label="Serie actuelle" value={`${store.streak_days} jours`} icon="🔥" />
-            <DetailStat label="Plus longue serie" value={`${store.longest_streak} jours`} icon="🏆" />
-            <DetailStat label="Badges debloques" value={store.badges_unlocked.length} icon="🏅" />
+            <DetailStat label="Exercices faits" value={total_exercises} icon="📝" />
+            <DetailStat label="Reponses correctes" value={total_correct} icon="✅" />
+            <DetailStat label="Sessions parfaites" value={perfect_sessions} icon="✨" />
+            <DetailStat label="Temps d'etude" value={`${Math.floor(total_study_minutes / 60)}h${(total_study_minutes % 60).toString().padStart(2, '0')}`} icon="⏱️" />
+            <DetailStat label="Jours actifs" value={new Set(sessions_history.map(s => s.date)).size} icon="📅" />
+            <DetailStat label="Serie actuelle" value={`${streak_days} jours`} icon="🔥" />
+            <DetailStat label="Plus longue serie" value={`${longest_streak} jours`} icon="🏆" />
+            <DetailStat label="Badges debloques" value={badges_unlocked.length} icon="🏅" />
           </div>
         </CardContent>
       </Card>
@@ -442,8 +453,10 @@ function DetailStat({ label, value, icon }: { label: string; value: string | num
 // ─── Knowledge Map Section ─────────────────────────────────────────────────
 
 function KnowledgeMapSection() {
-  const stats = useUserKnowledgeStore(s => s.getStats());
-  const weakest = useUserKnowledgeStore(s => s.getWeakestItems(8));
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
+  const stats = useMemo(() => useUserKnowledgeStore.getState().getStats(), [knowledgeItems, knowledgeLastUpdated]);
+  const weakest = useMemo(() => useUserKnowledgeStore.getState().getWeakestItems(8), [knowledgeItems, knowledgeLastUpdated]);
 
   if (stats.total_items === 0) {
     return (
