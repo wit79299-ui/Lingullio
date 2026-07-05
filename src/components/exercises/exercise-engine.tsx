@@ -790,8 +790,10 @@ function MCQRenderer({ exercise, meta, onSubmit }: {
   exercise: Exercise; meta: Record<string, unknown>; onSubmit: (correct: boolean, answer: unknown) => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
-  const options = (meta.options as string[]) ?? [];
-  const correctIndex = (meta.correct_index as number) ?? 0;
+  // Support options at meta.options OR meta.interactive.options (some exercises use nested format)
+  const interactive = (meta.interactive as Record<string, unknown>) ?? {};
+  const options = (meta.options as string[]) ?? (interactive.options as string[]) ?? [];
+  const correctIndex = (meta.correct_index as number) ?? (interactive.correct_index as number) ?? 0;
 
   return (
     <div className="space-y-4">
@@ -822,7 +824,7 @@ function MCQRenderer({ exercise, meta, onSubmit }: {
         variant="teal" size="lg" className="w-full"
         disabled={selected === null}
       >
-        Valider ma reponse
+        Submit answer
       </Button>
     </div>
   );
@@ -865,7 +867,7 @@ function CharRecognitionRenderer({ exercise, meta, onSubmit }: {
         variant="teal" size="lg" className="w-full"
         disabled={selected === null}
       >
-        Valider ma reponse
+        Submit answer
       </Button>
     </div>
   );
@@ -910,7 +912,7 @@ function FillBlankRenderer({ exercise, meta, onSubmit }: {
       />
       <HintToggle hint={exercise.hint} />
       <Button onClick={checkAnswer} variant="teal" size="lg" className="w-full" disabled={!value.trim()}>
-        Valider ma reponse
+        Submit answer
       </Button>
     </div>
   );
@@ -969,13 +971,13 @@ function DictationRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
         value={value}
         onChange={e => setValue(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && value.trim()) checkAnswer(); }}
-        placeholder="Tapez ce que vous entendez..."
+        placeholder="Type what you hear..."
         className="w-full px-4 py-3.5 rounded-xl border-2 border-cream-200 bg-white text-navy-900 text-lg focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all"
         autoComplete="off"
       />
       <HintToggle hint={exercise.hint} />
       <Button onClick={checkAnswer} variant="teal" size="lg" className="w-full" disabled={!value.trim()}>
-        Valider ma reponse
+        Submit answer
       </Button>
     </div>
   );
@@ -1037,7 +1039,7 @@ function TranslationRenderer({ exercise, meta, onSubmit }: {
       />
       <HintToggle hint={exercise.hint} />
       <Button onClick={checkAnswer} variant="teal" size="lg" className="w-full" disabled={!value.trim()}>
-        Valider ma traduction
+        Submit translation
       </Button>
     </div>
   );
@@ -1097,7 +1099,7 @@ function MatchingRenderer({ exercise, meta, onSubmit }: {
   return (
     <div className="space-y-4">
       <p className="text-lg font-medium text-navy-900 leading-relaxed">
-        {exercise.prompt || 'Associez les elements correspondants'}
+        {exercise.prompt || 'Match the corresponding items'}
       </p>
       <p className="text-xs text-navy-400">Cliquez sur un element a gauche, puis sur son correspondant a droite.</p>
 
@@ -1154,7 +1156,7 @@ function MatchingRenderer({ exercise, meta, onSubmit }: {
           variant="teal" size="lg"
           disabled={matches.size < pairs.length}
         >
-          Valider les associations
+          Submit matches
         </Button>
       </div>
     </div>
@@ -1248,7 +1250,7 @@ function ReorderRenderer({ exercise, meta, onSubmit }: {
         variant="teal" size="lg" className="w-full"
         disabled={selected.length < words.length}
       >
-        Valider l&apos;ordre
+        Submit order
       </Button>
     </div>
   );
@@ -1395,7 +1397,7 @@ function ListeningRenderer({ exercise, meta, onSubmit, playAudio, playingId }: {
         variant="teal" size="lg" className="w-full"
         disabled={selected === null}
       >
-        Valider ma reponse
+        Submit answer
       </Button>
     </div>
   );
@@ -1476,7 +1478,7 @@ function ReadingRenderer({ exercise, meta, onSubmit }: {
         variant="teal" size="lg" className="w-full"
         disabled={answers.size < questions.length}
       >
-        Valider les reponses ({answers.size}/{questions.length})
+        Submit answers ({answers.size}/{questions.length})
       </Button>
     </div>
   );

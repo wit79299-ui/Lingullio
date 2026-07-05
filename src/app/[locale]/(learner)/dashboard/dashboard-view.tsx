@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,19 @@ export function DashboardView() {
   const parcoursConfig = useTrainingModeStore(s => s.parcours_config);
   const setMode = useTrainingModeStore(s => s.setMode);
   const [showParcoursSetup, setShowParcoursSetup] = useState(false);
+  const router = useRouter();
+
+  // ─── Redirect to placement test if not completed ──────────────────
+  useEffect(() => {
+    try {
+      const result = localStorage.getItem('lingullio_placement_result');
+      if (!result) {
+        router.replace('/placement');
+      }
+    } catch {
+      // localStorage not available (SSR) — ignore
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-activate Coach Autonome after 15 days inactivity
   useCoachAutoActivation();

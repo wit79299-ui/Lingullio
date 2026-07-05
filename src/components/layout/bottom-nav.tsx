@@ -4,11 +4,12 @@ import { useTranslations } from 'next-intl';
 import { usePathname } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { Home, BookOpen, RefreshCw, User } from 'lucide-react';
+import { Home, BookOpen, RefreshCw, User, Trophy } from 'lucide-react';
 
 const mobileNavItems = [
   { key: 'home', href: '/dashboard', icon: Home },
   { key: 'courses', href: '/courses', icon: BookOpen },
+  { key: 'mockExams', href: '/mock-exams', icon: Trophy },
   { key: 'revisions', href: '/revisions', icon: RefreshCw },
   { key: 'profile', href: '/settings', icon: User },
 ] as const;

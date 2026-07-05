@@ -10,7 +10,7 @@ type Props = {
 // render its own <html>/<body> to avoid double-wrapping.
 export default function RootLayout({ children }: Props) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

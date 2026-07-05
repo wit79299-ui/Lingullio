@@ -101,20 +101,25 @@ export default function ReviewsPage() {
   const [hskFilter, setHskFilter] = useState<string>('all');
 
   const finishSessionLocal = useGamificationStore(s => s.finishSessionLocal);
-  const knowledgeStore = useUserKnowledgeStore();
+  // Fix: use selective subscriptions instead of full store to avoid infinite re-renders
+  const knowledgeItems = useUserKnowledgeStore(s => s.items);
+  const knowledgeLastUpdated = useUserKnowledgeStore(s => s.last_updated);
   const { playingId, play: playAudio } = useAudioPlayer();
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
 
   // ─── Knowledge Map Stats ──────────────────────────────────────────────
 
-  const knowledgeStats = useMemo(() => knowledgeStore.getStats(), [knowledgeStore.items]);
+  const knowledgeStats = useMemo(
+    () => useUserKnowledgeStore.getState().getStats(),
+    [knowledgeLastUpdated],
+  );
   const reviewQueue = useMemo(
-    () => knowledgeStore.getReviewQueue({ limit: 50 }),
-    [knowledgeStore.items],
+    () => useUserKnowledgeStore.getState().getReviewQueue({ limit: 50 }),
+    [knowledgeLastUpdated],
   );
   const weakItems = useMemo(
-    () => knowledgeStore.getWeakestItems(20),
-    [knowledgeStore.items],
+    () => useUserKnowledgeStore.getState().getWeakestItems(20),
+    [knowledgeLastUpdated],
   );
 
   const hasKnowledgeData = knowledgeStats.total_items > 0;
@@ -123,13 +128,13 @@ export default function ReviewsPage() {
   // HSK levels present in knowledge map
   const knownHskLevels = useMemo(() => {
     const levels = new Set<string>();
-    Object.values(knowledgeStore.items).forEach(i => levels.add(i.level));
+    Object.values(knowledgeItems).forEach(i => levels.add(i.level));
     return [...levels].sort();
-  }, [knowledgeStore.items]);
+  }, [knowledgeLastUpdated]);
 
   // Counts from knowledge map
   const kmCounts = useMemo(() => {
-    const items = Object.values(knowledgeStore.items);
+    const items = Object.values(knowledgeItems);
     return {
       total: items.length,
       vocab: items.filter(i => i.item_type === 'vocabulary').length,
@@ -140,7 +145,7 @@ export default function ReviewsPage() {
       mastered: knowledgeStats.by_mastery.mastered,
       learning: knowledgeStats.by_mastery.learning + knowledgeStats.by_mastery.familiar,
     };
-  }, [knowledgeStore.items, reviewQueue, weakItems, knowledgeStats]);
+  }, [knowledgeLastUpdated, reviewQueue, weakItems, knowledgeStats]);
 
   // ─── Build review cards based on mode ─────────────────────────────────
 
@@ -159,7 +164,7 @@ export default function ReviewsPage() {
 
       // If no SRS items due, fall back to all items sorted by priority
       if (flashcards.length === 0) {
-        let allItems = Object.values(knowledgeStore.items).filter(i => i.times_seen > 0);
+        let allItems = Object.values(knowledgeItems).filter(i => i.times_seen > 0);
         if (filter !== 'all') allItems = allItems.filter(i => i.item_type === filter);
         if (hskFilter !== 'all') allItems = allItems.filter(i => i.level === hskFilter);
         allItems.sort((a, b) => {
@@ -178,7 +183,7 @@ export default function ReviewsPage() {
       flashcards = items.map(knowledgeToFlashcard);
     } else if (reviewMode === 'all' || reviewMode === 'hsk') {
       // All known items (or filtered by HSK)
-      let items = Object.values(knowledgeStore.items).filter(i => i.times_seen > 0);
+      let items = Object.values(knowledgeItems).filter(i => i.times_seen > 0);
       if (filter !== 'all') items = items.filter(i => i.item_type === filter);
       if (hskFilter !== 'all') items = items.filter(i => i.level === hskFilter);
       // Shuffle
@@ -203,7 +208,7 @@ export default function ReviewsPage() {
     setCardStartTime(Date.now());
     setPhase('reviewing');
     setReviewStats(null);
-  }, [filter, hskFilter, reviewMode, hasKnowledgeData, reviewQueue, weakItems, knowledgeStore.items]);
+  }, [filter, hskFilter, reviewMode, hasKnowledgeData, reviewQueue, weakItems, knowledgeItems]);
 
   // ─── Answer handler (records in both gamification AND knowledge map) ──
 
@@ -228,7 +233,7 @@ export default function ReviewsPage() {
       );
     } else {
       // For starter cards, register them in the knowledge map
-      knowledgeStore.recordAttempt({
+      useUserKnowledgeStore.getState().recordAttempt({
         item_id: card.id,
         item_type: card.type,
         level: card.level,
@@ -274,7 +279,7 @@ export default function ReviewsPage() {
       setFlipped(false);
       setCardStartTime(Date.now());
     }
-  }, [cards, currentIndex, results, startTime, cardStartTime, finishSessionLocal, knowledgeStore]);
+  }, [cards, currentIndex, results, startTime, cardStartTime, finishSessionLocal]);
 
   // ═══ IDLE PHASE ═══
   if (phase === 'idle') {

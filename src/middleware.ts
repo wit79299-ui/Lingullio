@@ -6,7 +6,7 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createIntlMiddleware(routing);
 
 // Routes that require authentication
-const protectedPrefixes = ['/dashboard', '/courses', '/revisions', '/mock-exams', '/progress', '/objectives', '/resources', '/settings', '/profile', '/onboarding', '/exercises'];
+const protectedPrefixes = ['/dashboard', '/courses', '/revisions', '/mock-exams', '/progress', '/objectives', '/resources', '/settings', '/profile', '/onboarding', '/exercises', '/placement', '/daily-challenge', '/help'];
 
 // Routes that require admin role
 const adminPrefixes = ['/admin'];

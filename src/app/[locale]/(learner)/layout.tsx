@@ -15,12 +15,12 @@ export default async function LearnerLayout({ children, params }: Props) {
   setRequestLocale(locale);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden w-full max-w-full">
       <Sidebar />
       <TopBar />
       <GamificationToastStack />
-      <main className="lg:pl-64 pb-20 lg:pb-0">
-        <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
+      <main className="lg:pl-64 pb-20 lg:pb-0 overflow-x-hidden">
+        <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8 overflow-x-hidden">
           {children}
         </div>
       </main>

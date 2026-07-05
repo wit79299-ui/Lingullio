@@ -7,10 +7,10 @@ import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { useRouter } from '@/i18n/navigation';
 import {
   type PlacementTestData,
-  type ProfileeAnswer,
+  type ProfileAnswer,
   type DiagnosticAnswer,
   type ProductionAnswer,
-  type ProfileeQuestion,
+  type ProfileQuestion,
   type DiagnosticQuestion,
   type ProductionTask,
   type PlacementResult,
@@ -89,9 +89,9 @@ export function PlacementTest() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Profilee
-  const [profileAnswers, setProfileeAnswers] = useState<ProfileeAnswer[]>([]);
-  const [profileIndex, setProfileeIndex] = useState(0);
+  // Profile
+  const [profileAnswers, setProfileAnswers] = useState<ProfileAnswer[]>([]);
+  const [profileIndex, setProfileIndex] = useState(0);
 
   // Diagnostic
   const [diagnosticAnswers, setDiagnosticAnswers] = useState<DiagnosticAnswer[]>([]);
@@ -144,10 +144,10 @@ export function PlacementTest() {
     }
   }, [phase, startTime]);
 
-  // ─── Profilee handlers ──────────────────────────────────────────────────
-  const handleProfileeAnswer = useCallback(
+  // ─── Profile handlers ──────────────────────────────────────────────────
+  const handleProfileAnswer = useCallback(
     (questionId: string, selectedIds: string[]) => {
-      setProfileeAnswers((prev) => {
+      setProfileAnswers((prev) => {
         const filtered = prev.filter((a) => a.questionId !== questionId);
         return [...filtered, { questionId, selectedIds }];
       });
@@ -155,18 +155,18 @@ export function PlacementTest() {
     []
   );
 
-  const goNextProfilee = useCallback(() => {
+  const goNextProfile = useCallback(() => {
     if (!testData) return;
     if (profileIndex < testData.profile_questions.length - 1) {
-      setProfileeIndex((i) => i + 1);
+      setProfileIndex((i) => i + 1);
     } else {
       setPhase('diagnostic');
       setStartTime(Date.now());
     }
   }, [testData, profileIndex]);
 
-  const goPrevProfilee = useCallback(() => {
-    if (profileIndex > 0) setProfileeIndex((i) => i - 1);
+  const goPrevProfile = useCallback(() => {
+    if (profileIndex > 0) setProfileIndex((i) => i - 1);
   }, [profileIndex]);
 
   // ─── Diagnostic handlers ──────────────────────────────────────────────
@@ -297,16 +297,16 @@ export function PlacementTest() {
         )}
 
         {phase === 'profile' && (
-          <ProfileePhase
+          <ProfilePhase
             question={testData.profile_questions[profileIndex]}
             index={profileIndex}
             total={testData.profile_questions.length}
             currentAnswer={profileAnswers.find(
               (a) => a.questionId === testData.profile_questions[profileIndex].id
             )}
-            onAnswer={handleProfileeAnswer}
-            onNext={goNextProfilee}
-            onPrev={goPrevProfilee}
+            onAnswer={handleProfileAnswer}
+            onNext={goNextProfile}
+            onPrev={goPrevProfile}
           />
         )}
 
@@ -520,7 +520,7 @@ function StepPreview({ n, text }: { n: number; text: string }) {
 // PROFILE PHASE
 // ═══════════════════════════════════════════════════════════════════════════
 
-function ProfileePhase({
+function ProfilePhase({
   question,
   index,
   total,
@@ -529,10 +529,10 @@ function ProfileePhase({
   onNext,
   onPrev,
 }: {
-  question: ProfileeQuestion;
+  question: ProfileQuestion;
   index: number;
   total: number;
-  currentAnswer?: ProfileeAnswer;
+  currentAnswer?: ProfileAnswer;
   onAnswer: (qId: string, selectedIds: string[]) => void;
   onNext: () => void;
   onPrev: () => void;

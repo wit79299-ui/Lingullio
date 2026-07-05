@@ -213,7 +213,7 @@ function TodaysActions({ roadmap }: { roadmap: ParcoursInverseRoadmap }) {
     {
       id: 'lesson',
       icon: BookOpen,
-      title: 'Today's lesson',
+      title: "Today's lesson",
       subtitle: `Learn ~${Math.ceil(roadmap.words_per_week / 7)} new words`,
       href: '/courses',
       color: 'teal',

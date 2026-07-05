@@ -151,9 +151,9 @@ const RESOURCES: ResourceCard[] = [
     color: 'bg-gold-50 text-gold-600',
     category: 'culture',
     items: [
-      { title: 'Spaced repetition', detail: 'Review with Lingullio's SRS system — it optimizes your reviews automatically' },
-      { title: 'Daily immersion', detail: 'Listeningz des podcasts, regardez des series chinoises sous-titrees en chinois' },
-      { title: 'Writing manuelle', detail: 'Pratiquer l\'ecriture aide a memoriser les caracteres 3x plus vite' },
+      { title: 'Spaced repetition', detail: "Review with Lingullio's SRS system — it optimizes your reviews automatically" },
+      { title: 'Daily immersion', detail: 'Listen to Chinese podcasts, watch Chinese shows with Chinese subtitles' },
+      { title: 'Handwriting practice', detail: 'Pratiquer l\'ecriture aide a memoriser les caracteres 3x plus vite' },
       { title: 'Context over lists', detail: 'Learn words in sentences, not in isolation' },
       { title: 'Regularity > intensity', detail: '20 min/day is better than 3h on weekends' },
     ],
