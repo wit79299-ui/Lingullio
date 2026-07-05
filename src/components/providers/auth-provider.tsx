@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -10,28 +10,30 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
-  const setUser = useAuthStore((s) => s.setUser);
-  const setLoading = useAuthStore((s) => s.setLoading);
+  const initializedRef = useRef(false);
 
+  // Set initial user from server (runs once)
   useEffect(() => {
-    // Set initial user from server if available
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     if (initialUser) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setUser(initialUser as any);
+      useAuthStore.getState().setUser(initialUser as any);
     } else {
-      setLoading(false);
+      useAuthStore.getState().setLoading(false);
     }
-  }, [initialUser, setUser, setLoading]);
+  }, [initialUser]);
 
+  // Listen for auth state changes (runs once)
   useEffect(() => {
     const supabase = createClient();
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'SIGNED_OUT') {
-        setUser(null);
+        useAuthStore.getState().setUser(null);
       }
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -49,7 +51,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
 
           if (appUser) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            setUser(appUser as any);
+            useAuthStore.getState().setUser(appUser as any);
           }
         }
       }
@@ -58,7 +60,8 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps: subscribe once on mount
 
   return <>{children}</>;
 }
