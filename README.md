@@ -1,195 +1,161 @@
 # Lingullio
 
-## Presentation du projet
-- **Nom** : Lingullio (lingullio.com)
-- **Objectif** : Plateforme EdTech premium de preparation aux examens de langues asiatiques, commencant par le HSK (chinois mandarin, nouveau format 2026, 9 niveaux)
-- **Modele** : Systeme pedagogique complet (diagnostic, guidage, entrainement, mesure, explication des erreurs, prediction de progression)
-- **Prix** : ~99 EUR, licence 12 mois via Shopify
-
-## Stack technique
-- **Frontend** : Next.js 15 (App Router, RSC), React 19, TypeScript strict
-- **Backend** : Supabase (PostgreSQL, Auth, Storage, Edge Functions, RLS)
-- **Styling** : Tailwind CSS 4 avec design tokens Lingullio (`@theme`)
-- **i18n** : next-intl v4, 20 langues, `localePrefix: 'as-needed'`, defaut `fr`
-- **UI** : Radix UI (headless), CVA (variants), Lucide React (icones)
-- **State** : Zustand (client), TanStack Query (server state)
-- **Forms** : React Hook Form + Zod
-- **Deploiement** : Vercel (production)
+## Project Overview
+- **Name**: Lingullio (lingullio.com)
+- **Goal**: Premium EdTech platform for Asian language exam preparation, starting with HSK (Mandarin Chinese, 2026 new format, 9 levels)
+- **Model**: Complete pedagogical system (diagnostic, guidance, training, measurement, error explanation, progression prediction)
+- **Price**: ~99 EUR, 12-month license via Shopify
 
 ## URLs
-- **Dev sandbox** : https://3000-ic66lt2l6yurckegrav5c-b237eb32.sandbox.novita.ai
-- **Production** : (pas encore deploye)
+- **Production**: https://lingullio.vercel.app
+- **GitHub**: https://github.com/wit79299-ui/Lingullio
 
-## Etat de la base de donnees Supabase (3 juillet 2026)
+## Tech Stack
+- **Frontend**: Next.js 15 (App Router, RSC), React 19, TypeScript strict
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, RLS)
+- **Styling**: Tailwind CSS 4 with Lingullio design tokens (`@theme`)
+- **i18n**: next-intl v4, 20 languages, `localePrefix: 'as-needed'`, default `en`
+- **UI**: Radix UI (headless), CVA (variants), Lucide React (icons)
+- **State**: Zustand (client) with Supabase sync, TanStack Query (server state)
+- **Forms**: React Hook Form + Zod
+- **Deployment**: Vercel (auto-deploy from GitHub)
 
-### Contenu ingere
+## Data Architecture
 
-| Table | Count | Details |
-|-------|-------|---------|
-| courses | 9 | HSK 1-9 (1-5 published, 6-9 draft) |
-| modules | 37 | 10 HSK1 + 6 HSK2 + 7 HSK3 + 4 HSK4 + 10 HSK5 |
-| lessons | 208 | 51 HSK1 + 31 HSK2 + 63 HSK3 + 19 HSK4 + 50 HSK5 |
-| vocabulary_items | 1679 | 319 HSK1 + 200 HSK2 + 500 HSK3 + 60 HSK4 + 600 HSK5 |
-| grammar_points | 66 | 35 HSK1 + 9 HSK2 + 11 HSK3 + 11 HSK4 |
-| characters | 986 | 248 HSK1 + 123 HSK2 + 284 HSK3 + 331 HSK5 (deduplication inter-niveaux) |
-| stroke_order_data | 655 | HSK1-3 coverage 100% (source: MakeMeAHanzi) |
-| exercises | 205 | HSK1 seulement (10 types differents) |
-| exercise_options | 456 | Options MCQ pour 112 exercices |
-| lesson_vocabulary_items | 1642 | Mappings lesson-vocab (HSK1-5) |
-| lesson_grammar_points | 51 | Mappings lesson-grammar (HSK1-4) |
-| lesson_characters | 2281 | Mappings lesson-characters (HSK1-5) |
-| audio_files | 0 | TTS non encore genere |
+### Database (Supabase PostgreSQL)
+38+ tables organized in 9 domains:
+- **Users**: users, learner_profiles, user_preferences
+- **Licenses**: licenses, courses, course_translations, products, product_translations, shopify_sku_mappings
+- **Content**: modules, lessons, grammar_points, vocabulary_items, characters (+ translations)
+- **Exercises**: exercises, exercise_options (+ translations), stroke_order_data
+- **Progression**: attempts, handwriting_attempts, progress_snapshots, user_recommendations, spaced_repetition_items
+- **Sync** (NEW): user_knowledge_items, placement_results + learner_profiles JSONB columns
+- **Mock Exams**: mock_exams, mock_exam_sections, mock_exam_questions, mock_exam_attempts (+ translations)
+- **Media**: audio_files
+- **Admin**: admin_actions, content_versions, ai_feedback_logs
 
-### Traductions FR+EN
-- vocabulary_translations: 8846 records — FR+EN couverts pour HSK1-5
-- grammar_point_translations: 762 records — FR+EN pour HSK1-4
-- character_translations: 6326 records
-- lesson_translations: 416 (208 lecons x 2 locales)
-- course_translations: 62 / module_translations: 128
+### Progression Sync System (NEW - Migration 00005)
+Real-time bidirectional sync between client Zustand stores and Supabase:
 
-### Qualite des traductions EN (post-LLM)
-- HSK2: 4/200 passthroughs restants (98% qualite)
-- HSK3: 14/500 passthroughs restants (97% qualite)
-- HSK5: 600/600 FR generees par LLM (100%)
-- Grammar EN: 18/31 stubs corriges par LLM (HSK3: 7, HSK4: 11)
+| Store | Sync Target | Strategy |
+|-------|-------------|----------|
+| `user-knowledge-store` | `user_knowledge_items` table | Item-level upsert, merge counters |
+| `gamification-store` | `learner_profiles` columns + `gamification_extended` JSONB | Max-of-counters merge |
+| `training-mode-store` | `learner_profiles.training_mode_config` JSONB | Last-write-wins |
+| Placement results | `placement_results` table | Insert-only, latest wins |
 
-### Couverture HSK 3.0 officiel
-- HSK1: 319/~300 mots (107%) -- complet
-- HSK2: 200/~200 mots (100%) -- complet
-- HSK3: 500/~500 mots (100%) -- complet
-- HSK4: 60/~500 mots (12%) -- source DOCX partielle, necessite enrichissement
-- HSK5: 600/~600 mots (100%) -- complet (EN source + FR LLM)
+**Sync Architecture:**
+- `SyncManager` (client singleton): debounced push (2s), auto-retry (3x), offline-first
+- `SyncProvider` (React component): auto-pull on login, merge server<->local with conflict resolution
+- API routes: `/api/sync/knowledge`, `/api/sync/gamification`, `/api/sync/training-mode`, `/api/sync/placement`, `/api/sync/pull`
+- Auth: Supabase SSR cookies -> server-side user resolution -> service role client for DB ops
+- RLS policies on all new tables (users can only access their own data)
 
-### Test de positionnement (diagnostic)
-- **Modele de donnees** : `learner_profiles.diagnostic_completed` (boolean), `lesson_type='diagnostic'` (5 lecons diagnostic dans DB)
-- **Backend** : `activateAccount()` cree le profil avec `diagnostic_completed: false`
-- **Frontend** : Route `/onboarding` protegee dans middleware, mais **aucune page d'onboarding/diagnostic implementee**
-- **Statut** : Prevu dans l'architecture mais pas encore code. Le flow serait : inscription → onboarding (9 etapes) → test diagnostic → attribution du parcours personnalise
+### Storage Services Used
+- **Supabase Auth**: Email/password authentication with activation flow
+- **Supabase PostgreSQL**: All relational data with RLS
+- **Zustand + localStorage**: Client-side cache (offline-first, syncs to Supabase)
 
-### Scripts d'ingestion (dans `/scripts/`)
-- `ingest-hsk1.py` — Phase 1 : modules, lecons, grammaire, vocab enrichi
-- `ingest-hsk1-phase2.py` — Phase 2 : content_html, mnemoniques, exercices, strokes
-- `fix-exercise-options-v2.py` — Correction UUID pour options d'exercices
-- `ingest-hsk234.py` — Ingestion HSK2-4 : vocab HTML, grammaire DOCX, characters
-- `fix-hsk234-characters.py` — Deduplication caracteres entre niveaux
-- `populate-junctions.py` — Tables de jonction lesson<->contenu
-- `llm-translate-and-ingest-hsk5.py` — Fix traductions EN passthrough + grammar stubs via LLM
-- `ingest-hsk5.py` — Ingestion HSK5 : 600 vocab + FR via LLM
-- `fix-hsk5-remaining.py` — Fix lessons/characters/junctions HSK5
+## Completed Features
 
-## Fonctionnalites terminees
+### Authentication & Licensing
+- Shopify webhook (`orders/paid` -> POST /api/webhooks/shopify) -> license creation
+- Brevo transactional email with activation link
+- Activation flow: code verification -> password setup -> account creation
+- Login with email/password, password reset flow
+- Eye toggle on all password fields (login, activate, reset-password)
 
-### Phase 0 : Pre-build
-- Document d'architecture complet (23 sections, 57K caracteres) dans `docs/ARCHITECTURE.md`
-- Analyse de la charte graphique, integration du logo
-- 12 points d'arbitrage valides par l'utilisateur
+### Placement Test (Diagnostic)
+- Full placement test engine with 3 phases: profile (5 questions), diagnostic (32 questions), production (2 tasks)
+- All content translated to English (200+ strings)
+- Pinyin-based written production (not characters)
+- SM-2 SRS integration: diagnostic answers seed the knowledge map
+- Results synced to Supabase `placement_results` table
 
-### Phase 1 : Socle technique (TERMINE)
+### Learning Engine
+- SM-2 spaced repetition algorithm (`srs-engine.ts`)
+- User Knowledge Map store: tracks every vocab/character/grammar item encountered
+- Mastery levels: unknown -> seen -> learning -> familiar -> mastered
+- Review queue with priority scoring (overdue items first)
+- At-risk item detection (Ebbinghaus forgetting curve)
 
-#### Phase 1.1-1.4 : Fondations
-- Design system complet : 11 composants UI (Button, Badge, Card, Input, ProgressBar, ScoreRing, Spinner, DataTable, Dialog, Tabs, Textarea)
-- Palette de couleurs Lingullio : navy, blue, teal, cream, gold avec echelles completes
-- Polices : Inter (UI) + Noto Sans SC (caracteres chinois)
-- i18n : 20 locales configurees, fichiers FR et EN complets (~200 cles chacun)
-- Layouts : sidebar desktop + bottom nav mobile (learner), sidebar admin, auth centre
-- Pages : login, activation (2 etapes), mot de passe oublie, reinitialisation, dashboard (mock data), admin dashboard
+### Gamification
+- XP system with leveling (configurable thresholds)
+- Streak tracking (daily activity, longest streak)
+- Badge system with 15+ badges
+- Session scoring with perfect session bonus, speed bonus
+- Toast notifications for XP, level-up, badges, streak milestones
 
-#### Phase 1.5 : Authentification Supabase
-- Server actions : signIn, signOut, requestPasswordReset, resetPassword, verifyActivationCode, activateAccount, getCurrentUser, getSession
-- Formulaires connectes a Supabase Auth (login, activation code + mot de passe, forgot-password, reset-password)
-- Middleware avec protection auth : routes learner = session requise, routes admin = role admin/editor/reviewer requis
-- Route callback auth pour confirmations email Supabase
-- AuthProvider client + store Zustand pour l'etat de session
-- Bouton de deconnexion dans la sidebar avec info utilisateur
+### Training Modes
+- **Standard**: Default dashboard, user-driven navigation
+- **Coach Autonome**: Auto-triggered after 15 days inactivity
+- **Parcours Inverse**: User declares HSK goal + deadline, follows dynamic roadmap with weekly milestones
 
-#### Phase 1.6 : Base de donnees et API
-- Schema initial : 33 tables (migration 00001), indexes, triggers updated_at
-- Politiques RLS completes : 60+ policies sur toutes les tables (migration 00002)
-- Seed data : 9 cours HSK, modules, lecons, 20 mots vocabulaire, 5 points grammaire, 10 caracteres, 5 exercices, 2 licences test
-- Webhook Shopify : verification HMAC, creation licence avec code d'activation
-- API routes : /api/user/profile (GET/PATCH), /api/user/preferences (GET/PUT)
+### Content (Supabase)
+| Level | Vocabulary | Grammar | Characters | Exercises | Strokes |
+|-------|-----------|---------|------------|-----------|---------|
+| HSK1 | 319 | 35 | 248 | 205 | 248 |
+| HSK2 | 200 | 9 | 123 | - | 123 |
+| HSK3 | 500 | 11 | 284 | - | 284 |
+| HSK4 | 60 | 11 | - | - | - |
+| HSK5 | 600 | - | 331 | - | - |
 
-### Phase 2 : Contenu (EN COURS)
-- Phase 2a : HSK1 complet (319 vocab, 35 grammaire, 248 caracteres, 205 exercices, strokes SVG)
-- Phase 2b : HSK1 contenu riche (content_html, mnemoniques, options d'exercices)
-- Phase 2c : HSK2-4 ingestion (760 vocab, 31 grammaire, 407 caracteres, junctions)
-- Phase 2d : Qualite traductions EN via LLM (passthrough 97-98%, grammar stubs corriges)
-- Phase 2e : HSK5 ingestion (600 vocab, FR via LLM, 331 caracteres)
+### Admin
+- DataTable with pagination, search, status filter
+- Content management pages for courses, modules, lessons, vocabulary, grammar, characters, exercises
 
-### Phase 2.1 : Composants admin
-- DataTable generique avec pagination, barre de recherche, filtre de statut
-- Dialog (modal Radix UI), Tabs (Radix UI), Textarea
+### Progression Sync (Production-Ready)
+- All user progression data synced to Supabase (not just localStorage)
+- Offline-first: works without network, syncs when available
+- Multi-device support: same data on any browser/device
+- Conflict resolution: merge strategy (max counters, union arrays)
 
-## Modele de donnees
-33 tables organisees en 8 domaines :
-- **Utilisateurs** : users, learner_profiles, user_preferences
-- **Licences** : licenses, courses, course_translations
-- **Contenu** : modules, lessons, grammar_points, vocabulary_items, characters (+ translations pour chaque)
-- **Exercices** : exercises, exercise_options (+ translations), stroke_order_data
-- **Progression** : attempts, handwriting_attempts, progress_snapshots, user_recommendations, spaced_repetition_items
-- **Examens blancs** : mock_exams, mock_exam_sections, mock_exam_questions, mock_exam_attempts (+ translations)
-- **Media** : audio_files
-- **Admin** : admin_actions, content_versions, ai_feedback_logs
+## API Routes
 
-## Structure du projet
-```
-src/
-  app/
-    [locale]/(auth)/     login, activate, forgot-password, reset-password
-    [locale]/(learner)/  dashboard (+ futures pages)
-    [locale]/(admin)/    admin dashboard (+ futures pages)
-    api/                 user/profile, user/preferences, webhooks/shopify
-    auth/callback/       Supabase auth callback
-  components/
-    layout/              sidebar, bottom-nav, top-bar, admin-sidebar
-    providers/           auth-provider
-    ui/                  button, badge, card, input, progress-bar, score-ring, spinner, data-table, dialog, tabs, textarea
-  i18n/                  config, routing, request, navigation
-  lib/
-    auth/                actions (server actions)
-    learner/             queries (fetchLearnerVocabulary, etc.)
-    supabase/            client, server
-  messages/              fr.json, en.json
-  stores/                auth-store
-  styles/                globals.css
-  types/                 database.ts
-scripts/                 9 scripts d'ingestion Python
-supabase/
-  migrations/            00001_initial_schema.sql, 00002_rls_policies.sql
-  seed.sql
-```
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/api/user/profile` | GET/PATCH | User profile management |
+| `/api/user/preferences` | GET/PUT | User preferences |
+| `/api/webhooks/shopify` | POST | Shopify order webhook |
+| `/api/sync/pull` | GET | Pull all progression data (login) |
+| `/api/sync/knowledge` | GET/POST | Knowledge map sync |
+| `/api/sync/gamification` | GET/POST | Gamification state sync |
+| `/api/sync/training-mode` | GET/POST | Training mode config sync |
+| `/api/sync/placement` | GET/POST | Placement results sync |
+| `/auth/callback` | GET | Supabase auth callback |
 
-## Phases restantes
+## Remaining Work
 
-### Priorite 1 : Enrichissement contenu
-- [ ] HSK4 vocabulaire complet (~440 mots manquants)
-- [ ] HSK5 caracteres: enrichir radical/stroke_count (actuellement placeholders)
-- [ ] HSK5 stroke_order_data (0/331 — pas de source SVG)
-- [ ] Exercices HSK2/3/4/5 (actuellement HSK1 seulement)
-- [ ] Generation audio TTS pour vocabulaire
-- [ ] 18 passthroughs EN restants (4 HSK2 + 14 HSK3) — quantite negligeable
+### Priority 1: Content Enrichment
+- [ ] HSK4 vocabulary complete (~440 words missing)
+- [ ] HSK5 characters: enrich radical/stroke_count
+- [ ] HSK5 stroke_order_data
+- [ ] Exercises for HSK2/3/4/5
+- [ ] TTS audio generation
 
-### Priorite 2 : Front apprenant
-- [ ] Onboarding 9 etapes + test diagnostic
-- [ ] Dashboard avec donnees reelles Supabase
-- [ ] Moteur d'exercices (10 types implementes, 18 prevus)
-- [ ] Progression et scoring
+### Priority 2: Frontend Features
+- [ ] Exercise engine (10 types implemented, 18 planned)
+- [ ] Error tracking (Sentry)
+- [ ] Rate limiting on API routes
 
-### Priorite 3 : Admin et production
-- [ ] Pages admin CRUD
-- [ ] Examens blancs
-- [ ] Integration audio/TTS
-- [ ] Pedagogie IA (GPT-4o corrections, Whisper oral)
-- [ ] Moteur d'ecriture manuscrite
-- [ ] QA, accessibilite, tests mobile
-- [ ] Preparation lancement production (Vercel)
+### Priority 3: Admin & Production
+- [ ] Mock exam engine
+- [ ] AI pedagogy (GPT-4o corrections, Whisper oral)
+- [ ] Handwriting engine
+- [ ] QA, accessibility, mobile testing
 
-## Licences de test (dev)
-- `test@example.com` / code `TEST1234` (HSK 1)
-- `demo@example.com` / code `DEMO5678` (HSK 1)
+## Migrations Applied
 
-## Variables d'environnement requises
-Voir `.env.local.example` pour la liste complete.
+| Migration | Description | Date |
+|-----------|-------------|------|
+| 00001 | Initial schema (33 tables) | 2026-07-02 |
+| 00002 | RLS policies (60+ policies) | 2026-07-02 |
+| 00003 | Gamification columns | 2026-07-04 |
+| 00004 | Products & level rename | 2026-07-05 |
+| 00005 | Progression sync system | 2026-07-06 |
 
-## Derniere mise a jour
-3 juillet 2026
+## Environment Variables
+See `.env.local.example` for the complete list.
+
+## Last Updated
+6 July 2026
