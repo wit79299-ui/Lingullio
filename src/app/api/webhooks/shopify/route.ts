@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { sendActivationEmail } from '@/lib/email/brevo';
 import crypto from 'crypto';
 
 // Verify Shopify HMAC signature
@@ -29,12 +30,12 @@ function generateActivationCode(): string {
 }
 
 // POST /api/webhooks/shopify
-// Handles order/paid webhook from Shopify
+// Handles orders/paid webhook from Shopify
 export async function POST(request: NextRequest) {
   const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.error('SHOPIFY_WEBHOOK_SECRET not configured');
+    console.error('[Shopify Webhook] SHOPIFY_WEBHOOK_SECRET not configured');
     return NextResponse.json(
       { error: 'Webhook secret not configured' },
       { status: 500 }
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-shopify-hmac-sha256');
 
   if (!verifyShopifySignature(body, signature, secret)) {
+    console.error('[Shopify Webhook] Invalid HMAC signature');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -53,58 +55,40 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceRoleClient();
 
     const customerEmail = order.customer?.email || order.email;
+    const customerName = [order.customer?.first_name, order.customer?.last_name]
+      .filter(Boolean)
+      .join(' ') || undefined;
     const shopifyOrderId = String(order.id);
-    const shopifyOrderNumber = String(order.order_number);
+    const shopifyOrderNumber = String(order.order_number || '');
 
     if (!customerEmail) {
+      console.error('[Shopify Webhook] No customer email in order', shopifyOrderId);
       return NextResponse.json(
         { error: 'No customer email found' },
         { status: 400 }
       );
     }
 
-    // Find the course to associate (based on product SKU or default to first published course)
-    // For now, we map based on the first line item SKU
-    const lineItems = order.line_items || [];
-    let courseSlug = 'hsk-1'; // default
+    console.log(`[Shopify Webhook] Processing order #${shopifyOrderNumber} for ${customerEmail}`);
 
-    for (const item of lineItems) {
-      if (item.sku) {
-        // SKU format expected: HSK-1, HSK-2, etc.
-        courseSlug = item.sku.toLowerCase().replace('_', '-');
-        break;
-      }
-    }
-
-    // Look up the course
-    const { data: course } = await supabase
-      .from('courses')
-      .select('id')
-      .eq('slug', courseSlug)
-      .single();
-
-    if (!course) {
-      console.error(`Course not found for slug: ${courseSlug}`);
-      // Use a fallback or return error
-      return NextResponse.json(
-        { error: `Course not found: ${courseSlug}` },
-        { status: 404 }
-      );
-    }
-
-    // Check if license already exists for this order
+    // ── Check for duplicate processing ──
     const { data: existingLicense } = await supabase
       .from('licenses')
-      .select('id')
+      .select('id, activation_code')
       .eq('shopify_order_id', shopifyOrderId)
       .single();
 
     if (existingLicense) {
-      // Already processed
+      console.log(`[Shopify Webhook] Order #${shopifyOrderNumber} already processed`);
       return NextResponse.json({ status: 'already_processed' });
     }
 
-    // Generate unique activation code
+    // ── Single product = full access → use HSK-1 course as reference ──
+    // The user gets access to ALL courses upon activation (no per-course restriction).
+    // We store one license row pointing to HSK-1 as the primary course.
+    const primaryCourseId = 'a0000000-0000-0000-0000-000000000001'; // HSK-1
+
+    // ── Generate unique activation code ──
     let activationCode: string;
     let codeExists = true;
     do {
@@ -117,37 +101,48 @@ export async function POST(request: NextRequest) {
       codeExists = !!data;
     } while (codeExists);
 
-    // Create pending license
+    // ── Create pending license ──
     const { error: insertError } = await supabase.from('licenses').insert({
       email: customerEmail.toLowerCase(),
       shopify_order_id: shopifyOrderId,
       shopify_order_number: shopifyOrderNumber,
       activation_code: activationCode,
-      course_id: course.id,
+      course_id: primaryCourseId,
       status: 'pending',
       duration_months: 12,
     });
 
     if (insertError) {
-      console.error('Error creating license:', insertError);
+      console.error('[Shopify Webhook] Error creating license:', insertError);
       return NextResponse.json(
         { error: 'Failed to create license' },
         { status: 500 }
       );
     }
 
-    // TODO: Send activation email via Brevo with the activation code
-    // For now, log the code
-    console.log(
-      `License created for ${customerEmail}: code ${activationCode}`
+    console.log(`[Shopify Webhook] License created: ${activationCode} for ${customerEmail}`);
+
+    // ── Send activation email via Brevo ──
+    const emailResult = await sendActivationEmail(
+      customerEmail.toLowerCase(),
+      activationCode,
+      customerName,
     );
+
+    if (emailResult.success) {
+      console.log(`[Shopify Webhook] Activation email sent to ${customerEmail}`);
+    } else {
+      // Email failed but license is created - not fatal
+      // Admin can resend or user can still activate manually
+      console.error(`[Shopify Webhook] Email send failed: ${emailResult.error}`);
+    }
 
     return NextResponse.json({
       status: 'ok',
-      activation_code: activationCode,
+      email_sent: emailResult.success,
     });
   } catch (err) {
-    console.error('Webhook processing error:', err);
+    console.error('[Shopify Webhook] Processing error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

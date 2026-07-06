@@ -148,7 +148,7 @@ export async function activateAccount(
       auth_id: authId,
       email: email.toLowerCase(),
       role: 'learner',
-      interface_language: 'fr',
+      interface_language: 'en',
       is_active: true,
     })
     .select('id')
