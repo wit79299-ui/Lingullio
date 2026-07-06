@@ -889,7 +889,7 @@ function AudioButton({
         </button>
         <span className="text-xs text-navy-400">
           {remaining > 0
-            ? `${remaining} écoute${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}`
+            ? `${remaining} listen${remaining > 1 ? 's' : ''} remaining`
             : ''}
         </span>
       </div>
@@ -1236,10 +1236,11 @@ function OpenTextTask({
         // Additional points for longer/more complete text
         if (charCount >= minChars * 2) points += 1;
         if (charCount >= minChars * 3) points += 1;
-        // Check for Chinese characters
-        const chineseCount = (text.match(/[\u4e00-\u9fff]/g) || []).length;
-        if (chineseCount >= 5) points += 1;
-        if (chineseCount >= 10) points += 1;
+        // Check for pinyin-like content (tone marks or common pinyin syllables)
+        const pinyinPattern = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]|(?:zh|ch|sh|[bpmfdtnlgkhjqxrzcsyw])[aeiou]/gi;
+        const pinyinMatches = text.match(pinyinPattern) || [];
+        if (pinyinMatches.length >= 3) points += 1;
+        if (pinyinMatches.length >= 8) points += 1;
       }
       points = Math.min(points, maxPoints);
     }
@@ -1284,7 +1285,7 @@ function OpenTextTask({
           }}
           disabled={submitted}
           rows={5}
-          placeholder="Write your answer in Chinese here..."
+          placeholder="Write your answer in pinyin here (e.g. wǒ xué zhōngwén...)"
           className={`w-full p-4 rounded-xl border-2 text-base resize-none transition-colors focus:outline-none ${
             submitted
               ? 'border-cream-100 bg-cream-50 text-navy-500'
@@ -1393,7 +1394,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
 }) {
   const [showDetails, setShowDetails] = useState(false);
 
-  // E10: Knowledge Map is fed in ResultCTA when user clicks "Commencer"
+  // E10: Knowledge Map is fed in ResultCTA when user clicks "Start"
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -1536,7 +1537,7 @@ function ResultsScreen({ result, diagnosticAnswers, diagnosticQuestions }: {
                 <div key={i} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-xs font-bold">
-                      S{i + 1}
+                      W{i + 1}
                     </div>
                     {i < result.fourWeekPlan.length - 1 && (
                       <div className="w-0.5 flex-1 bg-cream-200 mt-1" />

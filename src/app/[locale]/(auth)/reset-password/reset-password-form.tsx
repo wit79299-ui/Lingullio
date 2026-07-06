@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,6 +24,8 @@ export function ResetPasswordForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,23 +97,43 @@ export function ResetPasswordForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label={t('newPassword')}
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            minLength={8}
-          />
-          <Input
-            label={t('confirmPassword')}
-            type="password"
-            value={confirmPwd}
-            onChange={(e) => setConfirmPwd(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
+          <div className="relative">
+            <Input
+              label={t('newPassword')}
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="new-password"
+              minLength={8}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-[38px] text-navy-400 hover:text-navy-600 transition-colors"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+            </button>
+          </div>
+          <div className="relative">
+            <Input
+              label={t('confirmPassword')}
+              type={showConfirmPwd ? 'text' : 'password'}
+              value={confirmPwd}
+              onChange={(e) => setConfirmPwd(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+              className="absolute right-3 top-[38px] text-navy-400 hover:text-navy-600 transition-colors"
+              aria-label={showConfirmPwd ? 'Hide password' : 'Show password'}
+            >
+              {showConfirmPwd ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+            </button>
+          </div>
           <p className="text-xs text-navy-400">{t('passwordRequirements')}</p>
           {error && (
             <p className="text-sm text-error-500" role="alert">

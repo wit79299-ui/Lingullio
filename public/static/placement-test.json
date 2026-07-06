@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "status": "production_ready_v1",
     "created_for": "Chinese learning and HSK preparation app",
-    "interface_language": "fr",
+    "interface_language": "en",
     "target_language": "zh-Hans",
     "content_policy": {
       "is_official_hsk_content": false,
@@ -13,8 +13,8 @@
       "cefr_note": "CEFR/CERCL levels are diagnostic estimates, not official equivalences."
     },
     "test_design": {
-      "title_fr": "Test de positionnement chinois",
-      "subtitle_fr": "Découvre ton niveau actuel, tes forces, tes lacunes et ton meilleur point de départ pour préparer le HSK.",
+      "title_fr": "Chinese Placement Test",
+      "subtitle_fr": "Discover your current level, strengths, gaps and best starting point for HSK preparation.",
       "estimated_duration_minutes": 16,
       "recommended_max_duration_minutes": 20,
       "delivery_mode": "adaptive_or_linear",
@@ -101,7 +101,7 @@
               "hsk1_band_score_percent >= 40",
               "hsk2_band_score_percent < 45"
             ],
-            "recommended_start": "HSK 1 — Bases + automatisation des phrases simples."
+            "recommended_start": "HSK 1 — Basics + sentence pattern automation."
           },
           {
             "placement_id": "hsk2_consolidation",
@@ -123,7 +123,7 @@
               "hsk3_band_score_percent >= 50",
               "hsk4_band_score_percent < 45"
             ],
-            "recommended_start": "HSK 3 — Préparation guidée avec révision ciblée HSK 2."
+            "recommended_start": "HSK 3 — Guided preparation with targeted HSK 2 review."
           },
           {
             "placement_id": "hsk4_ready",
@@ -134,7 +134,7 @@
               "hsk4_band_score_percent >= 50",
               "hsk5_hsk6_band_score_percent < 40"
             ],
-            "recommended_start": "HSK 4 — Compréhension, grammaire intermédiaire et lecture en contexte."
+            "recommended_start": "HSK 4 — Comprehension, intermediate grammar, and reading in context."
           },
           {
             "placement_id": "hsk5_ready",
@@ -155,7 +155,7 @@
               "hsk5_hsk6_band_score_percent >= 65",
               "hsk5_hsk6_band_score_percent < 80"
             ],
-            "recommended_start": "HSK 6 — Compréhension avancée, précision lexicale, synthèse."
+            "recommended_start": "HSK 6 — Advanced comprehension, lexical precision, synthesis."
           },
           {
             "placement_id": "advanced_diagnostic_recommended",
@@ -201,39 +201,39 @@
         "id": "profile_001",
         "type": "single_choice",
         "scored": false,
-        "prompt_fr": "Depuis combien de temps apprends-tu le chinois ?",
+        "prompt_fr": "How long have you been learning Chinese?",
         "options": [
           {
             "id": "A",
-            "text_fr": "Je débute complètement",
+            "text_fr": "I'm a complete beginner",
             "personalization_tags": [
               "true_beginner"
             ]
           },
           {
             "id": "B",
-            "text_fr": "Moins de 6 mois",
+            "text_fr": "Less than 6 months",
             "personalization_tags": [
               "recent_learner"
             ]
           },
           {
             "id": "C",
-            "text_fr": "6 mois à 1 an",
+            "text_fr": "6 months to 1 year",
             "personalization_tags": [
               "early_continuing_learner"
             ]
           },
           {
             "id": "D",
-            "text_fr": "1 à 2 ans",
+            "text_fr": "1 to 2 years",
             "personalization_tags": [
               "continuing_learner"
             ]
           },
           {
             "id": "E",
-            "text_fr": "Plus de 2 ans",
+            "text_fr": "More than 2 years",
             "personalization_tags": [
               "experienced_learner"
             ]
@@ -244,39 +244,39 @@
         "id": "profile_002",
         "type": "single_choice",
         "scored": false,
-        "prompt_fr": "Quel est ton objectif principal ?",
+        "prompt_fr": "What is your main goal?",
         "options": [
           {
             "id": "A",
-            "text_fr": "Préparer un examen HSK",
+            "text_fr": "Prepare for an HSK exam",
             "personalization_tags": [
               "exam_goal"
             ]
           },
           {
             "id": "B",
-            "text_fr": "Apprendre à parler dans la vie quotidienne",
+            "text_fr": "Learn to speak in daily life",
             "personalization_tags": [
               "daily_communication_goal"
             ]
           },
           {
             "id": "C",
-            "text_fr": "Étudier ou travailler en Chine / avec des interlocuteurs chinois",
+            "text_fr": "Study or work in China / with Chinese-speaking people",
             "personalization_tags": [
               "academic_or_professional_goal"
             ]
           },
           {
             "id": "D",
-            "text_fr": "Voyager",
+            "text_fr": "Travel",
             "personalization_tags": [
               "travel_goal"
             ]
           },
           {
             "id": "E",
-            "text_fr": "Reprendre après une pause",
+            "text_fr": "Resume after a break",
             "personalization_tags": [
               "restart_goal"
             ]
@@ -287,39 +287,39 @@
         "id": "profile_003",
         "type": "multi_choice",
         "scored": false,
-        "prompt_fr": "Qu’est-ce qui te semble le plus difficile aujourd’hui ?",
+        "prompt_fr": "What do you find most difficult right now?",
         "options": [
           {
             "id": "A",
-            "text_fr": "Les tons et la prononciation",
+            "text_fr": "Tones and pronunciation",
             "personalization_tags": [
               "phonology_need"
             ]
           },
           {
             "id": "B",
-            "text_fr": "Les caractères",
+            "text_fr": "Characters",
             "personalization_tags": [
               "characters_need"
             ]
           },
           {
             "id": "C",
-            "text_fr": "La grammaire",
+            "text_fr": "Grammar",
             "personalization_tags": [
               "grammar_need"
             ]
           },
           {
             "id": "D",
-            "text_fr": "Comprendre à l’oral",
+            "text_fr": "Listening comprehension",
             "personalization_tags": [
               "listening_need"
             ]
           },
           {
             "id": "E",
-            "text_fr": "Répondre vite en situation d’examen",
+            "text_fr": "Answering quickly in exam conditions",
             "personalization_tags": [
               "exam_speed_need"
             ]
@@ -330,26 +330,26 @@
         "id": "profile_004",
         "type": "single_choice",
         "scored": false,
-        "prompt_fr": "Combien de temps peux-tu étudier chaque semaine ?",
+        "prompt_fr": "How much time can you study each week?",
         "options": [
           {
             "id": "A",
-            "text_fr": "Moins de 1h",
+            "text_fr": "Less than 1 hour",
             "plan_intensity": "light"
           },
           {
             "id": "B",
-            "text_fr": "1 à 2h",
+            "text_fr": "1 to 2 hours",
             "plan_intensity": "standard_light"
           },
           {
             "id": "C",
-            "text_fr": "3 à 5h",
+            "text_fr": "3 to 5 hours",
             "plan_intensity": "standard"
           },
           {
             "id": "D",
-            "text_fr": "6h ou plus",
+            "text_fr": "6 hours or more",
             "plan_intensity": "intensive"
           }
         ]
@@ -358,32 +358,32 @@
         "id": "profile_005",
         "type": "single_choice",
         "scored": false,
-        "prompt_fr": "As-tu déjà passé un examen HSK ?",
+        "prompt_fr": "Have you already taken an HSK exam?",
         "options": [
           {
             "id": "A",
-            "text_fr": "Non",
+            "text_fr": "No",
             "personalization_tags": [
               "no_exam_experience"
             ]
           },
           {
             "id": "B",
-            "text_fr": "Oui, HSK 1 ou 2",
+            "text_fr": "Yes, HSK 1 or 2",
             "personalization_tags": [
               "exam_experience_low"
             ]
           },
           {
             "id": "C",
-            "text_fr": "Oui, HSK 3 ou 4",
+            "text_fr": "Yes, HSK 3 or 4",
             "personalization_tags": [
               "exam_experience_mid"
             ]
           },
           {
             "id": "D",
-            "text_fr": "Oui, HSK 5 ou plus",
+            "text_fr": "Yes, HSK 5 or higher",
             "personalization_tags": [
               "exam_experience_high"
             ]
@@ -405,7 +405,7 @@
           "context_meaning"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Dans cette phrase, que veut dire 今天 ?",
+        "prompt_fr": "In this sentence, what does 今天 mean?",
         "stimulus": {
           "zh": "今天我很高兴。",
           "pinyin": "Jīntiān wǒ hěn gāoxìng.",
@@ -433,7 +433,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "今天 signifie « aujourd’hui ». Dans une phrase chinoise, les expressions de temps apparaissent souvent au début ou après le sujet.",
+        "explanation_fr": "今天 means \"today\". In a Chinese sentence, time expressions often appear at the beginning or after the subject.",
         "diagnostic_tags": {
           "if_correct": [
             "basic_time_vocabulary_mastered"
@@ -446,7 +446,7 @@
         "remediation": {
           "module_id": "hsk1_time_words",
           "priority": "medium",
-          "lesson_title_fr": "Les mots de temps essentiels : 今天, 明天, 昨天, 现在"
+          "lesson_title_fr": "Essential time words: 今天, 明天, 昨天, 现在"
         }
       },
       {
@@ -461,9 +461,9 @@
           "basic_character_recognition"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quel mot chinois signifie « manger » ?",
+        "prompt_fr": "Which Chinese word means \"to eat\"?",
         "stimulus": {
-          "fr": "manger"
+          "fr": "to eat"
         },
         "options": [
           {
@@ -487,7 +487,7 @@
           }
         ],
         "correct_answer_id": "C",
-        "explanation_fr": "吃 signifie « manger ». 喝 signifie « boire », 看 signifie « regarder/lire », 去 signifie « aller ».",
+        "explanation_fr": "吃 means \"to eat\". 喝 means \"to drink\", 看 means \"to look/read\", 去 means \"to go\".",
         "diagnostic_tags": {
           "if_correct": [
             "basic_character_recognition_mastered"
@@ -500,7 +500,7 @@
         "remediation": {
           "module_id": "hsk1_core_verbs",
           "priority": "high",
-          "lesson_title_fr": "Verbes essentiels HSK 1 : 吃, 喝, 看, 去, 来"
+          "lesson_title_fr": "Essential HSK 1 verbs: 吃, 喝, 看, 去, 来"
         }
       },
       {
@@ -516,7 +516,7 @@
           "name_recognition"
         ],
         "question_type": "listening_multiple_choice",
-        "prompt_fr": "Écoute la phrase. Comment s’appelle la personne ?",
+        "prompt_fr": "Listen to the sentence. What is the person's name?",
         "audio": {
           "script_zh": "你好，我叫王明。",
           "pinyin": "Nǐ hǎo, wǒ jiào Wáng Míng.",
@@ -545,7 +545,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "La phrase 我叫王明 signifie « je m’appelle Wang Ming ».",
+        "explanation_fr": "The sentence 我叫王明 means \"My name is Wang Ming\".",
         "diagnostic_tags": {
           "if_correct": [
             "basic_listening_detail_mastered"
@@ -558,7 +558,7 @@
         "remediation": {
           "module_id": "hsk1_introductions",
           "priority": "medium",
-          "lesson_title_fr": "Se présenter : 我叫…, 我是…"
+          "lesson_title_fr": "Introducing yourself: 我叫…, 我是…"
         }
       },
       {
@@ -574,7 +574,7 @@
           "time_position"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Choisis la phrase correcte.",
+        "prompt_fr": "Choose the correct sentence.",
         "options": [
           {
             "id": "A",
@@ -597,7 +597,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "La structure naturelle est sujet + temps + verbe + lieu : 我 + 今天 + 去 + 学校.",
+        "explanation_fr": "The natural structure is subject + time + verb + place: 我 + 今天 + 去 + 学校.",
         "diagnostic_tags": {
           "if_correct": [
             "basic_word_order_mastered"
@@ -610,7 +610,7 @@
         "remediation": {
           "module_id": "hsk1_sentence_order",
           "priority": "high",
-          "lesson_title_fr": "Ordre des mots : sujet, temps, lieu, verbe"
+          "lesson_title_fr": "Word order: subject, time, place, verb"
         }
       },
       {
@@ -626,7 +626,7 @@
           "particle_ma"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase signifie « Est-ce que tu es étudiant ? »",
+        "prompt_fr": "Which sentence means \"Are you a student?\"",
         "options": [
           {
             "id": "A",
@@ -649,7 +649,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "Pour transformer une affirmation en question oui/non, on ajoute souvent 吗 à la fin : 你是学生吗？",
+        "explanation_fr": "To turn a statement into a yes/no question, 吗 is often added at the end: 你是学生吗？",
         "diagnostic_tags": {
           "if_correct": [
             "yes_no_question_mastered"
@@ -662,7 +662,7 @@
         "remediation": {
           "module_id": "hsk1_questions_ma",
           "priority": "high",
-          "lesson_title_fr": "Questions avec 吗"
+          "lesson_title_fr": "Questions with 吗"
         }
       },
       {
@@ -677,7 +677,7 @@
           "simple_sentence_comprehension"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Lis la phrase. Où va-t-elle ?",
+        "prompt_fr": "Read the sentence. Where is she going?",
         "stimulus": {
           "zh": "她明天去北京。",
           "pinyin": "Tā míngtiān qù Běijīng."
@@ -685,12 +685,12 @@
         "options": [
           {
             "id": "A",
-            "text": "À Shanghai",
+            "text": "In Shanghai",
             "diagnostic_if_selected": "place_confusion"
           },
           {
             "id": "B",
-            "text": "À Pékin"
+            "text": "In Beijing"
           },
           {
             "id": "C",
@@ -699,12 +699,12 @@
           },
           {
             "id": "D",
-            "text": "Chez elle",
+            "text": "At her place",
             "diagnostic_if_selected": "inference_overreach"
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "北京 signifie Pékin. 她明天去北京 = elle va à Pékin demain.",
+        "explanation_fr": "北京 means Beijing. 她明天去北京 = she goes to Beijing tomorrow.",
         "diagnostic_tags": {
           "if_correct": [
             "simple_reading_mastered"
@@ -717,7 +717,7 @@
         "remediation": {
           "module_id": "hsk1_places",
           "priority": "medium",
-          "lesson_title_fr": "Lieux fréquents et phrases avec 去"
+          "lesson_title_fr": "Common places and sentences with 去"
         }
       },
       {
@@ -733,7 +733,7 @@
           "nominal_phrases"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Complète la phrase : 我要___水。",
+        "prompt_fr": "Complete the sentence: 我要___水。",
         "stimulus": {
           "zh": "我要___水。",
           "pinyin": "Wǒ yào ___ shuǐ."
@@ -760,7 +760,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "Pour un verre d’eau, on dit 一杯水. 杯 est le classificateur/contenant pour tasse ou verre.",
+        "explanation_fr": "For a glass of water, we say 一杯水. 杯 is the measure word for cup or glass.",
         "diagnostic_tags": {
           "if_correct": [
             "measure_word_basic_mastered"
@@ -772,7 +772,7 @@
         "remediation": {
           "module_id": "hsk2_measure_words",
           "priority": "high",
-          "lesson_title_fr": "Classificateurs fréquents : 个, 杯, 本, 张, 件"
+          "lesson_title_fr": "Common measure words: 个, 杯, 本, 张, 件"
         }
       },
       {
@@ -788,7 +788,7 @@
           "completed_action"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase indique clairement que l’action est terminée ?",
+        "prompt_fr": "Which sentence clearly indicates the action is completed?",
         "options": [
           {
             "id": "A",
@@ -811,7 +811,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "了 après le verbe marque souvent qu’une action est accomplie : 我吃了饭 = j’ai mangé.",
+        "explanation_fr": "了 after the verb often marks a completed action: 我吃了饭 = I ate / I have eaten.",
         "diagnostic_tags": {
           "if_correct": [
             "aspect_le_basic_mastered"
@@ -823,7 +823,7 @@
         "remediation": {
           "module_id": "hsk2_le_basic",
           "priority": "high",
-          "lesson_title_fr": "Comprendre 了 : action accomplie et changement de situation"
+          "lesson_title_fr": "Understanding 了: completed action and change of state"
         }
       },
       {
@@ -839,7 +839,7 @@
           "place_detail"
         ],
         "question_type": "listening_multiple_choice",
-        "prompt_fr": "Écoute le dialogue. Quand se retrouvent-ils ?",
+        "prompt_fr": "Listen to the dialogue. When are they meeting?",
         "audio": {
           "script_zh": "女：我们几点见？男：下午三点，在图书馆门口。",
           "pinyin": "Nǚ: Wǒmen jǐ diǎn jiàn? Nán: Xiàwǔ sān diǎn, zài túshūguǎn ménkǒu.",
@@ -849,16 +849,16 @@
         "options": [
           {
             "id": "A",
-            "text": "À 13h",
+            "text": "At 1 PM",
             "diagnostic_if_selected": "time_detail_issue"
           },
           {
             "id": "B",
-            "text": "À 15h"
+            "text": "At 3 PM"
           },
           {
             "id": "C",
-            "text": "À midi",
+            "text": "At noon",
             "diagnostic_if_selected": "time_detail_issue"
           },
           {
@@ -868,7 +868,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "下午三点 signifie 15h. Le lieu est devant la bibliothèque, mais la question porte sur l’heure.",
+        "explanation_fr": "下午三点 means 3 PM. The location is in front of the library, but the question is about time.",
         "diagnostic_tags": {
           "if_correct": [
             "listening_time_detail_mastered"
@@ -881,7 +881,7 @@
         "remediation": {
           "module_id": "hsk2_time_listening",
           "priority": "high",
-          "lesson_title_fr": "Comprendre les heures et moments de la journée à l’oral"
+          "lesson_title_fr": "Understanding times and parts of the day in listening"
         }
       },
       {
@@ -896,7 +896,7 @@
           "comparison_bi"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase signifie « Mon frère aîné est plus grand que moi » ?",
+        "prompt_fr": "Which sentence means \"My older brother is taller than me\"?",
         "options": [
           {
             "id": "A",
@@ -919,7 +919,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "La structure comparative est A 比 B + adjectif. 哥哥比我高 = mon frère est plus grand que moi.",
+        "explanation_fr": "The comparative structure is A 比 B + adjective. 哥哥比我高 = my brother is taller than me.",
         "diagnostic_tags": {
           "if_correct": [
             "comparison_bi_mastered"
@@ -932,7 +932,7 @@
         "remediation": {
           "module_id": "hsk2_comparisons",
           "priority": "medium",
-          "lesson_title_fr": "Comparer avec 比"
+          "lesson_title_fr": "Comparing with 比"
         }
       },
       {
@@ -948,7 +948,7 @@
           "core_verbs"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Dans la phrase 我想买一本书, que signifie 买 ?",
+        "prompt_fr": "In the sentence 我想买一本书, what does 买 mean?",
         "stimulus": {
           "zh": "我想买一本书。",
           "pinyin": "Wǒ xiǎng mǎi yì běn shū."
@@ -956,26 +956,26 @@
         "options": [
           {
             "id": "A",
-            "text": "acheter"
+            "text": "to buy"
           },
           {
             "id": "B",
-            "text": "vendre",
+            "text": "to sell",
             "diagnostic_if_selected": "character_recognition_issue"
           },
           {
             "id": "C",
-            "text": "lire",
+            "text": "to read",
             "diagnostic_if_selected": "semantic_confusion"
           },
           {
             "id": "D",
-            "text": "écrire",
+            "text": "to write",
             "diagnostic_if_selected": "semantic_confusion"
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "买 signifie acheter. Attention à 卖, qui signifie vendre et qui se ressemble visuellement.",
+        "explanation_fr": "买 means \"to buy\". Be careful with 卖, which means \"to sell\" and looks similar visually.",
         "diagnostic_tags": {
           "if_correct": [
             "similar_character_discrimination_mastered"
@@ -988,7 +988,7 @@
         "remediation": {
           "module_id": "hsk2_similar_characters",
           "priority": "high",
-          "lesson_title_fr": "Caractères proches : 买/卖, 看/着, 末/未"
+          "lesson_title_fr": "Similar characters: 买/卖, 看/着, 末/未"
         }
       },
       {
@@ -1004,7 +1004,7 @@
           "location_phrase"
         ],
         "question_type": "ordering",
-        "prompt_fr": "Remets les blocs dans l’ordre pour former une phrase naturelle.",
+        "prompt_fr": "Reorder the blocks to form a natural sentence.",
         "blocks": [
           "在家",
           "我",
@@ -1031,7 +1031,7 @@
             "看电影"
           ]
         ],
-        "explanation_fr": "Les deux formes 晚上我在家看电影 et 我晚上在家看电影 sont naturelles. Le temps peut être en début de phrase ou après le sujet ; le lieu vient avant le verbe.",
+        "explanation_fr": "Both 晚上我在家看电影 and 我晚上在家看电影 are natural. Time can come at the beginning or after the subject; the place comes before the verb.",
         "diagnostic_tags": {
           "if_correct": [
             "time_location_order_mastered"
@@ -1044,7 +1044,7 @@
         "remediation": {
           "module_id": "hsk2_time_place_verb",
           "priority": "high",
-          "lesson_title_fr": "Temps + lieu + verbe : construire une phrase naturelle"
+          "lesson_title_fr": "Time + place + verb: building a natural sentence"
         }
       },
       {
@@ -1060,7 +1060,7 @@
           "action_completion"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Complète la phrase : 这本书我已经看___了。",
+        "prompt_fr": "Complete the sentence: 这本书我已经看___了。",
         "stimulus": {
           "zh": "这本书我已经看___了。",
           "pinyin": "Zhè běn shū wǒ yǐjīng kàn ___ le."
@@ -1087,7 +1087,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "看完 signifie finir de lire/regarder. 已经 + verbe + 完 + 了 indique que l’action est déjà terminée.",
+        "explanation_fr": "看完 means \"to finish reading/watching\". 已经 + verb + 完 + 了 indicates the action is already completed.",
         "diagnostic_tags": {
           "if_correct": [
             "result_complement_basic_mastered"
@@ -1100,7 +1100,7 @@
         "remediation": {
           "module_id": "hsk3_result_complements",
           "priority": "high",
-          "lesson_title_fr": "Compléments de résultat : 完, 到, 见, 好"
+          "lesson_title_fr": "Result complements: 完, 到, 见, 好"
         }
       },
       {
@@ -1116,7 +1116,7 @@
           "object_disposal"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Choisis la phrase la plus naturelle pour dire : « Mets le livre sur la table. »",
+        "prompt_fr": "Choose the most natural sentence to say: \"Put the book on the table.\"",
         "options": [
           {
             "id": "A",
@@ -1139,7 +1139,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "Avec 把, l’objet vient juste après 把 : 把 + objet + verbe + complément. Ici : 把书放在桌子上.",
+        "explanation_fr": "With 把, the object comes right after 把: 把 + object + verb + complement. Here: 把书放在桌子上.",
         "diagnostic_tags": {
           "if_correct": [
             "ba_basic_mastered"
@@ -1152,7 +1152,7 @@
         "remediation": {
           "module_id": "hsk3_ba_basic",
           "priority": "medium",
-          "lesson_title_fr": "Première approche de 把 : déplacer, mettre, finir quelque chose"
+          "lesson_title_fr": "Introduction to 把: moving, placing, finishing something"
         }
       },
       {
@@ -1168,7 +1168,7 @@
           "connectors"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Choisis le meilleur connecteur : ___今天下雨，___我们还是去公园了。",
+        "prompt_fr": "Choose the best connector: ___今天下雨，___我们还是去公园了。",
         "stimulus": {
           "zh": "___今天下雨，___我们还是去公园了。"
         },
@@ -1194,7 +1194,7 @@
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "虽然…但是… exprime une opposition : bien qu’il pleuve, nous sommes quand même allés au parc.",
+        "explanation_fr": "虽然…但是… expresses contrast: although it rained, we still went to the park.",
         "diagnostic_tags": {
           "if_correct": [
             "concession_connector_mastered"
@@ -1206,7 +1206,7 @@
         "remediation": {
           "module_id": "hsk3_connectors",
           "priority": "high",
-          "lesson_title_fr": "Connecteurs : 因为/所以, 虽然/但是, 如果/就"
+          "lesson_title_fr": "Connectors: 因为/所以, 虽然/但是, 如果/就"
         }
       },
       {
@@ -1222,7 +1222,7 @@
           "main_information"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Lis le message. Que doit faire 小李 ?",
+        "prompt_fr": "Read the message. What should 小李 do?",
         "stimulus": {
           "zh": "小李，今天的会议改到明天下午两点。请你把新的时间告诉王老师。",
           "pinyin": "Xiǎo Lǐ, jīntiān de huìyì gǎi dào míngtiān xiàwǔ liǎng diǎn. Qǐng nǐ bǎ xīn de shíjiān gàosu Wáng lǎoshī."
@@ -1235,21 +1235,21 @@
           },
           {
             "id": "B",
-            "text": "Prévenir Wang laoshi du nouvel horaire"
+            "text": "Inform Teacher Wang of the new schedule"
           },
           {
             "id": "C",
-            "text": "Annuler la réunion",
+            "text": "Cancel the meeting",
             "diagnostic_if_selected": "inference_overreach"
           },
           {
             "id": "D",
-            "text": "Changer le lieu de la réunion",
+            "text": "Change the meeting location",
             "diagnostic_if_selected": "reading_detail_issue"
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "Le message dit que la réunion est déplacée à demain 14h et demande à 小李 d’informer 王老师 du nouvel horaire.",
+        "explanation_fr": "The message says the meeting is moved to tomorrow at 2 PM and asks 小李 to inform 王老师 of the new time.",
         "diagnostic_tags": {
           "if_correct": [
             "short_notice_reading_mastered"
@@ -1262,7 +1262,7 @@
         "remediation": {
           "module_id": "hsk3_practical_reading",
           "priority": "medium",
-          "lesson_title_fr": "Lire messages, annonces et consignes courtes"
+          "lesson_title_fr": "Reading messages, notices, and short instructions"
         }
       },
       {
@@ -1278,7 +1278,7 @@
           "dialogue_comprehension"
         ],
         "question_type": "listening_multiple_choice",
-        "prompt_fr": "Écoute le dialogue. Pourquoi l’homme ne peut-il pas venir ?",
+        "prompt_fr": "Listen to the dialogue. Why can't the man come?",
         "audio": {
           "script_zh": "女：你今晚来我家吃饭吗？男：不好意思，我妈妈生病了，我得去医院。",
           "pinyin": "Nǚ: Nǐ jīnwǎn lái wǒ jiā chīfàn ma? Nán: Bù hǎoyìsi, wǒ māma shēngbìng le, wǒ děi qù yīyuàn.",
@@ -1297,17 +1297,17 @@
           },
           {
             "id": "C",
-            "text": "Il n’aime pas dîner chez elle",
+            "text": "He doesn't like having dinner at her place",
             "diagnostic_if_selected": "inference_overreach"
           },
           {
             "id": "D",
-            "text": "Il est lui-même malade",
+            "text": "He himself is sick",
             "diagnostic_if_selected": "listening_detail_issue"
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "妈妈生病了 signifie « ma mère est malade » et 我得去医院 signifie « je dois aller à l’hôpital ».",
+        "explanation_fr": "妈妈生病了 means \"my mother is sick\" and 我得去医院 means \"I have to go to the hospital\".",
         "diagnostic_tags": {
           "if_correct": [
             "listening_reason_mastered"
@@ -1320,7 +1320,7 @@
         "remediation": {
           "module_id": "hsk3_listening_reasons",
           "priority": "high",
-          "lesson_title_fr": "Comprendre les raisons à l’oral : 因为, 得, 所以, 不好意思"
+          "lesson_title_fr": "Understanding reasons in listening: 因为, 得, 所以, 不好意思"
         }
       },
       {
@@ -1336,7 +1336,7 @@
           "experience"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase signifie « Je suis déjà allé en Chine » au sens d’expérience vécue ?",
+        "prompt_fr": "Which sentence means \"I have been to China\" (as a past experience)?",
         "options": [
           {
             "id": "A",
@@ -1359,7 +1359,7 @@
           }
         ],
         "correct_answer_id": "C",
-        "explanation_fr": "过 marque l’expérience vécue : 我去过中国 = je suis déjà allé en Chine.",
+        "explanation_fr": "过 marks past experience: 我去过中国 = I have been to China.",
         "diagnostic_tags": {
           "if_correct": [
             "aspect_guo_mastered"
@@ -1371,7 +1371,7 @@
         "remediation": {
           "module_id": "hsk3_le_guo_zai",
           "priority": "high",
-          "lesson_title_fr": "Différencier 了, 过 et 在"
+          "lesson_title_fr": "Differentiating 了, 过 and 在"
         }
       },
       {
@@ -1387,7 +1387,7 @@
           "daily_life"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Choisis le mot le plus naturel : 我每天坐地铁去公司，路上大概___四十分钟。",
+        "prompt_fr": "Choose the most natural word: 我每天坐地铁去公司，路上大概___四十分钟。",
         "stimulus": {
           "zh": "我每天坐地铁去公司，路上大概___四十分钟。"
         },
@@ -1413,7 +1413,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "花 + temps/argent signifie « dépenser/passer » : 路上花四十分钟 = le trajet prend environ 40 minutes.",
+        "explanation_fr": "花 + time/money means \"to spend\": 路上花四十分钟 = the commute takes about 40 minutes.",
         "diagnostic_tags": {
           "if_correct": [
             "contextual_vocabulary_mastered"
@@ -1426,7 +1426,7 @@
         "remediation": {
           "module_id": "hsk3_common_collocations",
           "priority": "medium",
-          "lesson_title_fr": "Collocations fréquentes : 花时间, 坐地铁, 去公司"
+          "lesson_title_fr": "Common collocations: 花时间, 坐地铁, 去公司"
         }
       },
       {
@@ -1442,7 +1442,7 @@
           "abstract_vocabulary"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Complète avec le mot le plus approprié : 这次实习让我积累了很多工作___。",
+        "prompt_fr": "Complete with the most appropriate word: 这次实习让我积累了很多工作___。",
         "stimulus": {
           "zh": "这次实习让我积累了很多工作___。"
         },
@@ -1468,7 +1468,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "经验 désigne l’expérience acquise/compétence pratique. 经历 désigne plutôt une expérience vécue ou un parcours.",
+        "explanation_fr": "经验 means acquired experience/practical skills. 经历 refers more to a lived experience or life journey.",
         "diagnostic_tags": {
           "if_correct": [
             "near_synonym_precision_mastered"
@@ -1481,7 +1481,7 @@
         "remediation": {
           "module_id": "hsk4_near_synonyms",
           "priority": "high",
-          "lesson_title_fr": "Nuances lexicales : 经验, 经历, 经过, 经理"
+          "lesson_title_fr": "Lexical nuances: 经验, 经历, 经过, 经理"
         }
       },
       {
@@ -1497,7 +1497,7 @@
           "passive_meaning"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase signifie « Mon téléphone a été cassé par mon petit frère » ?",
+        "prompt_fr": "Which sentence means \"My phone was broken by my little brother\"?",
         "options": [
           {
             "id": "A",
@@ -1520,7 +1520,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "被 introduit l’agent dans une phrase passive : objet affecté + 被 + agent + verbe + résultat.",
+        "explanation_fr": "被 introduces the agent in a passive sentence: affected object + 被 + agent + verb + result.",
         "diagnostic_tags": {
           "if_correct": [
             "bei_basic_mastered"
@@ -1534,7 +1534,7 @@
         "remediation": {
           "module_id": "hsk4_bei",
           "priority": "medium",
-          "lesson_title_fr": "被 : exprimer le passif et l’objet affecté"
+          "lesson_title_fr": "被: expressing the passive and affected objects"
         }
       },
       {
@@ -1550,14 +1550,14 @@
           "inference"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Lis le texte. Quelle est la meilleure conclusion ?",
+        "prompt_fr": "Read the text. What is the best conclusion?",
         "stimulus": {
           "zh": "经理说，这个报告内容不错，但是数据还不够清楚。她希望我们今天下班前再修改一次，明天早上交给客户。"
         },
         "options": [
           {
             "id": "A",
-            "text": "Le rapport est refusé définitivement",
+            "text": "The report is permanently rejected",
             "diagnostic_if_selected": "inference_overreach"
           },
           {
@@ -1566,17 +1566,17 @@
           },
           {
             "id": "C",
-            "text": "Le client a déjà reçu le rapport",
+            "text": "The client has already received the report",
             "diagnostic_if_selected": "reading_detail_issue"
           },
           {
             "id": "D",
-            "text": "Les données sont parfaites",
+            "text": "The data is perfect",
             "diagnostic_if_selected": "contradiction_issue"
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "Le contenu est bon, mais les données doivent être clarifiées. Le rapport doit être modifié avant demain matin.",
+        "explanation_fr": "The content is good, but the data needs to be clarified. The report must be revised before tomorrow morning.",
         "diagnostic_tags": {
           "if_correct": [
             "workplace_reading_inference_mastered"
@@ -1589,7 +1589,7 @@
         "remediation": {
           "module_id": "hsk4_reading_inference",
           "priority": "high",
-          "lesson_title_fr": "Lire entre les lignes sans surinterpréter"
+          "lesson_title_fr": "Reading between the lines without over-interpreting"
         }
       },
       {
@@ -1605,7 +1605,7 @@
           "attitude"
         ],
         "question_type": "listening_multiple_choice",
-        "prompt_fr": "Écoute le dialogue. Que veut dire la femme implicitement ?",
+        "prompt_fr": "Listen to the dialogue. What does the woman imply?",
         "audio": {
           "script_zh": "男：这个周末我们去爬山吧。女：我也想去，可是天气预报说周六会下大雨。",
           "pinyin": "Nán: Zhège zhōumò wǒmen qù páshān ba. Nǚ: Wǒ yě xiǎng qù, kěshì tiānqì yùbào shuō zhōuliù huì xià dàyǔ.",
@@ -1615,26 +1615,26 @@
         "options": [
           {
             "id": "A",
-            "text": "Elle refuse parce qu’elle n’aime pas la montagne",
+            "text": "She refuses because she doesn't like mountains",
             "diagnostic_if_selected": "inference_overreach"
           },
           {
             "id": "B",
-            "text": "Elle veut y aller, mais la météo pose problème"
+            "text": "She wants to go, but the weather is an issue"
           },
           {
             "id": "C",
-            "text": "Elle ne comprend pas la proposition",
+            "text": "She doesn't understand the proposal",
             "diagnostic_if_selected": "listening_detail_issue"
           },
           {
             "id": "D",
-            "text": "Elle propose d’y aller samedi sous la pluie",
+            "text": "She suggests going on Saturday in the rain",
             "diagnostic_if_selected": "contradiction_issue"
           }
         ],
         "correct_answer_id": "B",
-        "explanation_fr": "我也想去 signifie qu’elle veut aussi y aller ; 可是 introduit l’obstacle : la météo annonce une forte pluie.",
+        "explanation_fr": "我也想去 means she also wants to go; 可是 introduces the obstacle: the weather forecast says heavy rain.",
         "diagnostic_tags": {
           "if_correct": [
             "listening_implication_mastered"
@@ -1648,7 +1648,7 @@
         "remediation": {
           "module_id": "hsk4_listening_implicits",
           "priority": "high",
-          "lesson_title_fr": "Comprendre les implicites avec 可是, 但是, 不过"
+          "lesson_title_fr": "Understanding implications with 可是, 但是, 不过"
         }
       },
       {
@@ -1664,7 +1664,7 @@
           "inclusion_exclusion"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase signifie : « À part le chinois, elle apprend aussi le japonais » ?",
+        "prompt_fr": "Which sentence means: \"Besides Chinese, she also learns Japanese\"?",
         "options": [
           {
             "id": "A",
@@ -1687,7 +1687,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "除了 A 以外，还 B signifie « en plus de A, aussi B ». Attention : avec 不/都, le sens peut changer.",
+        "explanation_fr": "除了 A 以外，还 B means \"besides A, also B\". Note: with 不/都, the meaning can change.",
         "diagnostic_tags": {
           "if_correct": [
             "chule_yiwai_mastered"
@@ -1700,7 +1700,7 @@
         "remediation": {
           "module_id": "hsk4_except_structures",
           "priority": "medium",
-          "lesson_title_fr": "除了…以外 : inclusion, exclusion et pièges"
+          "lesson_title_fr": "除了…以外: inclusion, exclusion, and traps"
         }
       },
       {
@@ -1716,7 +1716,7 @@
           "parallel_structure"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Complète : 这个办法___省时间，___很容易操作。",
+        "prompt_fr": "Complete: 这个办法___省时间，___很容易操作。",
         "stimulus": {
           "zh": "这个办法___省时间，___很容易操作。"
         },
@@ -1742,7 +1742,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "不但…而且… ajoute deux qualités : non seulement cela fait gagner du temps, mais c’est aussi facile à utiliser.",
+        "explanation_fr": "不但…而且… adds two qualities: not only does it save time, but it is also easy to use.",
         "diagnostic_tags": {
           "if_correct": [
             "additive_connector_mastered"
@@ -1754,7 +1754,7 @@
         "remediation": {
           "module_id": "hsk4_connectors_complex",
           "priority": "high",
-          "lesson_title_fr": "Connecteurs intermédiaires : 不但…而且…, 既然…就…"
+          "lesson_title_fr": "Intermediate connectors: 不但…而且…, 既然…就…"
         }
       },
       {
@@ -1770,7 +1770,7 @@
           "semantic_distinction"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quel mot convient le mieux dans cette phrase : 请你___一下这个问题。",
+        "prompt_fr": "Which word fits best in this sentence: 请你___一下这个问题。",
         "stimulus": {
           "zh": "请你___一下这个问题。"
         },
@@ -1796,7 +1796,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "解释 signifie expliquer. 解决 signifie résoudre. Ici, avec « ce problème », les deux peuvent exister selon le contexte, mais 一下 et la demande 请你 suggèrent plus naturellement « expliquer brièvement ce problème » si l’objectif est de clarifier.",
+        "explanation_fr": "解释 means \"to explain\". 解决 means \"to solve\". Here, with \"this problem\", both can work depending on context, but 一下 and the request 请你 suggest an explanation.",
         "diagnostic_tags": {
           "if_correct": [
             "contextual_word_precision_mastered"
@@ -1809,7 +1809,7 @@
         "remediation": {
           "module_id": "hsk4_semantic_precision",
           "priority": "medium",
-          "lesson_title_fr": "Choisir le bon verbe selon le contexte"
+          "lesson_title_fr": "Choosing the right verb based on context"
         }
       },
       {
@@ -1825,14 +1825,14 @@
           "author_intention"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Lis le texte. Quelle idée résume le mieux le point de vue de l’auteur ?",
+        "prompt_fr": "Read the text. Which idea best summarizes the author's viewpoint?",
         "stimulus": {
           "zh": "很多人以为学习语言就是背单词。其实，单词当然重要，但如果不了解词语出现的场景，也不练习表达自己的想法，就很难真正使用这门语言。学习语言的目的不是把词表背完，而是在合适的场合说出合适的话。"
         },
         "options": [
           {
             "id": "A",
-            "text": "Mémoriser des listes suffit pour maîtriser une langue",
+            "text": "Memorizing lists is enough to master a language",
             "diagnostic_if_selected": "contradiction_issue"
           },
           {
@@ -1842,16 +1842,16 @@
           },
           {
             "id": "C",
-            "text": "Il faut apprendre les mots avec leur contexte et leur usage"
+            "text": "Words should be learned with their context and usage"
           },
           {
             "id": "D",
-            "text": "La grammaire est plus importante que tout le reste",
+            "text": "Grammar is more important than everything else",
             "diagnostic_if_selected": "inference_overreach"
           }
         ],
         "correct_answer_id": "C",
-        "explanation_fr": "L’auteur ne nie pas l’importance du vocabulaire, mais insiste sur le contexte, l’usage et la capacité à exprimer ses idées.",
+        "explanation_fr": "The author does not deny the importance of vocabulary, but emphasizes context, usage, and the ability to express ideas.",
         "diagnostic_tags": {
           "if_correct": [
             "advanced_reading_inference_mastered"
@@ -1864,7 +1864,7 @@
         "remediation": {
           "module_id": "hsk5_reading_author_viewpoint",
           "priority": "high",
-          "lesson_title_fr": "Identifier le point de vue de l’auteur"
+          "lesson_title_fr": "Identifying the author's viewpoint"
         }
       },
       {
@@ -1880,7 +1880,7 @@
           "formal_register"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Choisis le mot le plus naturel : 为了___类似的问题再次发生，我们需要提前检查系统。",
+        "prompt_fr": "Choose the most natural word: 为了___类似的问题再次发生，我们需要提前检查系统。",
         "stimulus": {
           "zh": "为了___类似的问题再次发生，我们需要提前检查系统。"
         },
@@ -1906,7 +1906,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "避免 signifie éviter qu’une situation négative se produise. La collocation 避免问题再次发生 est naturelle.",
+        "explanation_fr": "避免 means \"to avoid\" a negative situation. The collocation 避免问题再次发生 is natural.",
         "diagnostic_tags": {
           "if_correct": [
             "formal_collocation_mastered"
@@ -1919,7 +1919,7 @@
         "remediation": {
           "module_id": "hsk5_formal_collocations",
           "priority": "high",
-          "lesson_title_fr": "Collocations formelles fréquentes en HSK 5"
+          "lesson_title_fr": "Common formal collocations in HSK 5"
         }
       },
       {
@@ -1935,7 +1935,7 @@
           "argument_structure"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Complète : ___你已经决定了，___应该为自己的选择负责。",
+        "prompt_fr": "Complete: ___你已经决定了，___应该为自己的选择负责。",
         "stimulus": {
           "zh": "___你已经决定了，___应该为自己的选择负责。"
         },
@@ -1961,7 +1961,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "既然…就… signifie « puisque… alors… ». Le second membre présente la conséquence logique.",
+        "explanation_fr": "既然…就… means \"since… then…\". The second part presents the logical consequence.",
         "diagnostic_tags": {
           "if_correct": [
             "advanced_connector_logic_mastered"
@@ -1973,7 +1973,7 @@
         "remediation": {
           "module_id": "hsk5_argument_connectors",
           "priority": "medium",
-          "lesson_title_fr": "Connecteurs d’argumentation : 既然…就…, 与其…不如…"
+          "lesson_title_fr": "Argumentation connectors: 既然…就…, 与其…不如…"
         }
       },
       {
@@ -1989,7 +1989,7 @@
           "implicit_evaluation"
         ],
         "question_type": "listening_multiple_choice",
-        "prompt_fr": "Écoute l’extrait. Quelle est l’attitude de la femme envers la proposition ?",
+        "prompt_fr": "Listen to the excerpt. What is the woman's attitude toward the proposal?",
         "audio": {
           "script_zh": "男：我们把所有课程都改成直播课怎么样？女：直播课当然有互动性，可是如果学生的时间不固定，可能反而会降低完成率。",
           "pinyin": "Nán: Wǒmen bǎ suǒyǒu kèchéng dōu gǎi chéng zhíbō kè zěnmeyàng? Nǚ: Zhíbō kè dāngrán yǒu hùdòng xìng, kěshì rúguǒ xuésheng de shíjiān bù gùdìng, kěnéng fǎn'ér huì jiàngdī wánchéng lǜ.",
@@ -1999,26 +1999,26 @@
         "options": [
           {
             "id": "A",
-            "text": "Elle soutient totalement l’idée",
+            "text": "She fully supports the idea",
             "diagnostic_if_selected": "attitude_misread"
           },
           {
             "id": "B",
-            "text": "Elle rejette l’idée sans nuance",
+            "text": "She rejects the idea outright",
             "diagnostic_if_selected": "attitude_misread"
           },
           {
             "id": "C",
-            "text": "Elle reconnaît un avantage mais signale un risque"
+            "text": "She acknowledges an advantage but flags a risk"
           },
           {
             "id": "D",
-            "text": "Elle parle seulement du prix des cours",
+            "text": "She only talks about the cost of classes",
             "diagnostic_if_selected": "listening_detail_issue"
           }
         ],
         "correct_answer_id": "C",
-        "explanation_fr": "当然 reconnaît un avantage, mais 可是 introduit la réserve : la disponibilité variable des étudiants peut réduire le taux de complétion.",
+        "explanation_fr": "当然 acknowledges an advantage, but 可是 introduces the reservation: variable student availability may reduce the completion rate.",
         "diagnostic_tags": {
           "if_correct": [
             "listening_attitude_mastered"
@@ -2032,7 +2032,7 @@
         "remediation": {
           "module_id": "hsk5_listening_attitude",
           "priority": "high",
-          "lesson_title_fr": "Identifier l’attitude du locuteur : accord, réserve, opposition"
+          "lesson_title_fr": "Identifying the speaker's attitude: agreement, reservation, opposition"
         }
       },
       {
@@ -2048,7 +2048,7 @@
           "abstraction"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Choisis le meilleur titre pour ce paragraphe.",
+        "prompt_fr": "Choose the best title for this paragraph.",
         "stimulus": {
           "zh": "技术的发展让学习变得越来越方便，但也带来了新的问题。资源越多，学习者越容易分心；工具越强大，越需要清楚地知道自己为什么学、学什么、怎么学。真正有效的学习，不是把所有工具都用上，而是选择最适合目标的方法。"
         },
@@ -2074,7 +2074,7 @@
           }
         ],
         "correct_answer_id": "C",
-        "explanation_fr": "Le paragraphe insiste sur le fait que l’efficacité ne vient pas du nombre d’outils, mais de l’adéquation entre objectif, méthode et besoin.",
+        "explanation_fr": "The paragraph emphasizes that efficiency doesn't come from the number of tools, but from the match between objective, method, and need.",
         "diagnostic_tags": {
           "if_correct": [
             "advanced_summary_mastered"
@@ -2087,7 +2087,7 @@
         "remediation": {
           "module_id": "hsk6_summary_titles",
           "priority": "high",
-          "lesson_title_fr": "Résumer un paragraphe avancé sans surinterpréter"
+          "lesson_title_fr": "Summarizing an advanced paragraph without over-interpreting"
         }
       },
       {
@@ -2103,7 +2103,7 @@
           "complex_sentence"
         ],
         "question_type": "multiple_choice",
-        "prompt_fr": "Quelle phrase est correcte ?",
+        "prompt_fr": "Which sentence is correct?",
         "options": [
           {
             "id": "A",
@@ -2126,7 +2126,7 @@
           }
         ],
         "correct_answer_id": "A",
-        "explanation_fr": "无论…都… exprime « peu importe… ». La structure correcte est 无论 + condition/question word + …, sujet + 都 + résultat.",
+        "explanation_fr": "无论…都… means \"no matter what…\". The correct structure is 无论 + condition/question word + …, subject + 都 + result.",
         "diagnostic_tags": {
           "if_correct": [
             "universal_condition_mastered"
@@ -2139,7 +2139,7 @@
         "remediation": {
           "module_id": "hsk6_complex_connectors",
           "priority": "medium",
-          "lesson_title_fr": "Structures complexes : 无论…都…, 即使…也…"
+          "lesson_title_fr": "Complex structures: 无论…都…, 即使…也…"
         }
       }
     ],
@@ -2158,7 +2158,7 @@
           "completed_action"
         ],
         "question_type": "controlled_sentence_reconstruction",
-        "prompt_fr": "Construis une phrase correcte avec tous les blocs.",
+        "prompt_fr": "Build a correct sentence using all the blocks.",
         "blocks": [
           "昨天",
           "我",
@@ -2185,7 +2185,7 @@
             "points": 1
           }
         ],
-        "explanation_fr": "La structure naturelle est temps + sujet + 把 + objet + verbe + complément de résultat : 昨天我把作业做完了.",
+        "explanation_fr": "The natural structure is time + subject + 把 + object + verb + result complement.",
         "diagnostic_tags": {
           "if_correct": [
             "controlled_production_mastered"
@@ -2199,7 +2199,7 @@
         "remediation": {
           "module_id": "hsk3_sentence_production",
           "priority": "high",
-          "lesson_title_fr": "Produire une phrase correcte avec 把 et un complément"
+          "lesson_title_fr": "Building a correct sentence with 把 and a complement"
         }
       },
       {
@@ -2216,42 +2216,42 @@
           "goal_expression"
         ],
         "question_type": "open_text",
-        "prompt_fr": "Écris 2 à 3 phrases en chinois pour expliquer pourquoi tu apprends le chinois et ce que tu veux améliorer.",
+        "prompt_fr": "Write 2 to 3 sentences in pinyin to explain why you are learning Chinese and what you hope to achieve.",
         "constraints": {
-          "min_characters": 20,
-          "max_characters": 120,
-          "allow_pinyin": false,
-          "learner_instruction_fr": "N’utilise pas de traducteur. Écris simplement ce que tu sais dire."
+          "min_characters": 30,
+          "max_characters": 300,
+          "allow_pinyin": true,
+          "learner_instruction_fr": "Don't use a translator. Write in pinyin (e.g. wǒ xué zhōngwén yīnwèi...). Simply express what you can."
         },
         "rubric": [
           {
             "criterion_id": "communicative_success",
-            "description_fr": "Le message est compréhensible et répond à la consigne.",
+            "description_fr": "The message is understandable and addresses the prompt.",
             "points": 1
           },
           {
             "criterion_id": "sentence_structure",
-            "description_fr": "Les phrases ont un ordre naturel et identifiable.",
+            "description_fr": "Sentences have a natural and identifiable word order.",
             "points": 1
           },
           {
             "criterion_id": "grammar_control",
-            "description_fr": "Les particules, connecteurs ou compléments utilisés ne bloquent pas le sens.",
+            "description_fr": "Grammar is appropriate for the learner level.",
             "points": 1
           },
           {
             "criterion_id": "vocabulary_range",
-            "description_fr": "Le vocabulaire est adapté à l’objectif et pas seulement ultra-basique.",
+            "description_fr": "Vocabulary is appropriate and varied for the level.",
             "points": 1
           },
           {
             "criterion_id": "characters_accuracy",
-            "description_fr": "Les caractères sont globalement corrects et lisibles.",
+            "description_fr": "The characters/pinyin are generally correct and readable.",
             "points": 1
           }
         ],
         "example_strong_answer_zh": "我学习中文是因为我想去中国工作。我觉得听力比较难，所以我想多练习听和说。",
-        "example_strong_answer_fr": "J’apprends le chinois parce que je veux travailler en Chine. Je trouve l’écoute assez difficile, donc je veux pratiquer davantage l’écoute et l’oral.",
+        "example_strong_answer_fr": "I'm learning Chinese because I want to work in China. I find listening quite difficult, so I want to practice more listening and speaking.",
         "diagnostic_tags": {
           "if_score_4_or_5": [
             "open_production_solid"
@@ -2268,8 +2268,9 @@
         "remediation": {
           "module_id": "personalized_writing_start",
           "priority": "medium",
-          "lesson_title_fr": "Écrire sur ses objectifs en chinois"
-        }
+          "lesson_title_fr": "Writing about your goals in Chinese"
+        },
+        "explanation_fr": "N/A"
       }
     ],
     "diagnostic_feedback_engine": {
@@ -2277,169 +2278,169 @@
         {
           "tag": "word_order_issue",
           "threshold_wrong_count": 2,
-          "weakness_fr": "Ordre des mots fragile : temps, lieu, complément et verbe ne sont pas encore placés automatiquement.",
-          "revision_priority_fr": "Revoir les structures sujet + temps + lieu + verbe + complément, puis pratiquer avec des phrases à remettre dans l’ordre."
+          "weakness_fr": "Fragile word order: time, place, complement and verb are not yet automatically placed.",
+          "revision_priority_fr": "Review subject + time + place + verb + complement structures, then practice with sentence reordering exercises."
         },
         {
           "tag": "aspect_particle_confusion",
           "threshold_wrong_count": 2,
-          "weakness_fr": "Confusion sur les particules aspectuelles comme 了, 过, 着.",
-          "revision_priority_fr": "Reprendre les différences entre action accomplie, expérience vécue et état en cours."
+          "weakness_fr": "Confusion with aspect particles such as 了, 过, 着.",
+          "revision_priority_fr": "Review the differences between completed action, past experience, and ongoing state."
         },
         {
           "tag": "measure_word_issue",
           "threshold_wrong_count": 1,
-          "weakness_fr": "Classificateurs à consolider.",
-          "revision_priority_fr": "Réviser les classificateurs fréquents : 个, 本, 杯, 张, 件, 只."
+          "weakness_fr": "Measure words need consolidation.",
+          "revision_priority_fr": "Review common measure words: 个, 本, 杯, 张, 件, 只."
         },
         {
           "tag": "character_recognition_issue",
           "threshold_wrong_count": 2,
-          "weakness_fr": "Reconnaissance des caractères fragile, surtout lorsqu’ils sont proches graphiquement ou hors contexte.",
-          "revision_priority_fr": "Travailler les caractères par familles visuelles et par mots fréquents plutôt qu’isolément."
+          "weakness_fr": "Fragile character recognition, especially when characters look similar or appear out of context.",
+          "revision_priority_fr": "Practice characters by visual families and through common words rather than in isolation."
         },
         {
           "tag": "listening_detail_issue",
           "threshold_wrong_count": 2,
-          "weakness_fr": "Difficulté à repérer les détails importants à l’oral : heure, lieu, intention ou raison.",
-          "revision_priority_fr": "Pratiquer l’écoute courte avec repérage d’indices avant de passer aux audios longs."
+          "weakness_fr": "Difficulty identifying important details when listening: time, place, intention, or reason.",
+          "revision_priority_fr": "Practice short listening with cue identification before moving on to longer audio."
         },
         {
           "tag": "connector_logic_issue",
           "threshold_wrong_count": 2,
-          "weakness_fr": "Connecteurs logiques à renforcer.",
-          "revision_priority_fr": "Réviser 因为/所以, 虽然/但是, 不但/而且, 既然/就, 无论/都 avec des exemples contrastés."
+          "weakness_fr": "Logical connectors need strengthening.",
+          "revision_priority_fr": "Review 因为/所以, 虽然/但是, 不但/而且, 既然/就, 无论/都 with contrasting examples."
         },
         {
           "tag": "abstract_vocabulary_issue",
           "threshold_wrong_count": 2,
-          "weakness_fr": "Vocabulaire abstrait ou académique encore insuffisant.",
-          "revision_priority_fr": "Construire des familles de mots autour des thèmes opinion, étude, travail, société et décision."
+          "weakness_fr": "Abstract or academic vocabulary is still insufficient.",
+          "revision_priority_fr": "Build word families around themes: opinion, study, work, society, and decision."
         }
       ],
       "strength_rules": [
         {
           "skill": "vocabulary",
           "threshold_percent": 75,
-          "strength_fr": "Bonne reconnaissance du vocabulaire en contexte."
+          "strength_fr": "Good vocabulary recognition in context."
         },
         {
           "skill": "grammar",
           "threshold_percent": 75,
-          "strength_fr": "Structures grammaticales globalement solides pour ton niveau actuel."
+          "strength_fr": "Solid grammatical intuition at the tested level."
         },
         {
           "skill": "reading",
           "threshold_percent": 75,
-          "strength_fr": "Bonne compréhension écrite : tu repères correctement les informations importantes."
+          "strength_fr": "Good reading ability with correct inference."
         },
         {
           "skill": "listening",
           "threshold_percent": 75,
-          "strength_fr": "Bonne compréhension orale des informations explicites."
+          "strength_fr": "Good listening comprehension for the tested level."
         },
         {
           "skill": "characters",
           "threshold_percent": 70,
-          "strength_fr": "Reconnaissance correcte des caractères fréquents."
+          "strength_fr": "Good character recognition, including visually similar ones."
         }
       ]
     },
     "result_templates": {
       "pre_hsk": {
-        "headline_fr": "Tu peux commencer par les fondations sans brûler les étapes.",
-        "summary_fr": "Ton diagnostic montre que les bases ne sont pas encore assez automatisées pour entrer directement dans une préparation HSK chronométrée. C’est normal si tu débutes : le plus rentable est de sécuriser pinyin, tons, caractères essentiels et phrases simples.",
-        "recommended_training_level": "Fondations chinoises puis HSK 1",
-        "avoid_fr": "Évite de commencer directement par des annales HSK : tu risques de mémoriser des réponses sans comprendre les mécanismes.",
+        "headline_fr": "You can start with the foundations without rushing ahead.",
+        "summary_fr": "Your diagnostic shows that the basics are not yet automatic enough to enter HSK preparation directly. Starting with solid foundations will save you time later.",
+        "recommended_training_level": "Chinese foundations then HSK 1",
+        "avoid_fr": "Avoid jumping directly into HSK past papers: you risk memorizing answers without understanding the underlying patterns.",
         "four_week_plan": [
-          "Semaine 1 : pinyin, tons, salutations, pronoms, nombres.",
-          "Semaine 2 : caractères de base, famille, dates, verbes fréquents.",
-          "Semaine 3 : phrases simples sujet + verbe + objet, questions avec 吗 et 什么.",
-          "Semaine 4 : mini-dialogues, dictées très courtes, premier entraînement HSK 1."
+          "Week 1: pinyin, tones, greetings, pronouns, numbers.",
+          "Week 2: basic characters, family, dates, common verbs.",
+          "Week 3: simple sentences (subject + verb + object), questions with 吗 and 什么.",
+          "Week 4: first listening exercises and character writing practice."
         ]
       },
       "hsk1_foundation": {
-        "headline_fr": "Tu as des bases, mais elles doivent devenir automatiques.",
-        "summary_fr": "Tu reconnais une partie du chinois très fréquent, mais ton score indique encore des hésitations sur l’ordre des mots, les caractères simples ou l’écoute courte.",
+        "headline_fr": "You have some basics, but they need to become automatic.",
+        "summary_fr": "You recognize some very common Chinese, but your score indicates hesitation on word order, basic characters, and listening comprehension.",
         "recommended_training_level": "HSK 1",
-        "avoid_fr": "Ne saute pas trop vite au HSK 2 si tu dois encore traduire mentalement chaque phrase.",
+        "avoid_fr": "Don't jump to HSK 2 too quickly if you still need to mentally translate every sentence.",
         "four_week_plan": [
-          "Semaine 1 : vocabulaire quotidien et caractères HSK 1.",
-          "Semaine 2 : questions simples, négation 不/没, possession avec 的.",
-          "Semaine 3 : écoute de dialogues courts et repérage d’informations.",
-          "Semaine 4 : entraînement HSK 1 + correction détaillée des erreurs."
+          "Week 1: everyday vocabulary and HSK 1 characters.",
+          "Week 2: simple questions, negation 不/没, possession with 的.",
+          "Week 3: listening to short dialogues and identifying key information.",
+          "Week 4: timed exercises and review of weak points."
         ]
       },
       "hsk2_consolidation": {
-        "headline_fr": "Tu peux consolider HSK 2 et préparer la montée vers HSK 3.",
-        "summary_fr": "Ton niveau te permet de comprendre des phrases simples, mais certaines structures bloquent encore la fluidité : classificateurs, temps, lieu, 了, comparaisons et détails à l’oral.",
+        "headline_fr": "You can consolidate HSK 2 and prepare for HSK 3.",
+        "summary_fr": "Your level allows you to understand simple sentences, but some structures still hinder fluency: measure words, aspect particles, and comparisons.",
         "recommended_training_level": "HSK 2 consolidation",
-        "avoid_fr": "Évite de te lancer uniquement dans du vocabulaire HSK 3 si les structures HSK 2 ne sont pas stables.",
+        "avoid_fr": "Avoid diving into HSK 3 vocabulary only if HSK 2 structures aren't stable yet.",
         "four_week_plan": [
-          "Semaine 1 : révision HSK 1-2 ciblée sur les erreurs du test.",
-          "Semaine 2 : ordre des mots, classificateurs, temps et lieux.",
-          "Semaine 3 : écoute de dialogues courts, questions de détail.",
-          "Semaine 4 : mini-test HSK 2 puis transition vers HSK 3."
+          "Week 1: targeted HSK 1-2 review based on test errors.",
+          "Week 2: word order, measure words, time and place expressions.",
+          "Week 3: short dialogue listening and detail questions.",
+          "Week 4: mock exercises and progress check."
         ]
       },
       "hsk3_ready": {
-        "headline_fr": "Tu peux commencer HSK 3 avec une consolidation ciblée.",
-        "summary_fr": "Tu as dépassé le stade débutant. Le bon point de départ est HSK 3, avec un travail prioritaire sur les compléments, les connecteurs et la compréhension plus rapide.",
+        "headline_fr": "You can start HSK 3 with targeted consolidation.",
+        "summary_fr": "You are past the beginner stage. The best starting point is HSK 3, with priority work on complements, connectors, and listening skills.",
         "recommended_training_level": "HSK 3",
-        "avoid_fr": "Évite de viser HSK 4 tant que les structures HSK 3 ne sont pas rapides et naturelles.",
+        "avoid_fr": "Avoid aiming for HSK 4 as long as HSK 3 structures are not fast and natural.",
         "four_week_plan": [
-          "Semaine 1 : consolidation HSK 2 + erreurs récurrentes.",
-          "Semaine 2 : grammaire HSK 3 : 了, 过, compléments, 把 introductif.",
-          "Semaine 3 : compréhension écrite/orale HSK 3 en temps limité.",
-          "Semaine 4 : mini-examen HSK 3 + plan de correction personnalisé."
+          "Week 1: HSK 2 consolidation + recurring errors.",
+          "Week 2: HSK 3 grammar: 了, 过, complements, introductory 把.",
+          "Week 3: timed HSK 3 reading and listening comprehension.",
+          "Week 4: mock exam and progress assessment."
         ]
       },
       "hsk4_ready": {
-        "headline_fr": "Tu peux entrer dans une vraie préparation HSK 4.",
-        "summary_fr": "Tu comprends les situations courantes et tu peux aborder des textes plus riches. Le défi sera de gagner en précision : connecteurs, nuances lexicales, lecture rapide, implication logique.",
+        "headline_fr": "You can begin real HSK 4 preparation.",
+        "summary_fr": "You understand everyday situations and can handle richer texts. The challenge will be gaining precision: connectors, passive voice, nuance.",
         "recommended_training_level": "HSK 4",
-        "avoid_fr": "Ne travaille pas seulement les listes de mots : à ce niveau, la différence se fait sur les nuances et la vitesse de compréhension.",
+        "avoid_fr": "Don't just study word lists: at this level, the difference comes from nuance and comprehension speed.",
         "four_week_plan": [
-          "Semaine 1 : diagnostic des points HSK 3 faibles + vocabulaire HSK 4 fréquent.",
-          "Semaine 2 : connecteurs, structures complexes, reformulation.",
-          "Semaine 3 : lecture chronométrée de textes courts et moyens.",
-          "Semaine 4 : entraînements HSK 4 mixtes + analyse des distracteurs."
+          "Week 1: weak HSK 3 points diagnosis + frequent HSK 4 vocabulary.",
+          "Week 2: connectors, complex structures, rephrasing.",
+          "Week 3: timed reading of short and medium texts.",
+          "Week 4: full mock exam with review."
         ]
       },
       "hsk5_ready": {
-        "headline_fr": "Tu peux viser HSK 5, avec un gros travail de lecture et de précision.",
-        "summary_fr": "Ton diagnostic indique une autonomie solide, mais le passage vers HSK 5 demande plus que de la compréhension générale : il faut maîtriser vocabulaire abstrait, inférences, résumé et vitesse.",
+        "headline_fr": "You can aim for HSK 5, with intensive reading and precision work.",
+        "summary_fr": "Your diagnostic shows solid autonomy, but HSK 5 requires more than general comprehension: inference, precise synonyms, and structured expression.",
         "recommended_training_level": "HSK 5",
-        "avoid_fr": "Évite les entraînements trop courts uniquement basés sur la traduction : il faut lire plus long, plus vite, et mieux justifier les réponses.",
+        "avoid_fr": "Avoid training only with short translation exercises: you need to read longer, faster, and justify your answers better.",
         "four_week_plan": [
-          "Semaine 1 : vocabulaire abstrait par thème et collocations.",
-          "Semaine 2 : lecture longue, inférences, intention de l’auteur.",
-          "Semaine 3 : compréhension orale avec implicites et reformulations.",
-          "Semaine 4 : mini-test HSK 5 + correction stratégique."
+          "Week 1: abstract vocabulary by theme and collocations.",
+          "Week 2: long reading, inference, author intent.",
+          "Week 3: listening comprehension with implicit meaning and rephrasing.",
+          "Week 4: intensive review and timed mock exam."
         ]
       },
       "hsk6_ready": {
-        "headline_fr": "Tu es dans une zone avancée : ton enjeu est la précision.",
-        "summary_fr": "Tu peux comprendre des contenus complexes, mais pour performer au niveau HSK 6, il faut réduire les erreurs de nuance, accélérer la lecture et structurer l’expression.",
+        "headline_fr": "You are in the advanced zone: your challenge is precision.",
+        "summary_fr": "You can understand complex content, but to perform at HSK 6, you need to reduce nuance errors, speed up reading, and master formal expression.",
         "recommended_training_level": "HSK 6",
-        "avoid_fr": "Évite de te contenter de comprendre globalement : à ce niveau, les mauvaises réponses exploitent les nuances, les implicites et les reformulations.",
+        "avoid_fr": "Avoid being satisfied with general understanding: at this level, wrong answers exploit nuances, implications, and formal registers.",
         "four_week_plan": [
-          "Semaine 1 : vocabulaire avancé, synonymes et registres.",
-          "Semaine 2 : lecture dense et synthèse rapide.",
-          "Semaine 3 : écoute avancée avec prise de notes.",
-          "Semaine 4 : entraînement HSK 6 + expression écrite structurée."
+          "Week 1: advanced vocabulary, synonyms, and registers.",
+          "Week 2: dense reading and fast synthesis.",
+          "Week 3: advanced listening with note-taking.",
+          "Week 4: summary writing and full mock exam."
         ]
       },
       "advanced_diagnostic_recommended": {
-        "headline_fr": "Ton résultat suggère un niveau avancé : passe un diagnostic HSK 7-9 dédié.",
-        "summary_fr": "Ce test court n’est pas conçu pour certifier un niveau avancé. Ton score indique un potentiel élevé, mais il faut vérifier traduction, expression orale, écriture argumentative et compréhension de sujets complexes.",
-        "recommended_training_level": "Diagnostic HSK 7-9",
-        "avoid_fr": "Ne déduis pas un niveau HSK 7-9 uniquement à partir d’un test court d’onboarding.",
+        "headline_fr": "Your results suggest an advanced level: take a dedicated HSK 7-9 diagnostic.",
+        "summary_fr": "This short test is not designed to certify an advanced level. Your score indicates high potential, but a full advanced diagnostic is needed.",
+        "recommended_training_level": "HSK 7-9 Diagnostic",
+        "avoid_fr": "Don't assume HSK 7-9 level based solely on a short onboarding test.",
         "four_week_plan": [
-          "Semaine 1 : diagnostic avancé complet : lecture, écoute, traduction.",
-          "Semaine 2 : écriture argumentative et précision grammaticale.",
-          "Semaine 3 : oral structuré sur sujets sociaux, académiques et professionnels.",
-          "Semaine 4 : simulation avancée et plan de progression."
+          "Week 1: full advanced diagnostic: reading, listening, translation.",
+          "Week 2: argumentative writing and grammatical precision.",
+          "Week 3: structured speaking on social, academic, and professional topics.",
+          "Week 4: comprehensive review and level confirmation."
         ]
       }
     }
