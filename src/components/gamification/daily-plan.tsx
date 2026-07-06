@@ -103,7 +103,7 @@ function generateDailyPlan(state: {
       durationMinutes: Math.max(5, Math.ceil(dueCount * 0.5)),
       priority: dueCount >= 10 ? 0 : isStruggling ? 1 : 2,
       reason: dueCount > 0
-        ? `${dueCount} words are waiting for SRS review — memory fades without practice`
+        ? `${dueCount} words are waiting for SRS review - memory fades without practice`
         : 'Spaced repetition optimizes long-term memorization',
     });
   }

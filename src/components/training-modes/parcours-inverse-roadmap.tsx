@@ -169,7 +169,7 @@ export function ParcoursInverseView({ className }: { className?: string }) {
               <RiskIcon className={cn('h-5 w-5 shrink-0 mt-0.5', risk.color)} />
               <div>
                 <p className={cn('text-sm font-bold', risk.color)}>
-                  {roadmap.delay_risk === 'critical' ? 'Critical delay detected' : 'Warning — falling behind'}
+                  {roadmap.delay_risk === 'critical' ? 'Critical delay detected' : 'Warning - falling behind'}
                 </p>
                 <p className="text-xs text-navy-600 mt-1 leading-relaxed">
                   {roadmap.delay_risk === 'critical'

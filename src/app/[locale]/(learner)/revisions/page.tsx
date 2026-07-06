@@ -156,7 +156,7 @@ export default function ReviewsPage() {
       // Use starter cards for new users
       flashcards = [...STARTER_CARDS];
     } else if (reviewMode === 'srs') {
-      // SRS due items — the core review mode
+      // SRS due items - the core review mode
       let queueItems = reviewQueue.items;
       if (filter !== 'all') queueItems = queueItems.filter(i => i.item_type === filter);
       if (hskFilter !== 'all') queueItems = queueItems.filter(i => i.level === hskFilter);
@@ -176,7 +176,7 @@ export default function ReviewsPage() {
         flashcards = allItems.slice(0, 20).map(knowledgeToFlashcard);
       }
     } else if (reviewMode === 'weak') {
-      // Weakest items — lowest accuracy
+      // Weakest items - lowest accuracy
       let items = [...weakItems];
       if (filter !== 'all') items = items.filter(i => i.item_type === filter);
       if (hskFilter !== 'all') items = items.filter(i => i.level === hskFilter);
@@ -291,7 +291,7 @@ export default function ReviewsPage() {
             Reviews
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            Spaced repetition — strengthen your memory with smart flashcards
+            Spaced repetition - strengthen your memory with smart flashcards
           </p>
         </header>
 
@@ -494,7 +494,7 @@ export default function ReviewsPage() {
           </CardContent>
         </Card>
 
-        {/* Urgent review preview — show actual words to review */}
+        {/* Urgent review preview - show actual words to review */}
         {hasDueItems && (
           <Card>
             <CardHeader>

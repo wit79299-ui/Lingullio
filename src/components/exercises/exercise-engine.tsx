@@ -214,7 +214,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
           <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-6 py-8 text-white text-center">
             <Zap className="h-10 w-10 mx-auto mb-3 opacity-90" />
             <h2 className="text-xl font-bold">{lessonTitle}</h2>
-            <p className="text-teal-100 text-sm mt-1">{moduleTitle} &mdash; HSK {hskLevel}</p>
+            <p className="text-teal-100 text-sm mt-1">{moduleTitle} - HSK {hskLevel}</p>
           </div>
           <CardContent className="p-6 space-y-5">
             <div className="grid grid-cols-3 gap-4 text-center">
@@ -298,7 +298,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
           },
           a.isCorrect,
           a.timeSpent,
-          false, // hintUsed — individual hint tracking per exercise not yet wired
+          false, // hintUsed - individual hint tracking per exercise not yet wired
           lessonId,
         );
       });
@@ -348,7 +348,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
               {results.passed ? 'Congratulations, level passed!' : 'Not yet, keep practicing!'}
             </p>
             <p className="text-sm opacity-80 mt-1">
-              {results.percentage}% &mdash; {results.totalPoints}/{results.maxPoints} raw points
+              {results.percentage}% - {results.totalPoints}/{results.maxPoints} raw points
             </p>
             {/* XP earned floating badge */}
             {sessionSummary && (
@@ -536,7 +536,7 @@ export function ExerciseEngine({ exercises, lessonTitle, moduleTitle, hskLevel, 
             ) : (
               <div className="flex items-center justify-center gap-2 text-red-500">
                 <XCircle className="h-7 w-7" />
-                <span className="text-lg font-bold">Incorrect &mdash; 0 pts</span>
+                <span className="text-lg font-bold">Incorrect - 0 pts</span>
               </div>
             )}
           </div>
@@ -710,7 +710,7 @@ function AnswerReview({ answers, exercises }: { answers: ExerciseAnswer[]; exerc
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// EXERCISE RENDERER — dispatches to type-specific components
+// EXERCISE RENDERER - dispatches to type-specific components
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface RendererProps {

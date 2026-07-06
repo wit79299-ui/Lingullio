@@ -56,7 +56,7 @@ export default async function LessonPage({ params }: Props) {
         </Link>
         <span className="text-navy-200">/</span>
         <span className="text-navy-500">
-          {t('modulePrefix', { number: lesson.module_sort_order })} — {lesson.module_title}
+          {t('modulePrefix', { number: lesson.module_sort_order })} - {lesson.module_title}
         </span>
       </div>
 
@@ -145,7 +145,7 @@ export default async function LessonPage({ params }: Props) {
                 Test your knowledge
               </h3>
               <p className="text-sm text-navy-500 mt-1">
-                {lesson.exercise_count} interactive exercises &mdash; MCQ, dictation, translation, matching and more.
+                {lesson.exercise_count} interactive exercises - MCQ, dictation, translation, matching and more.
                 Score calculated on the HSK scale (120/200 to pass).
               </p>
             </div>

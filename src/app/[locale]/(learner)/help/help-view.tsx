@@ -284,7 +284,7 @@ export function HelpView() {
           Can't find the answer to your question?
         </p>
         <p className="text-xs text-navy-300 mt-1">
-          Lingullio is in beta — new features are coming regularly
+          Lingullio is in beta - new features are coming regularly
         </p>
       </div>
     </div>

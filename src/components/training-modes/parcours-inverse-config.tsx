@@ -245,7 +245,7 @@ export function ParcoursInverseSetup({ onComplete }: { onComplete?: () => void }
                 How much time do you need?
               </h3>
               <p className="text-sm text-navy-400 mb-4">
-                Choose your deadline — the app calculates the necessary pace
+                Choose your deadline - the app calculates the necessary pace
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

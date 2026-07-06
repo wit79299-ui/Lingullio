@@ -211,7 +211,7 @@ export function CharacterPractice({
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 text-teal-600">
               <Pencil className="h-5 w-5" />
             </div>
-            {t('title')} — HSK {hskLevel}
+            {t('title')} - HSK {hskLevel}
           </h1>
           <p className="text-sm text-navy-400 mt-1 ml-[52px]">
             {t('subtitle', { course: courseTitle })}

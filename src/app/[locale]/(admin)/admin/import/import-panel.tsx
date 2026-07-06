@@ -240,7 +240,7 @@ export function ImportPanel() {
                   className="accent-navy-600"
                 />
                 <span className="text-sm">
-                  <strong>Remplacer</strong> — supprime l&apos;ancien vocabulaire HSK1 et le remplace
+                  <strong>Remplacer</strong> - supprime l&apos;ancien vocabulaire HSK1 et le remplace
                 </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -252,7 +252,7 @@ export function ImportPanel() {
                   className="accent-navy-600"
                 />
                 <span className="text-sm">
-                  <strong>Ajouter</strong> — ajoute aux donnees existantes (upsert)
+                  <strong>Ajouter</strong> - ajoute aux donnees existantes (upsert)
                 </span>
               </label>
             </div>

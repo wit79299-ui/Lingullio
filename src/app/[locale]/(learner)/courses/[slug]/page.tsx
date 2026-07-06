@@ -39,7 +39,7 @@ export default async function CourseDetailPage({ params }: Props) {
     fetchLearnerCharacters(level, locale),
   ]);
 
-  // Stats data — passed to client CourseTabs so cards are clickable
+  // Stats data - passed to client CourseTabs so cards are clickable
   const statsData = [
     { tabId: 'vocabulary' as const, label: t('vocabularyTab'), value: course.vocabulary_count, target: targets?.vocabTarget, color: 'bg-emerald-50 text-emerald-600' },
     { tabId: 'grammar' as const, label: t('grammarTab'), value: course.grammar_count, target: targets?.grammarTarget, color: 'bg-violet-50 text-violet-600' },
@@ -79,7 +79,7 @@ export default async function CourseDetailPage({ params }: Props) {
               <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gold-100 text-gold-700 font-medium">
                 <Award className="h-3 w-3" />
                 CECRL {cefrLevel}
-                {cefrDesc && <span className="text-gold-500 hidden sm:inline">— {cefrDesc}</span>}
+                {cefrDesc && <span className="text-gold-500 hidden sm:inline">- {cefrDesc}</span>}
               </span>
             )}
           </div>
@@ -98,7 +98,7 @@ export default async function CourseDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Stats grid + Tabs — all in client component for interactivity */}
+      {/* Stats grid + Tabs - all in client component for interactivity */}
       <CourseTabs
         statsData={statsData}
         slug={slug}

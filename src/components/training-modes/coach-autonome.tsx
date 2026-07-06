@@ -54,7 +54,7 @@ export function useCoachAutoActivation() {
     // 3. Coach is not already activated
     // 4. Coach is not dismissed for today
     if (activeMode !== 'standard') return;
-    if (daysSinceActivity === null) return; // no activity at all — could be new user
+    if (daysSinceActivity === null) return; // no activity at all - could be new user
     if (daysSinceActivity < COACH_AUTO_ACTIVATE_DAYS) return;
     if (coachState.auto_activated) return;
     
@@ -83,7 +83,7 @@ function generatePrescribedSessions(
   const accuracy = totalExercises > 0 ? Math.round((totalCorrect / totalExercises) * 100) : 0;
   const decayPercent = estimateMemoryDecay(daysSinceActivity);
 
-  // 1. URGENT — SRS Revision to combat memory decay
+  // 1. URGENT - SRS Revision to combat memory decay
   if (totalExercises >= 5) {
     sessions.push({
       id: 'coach-srs-urgent',
@@ -99,7 +99,7 @@ function generatePrescribedSessions(
     });
   }
 
-  // 2. HIGH — Quick lesson to rebuild momentum
+  // 2. HIGH - Quick lesson to rebuild momentum
   sessions.push({
     id: 'coach-lesson-restart',
     type: 'lesson',
@@ -113,7 +113,7 @@ function generatePrescribedSessions(
     memory_decay_percent: 0,
   });
 
-  // 3. MEDIUM — Practice to rebuild accuracy (if enough history)
+  // 3. MEDIUM - Practice to rebuild accuracy (if enough history)
   if (totalExercises >= 20 && accuracy < 80) {
     sessions.push({
       id: 'coach-practice',
@@ -123,13 +123,13 @@ function generatePrescribedSessions(
       href: '/courses',
       duration_minutes: 10,
       xp_estimate: 35,
-      reason: `Accuracy at ${accuracy}% — target 80%+`,
+      reason: `Accuracy at ${accuracy}% - target 80%+`,
       urgency: 'medium',
       memory_decay_percent: 0,
     });
   }
 
-  // 4. MEDIUM — Mock exam if advanced enough and long inactivity
+  // 4. MEDIUM - Mock exam if advanced enough and long inactivity
   if (totalExercises >= 50 && daysSinceActivity >= 20) {
     sessions.push({
       id: 'coach-mock-diagnostic',
@@ -191,7 +191,7 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
                 </span>
               </h3>
               <p className="text-xs text-navy-500 mt-0.5">
-                Auto-activated — {daysSinceActivity} days of inactivity
+                Auto-activated - {daysSinceActivity} days of inactivity
               </p>
             </div>
           </div>
@@ -240,7 +240,7 @@ export function CoachAutonomeBanner({ className }: { className?: string }) {
         <Link href="/revisions">
           <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg">
             <Brain className="h-4 w-4 mr-2" />
-            Start emergency review — 7 min
+            Start emergency review - 7 min
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </Link>
@@ -300,7 +300,7 @@ function AtRiskAlert({ daysSinceActivity, decayPercent }: { daysSinceActivity: n
               <span
                 key={item.item_id}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-xs"
-                title={`${item.pinyin} — ${item.meaning} (−${item.memory_decay_percent}% memory)`}
+                title={`${item.pinyin} - ${item.meaning} (−${item.memory_decay_percent}% memory)`}
               >
                 <span className="font-bold text-navy-900">{item.display}</span>
                 <span className="text-red-500 text-[10px]">−{item.memory_decay_percent}%</span>
@@ -341,7 +341,7 @@ function AtRiskWordsGrid() {
                   −{item.memory_decay_percent}%
                 </span>
               </div>
-              <p className="text-[10px] text-navy-500 truncate">{item.pinyin} — {item.meaning}</p>
+              <p className="text-[10px] text-navy-500 truncate">{item.pinyin} - {item.meaning}</p>
               <div className="h-1 bg-white/60 rounded-full mt-1 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-red-400"
@@ -404,7 +404,7 @@ export function CoachAutonomeView({ className }: { className?: string }) {
             Coach Autonome
           </h1>
           <p className="text-sm text-navy-400 mt-1">
-            Personalized recovery program — {days} days of absence detected
+            Personalized recovery program - {days} days of absence detected
           </p>
         </div>
         <Button variant="secondary" size="sm" onClick={deactivateCoach}>

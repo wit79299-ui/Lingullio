@@ -51,7 +51,7 @@ export function DashboardView() {
         router.replace('/placement');
       }
     } catch {
-      // localStorage not available (SSR) — ignore
+      // localStorage not available (SSR) - ignore
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -368,7 +368,7 @@ export function DashboardView() {
                         'flex flex-col items-center gap-1 p-2 rounded-xl border text-center',
                         colors.bg, colors.border
                       )}
-                      title={`${badge.name_fr} — ${badge.description_fr}`}
+                      title={`${badge.name_fr} - ${badge.description_fr}`}
                     >
                       <span className="text-2xl">{badge.icon}</span>
                       <span className={cn('text-[9px] font-medium leading-tight', colors.text)}>
@@ -447,7 +447,7 @@ function StreakCalendar({ sessions }: { sessions: Array<{ date: string }> }) {
           'w-3 h-3 rounded-sm transition-colors',
           active ? 'bg-emerald-400' : 'bg-cream-100'
         )}
-        title={`${dateStr}${active ? ' — Active' : ''}`}
+        title={`${dateStr}${active ? ' - Active' : ''}`}
       />
     );
   }
@@ -483,7 +483,7 @@ function NextBadgesHint({ currentBadges, stats }: {
             <span className="text-lg opacity-30">{badge.icon}</span>
             <div className="flex-1">
               <span className="font-medium text-navy-600">{badge.name_fr}</span>
-              <span className="text-navy-400 ml-1">— {badge.description_fr}</span>
+              <span className="text-navy-400 ml-1">- {badge.description_fr}</span>
             </div>
           </div>
         ))}

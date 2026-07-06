@@ -75,7 +75,7 @@ export default async function AnalyticsPage({ params }: Props) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-48 border-2 border-dashed border-navy-100 rounded-lg text-sm text-navy-400">
-            Graphiques à venir — les données s&apos;accumulent
+            Graphiques à venir - les données s&apos;accumulent
           </div>
         </CardContent>
       </Card>

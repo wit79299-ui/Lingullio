@@ -225,7 +225,7 @@ export const useGamificationStore = create<GamificationStore>()(
             id: `perfect-${ts}`,
             type: 'perfect',
             title: 'Session parfaite !',
-            description: `${totalCount}/${totalCount} — +${XP_CONFIG.perfect_session} XP bonus`,
+            description: `${totalCount}/${totalCount} - +${XP_CONFIG.perfect_session} XP bonus`,
             icon: '✨',
             created_at: ts + 2,
           });
