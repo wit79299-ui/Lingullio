@@ -13,6 +13,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { calculateSRS, createNewSRSItem, isDue, isMastered, reviewPriority } from '@/lib/gamification/srs-engine';
 import type { SRSItem } from '@/lib/gamification/srs-engine';
+import { syncManager } from '@/lib/sync/sync-manager';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -114,6 +115,9 @@ export interface UserKnowledgeStore {
 
   /** Reset all knowledge */
   reset: () => void;
+
+  /** Hydrate store from server data (called on login) */
+  hydrateFromServer: (serverItems: Record<string, KnowledgeItem>) => void;
 }
 
 // ─── Param Types ────────────────────────────────────────────────────────
@@ -245,10 +249,13 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
                 : existing.source_lesson_ids,
             };
             updated.mastery = computeMastery(updated);
-            return {
+            const newState = {
               items: { ...state.items, [params.item_id]: updated },
               last_updated: now,
             };
+            // Sync to server (debounced)
+            syncManager.pushKnowledge(newState.items, now);
+            return newState;
           }
 
           // Create new
@@ -256,10 +263,13 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
           newItem.times_seen = 1;
           newItem.last_seen_at = now;
           newItem.mastery = 'seen';
-          return {
+          const newState = {
             items: { ...state.items, [params.item_id]: newItem },
             last_updated: now,
           };
+          // Sync to server (debounced)
+          syncManager.pushKnowledge(newState.items, now);
+          return newState;
         });
       },
 
@@ -320,10 +330,13 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
           };
           updated.mastery = computeMastery(updated);
 
-          return {
+          const newState = {
             items: { ...state.items, [params.item_id]: updated },
             last_updated: now,
           };
+          // Sync to server (debounced)
+          syncManager.pushKnowledge(newState.items, now);
+          return newState;
         });
       },
 
@@ -353,6 +366,8 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
             }
           }
 
+          // Sync to server (debounced)
+          syncManager.pushKnowledge(newItems, now);
           return { items: newItems, last_updated: now };
         });
       },
@@ -501,6 +516,41 @@ export const useUserKnowledgeStore = create<UserKnowledgeStore>()(
       // ── Reset ─────────────────────────────────────────────────────
       reset: () => {
         set({ items: {}, last_updated: null });
+      },
+
+      // ── Hydrate from server ───────────────────────────────────────
+      hydrateFromServer: (serverItems) => {
+        set((state) => {
+          const merged = { ...state.items };
+          for (const [itemId, serverItem] of Object.entries(serverItems)) {
+            const local = merged[itemId];
+            if (!local) {
+              // Server has item we don't — take it
+              merged[itemId] = serverItem;
+            } else {
+              // Both have item — merge: take the one with more activity
+              // (higher times_seen or more recent last_seen_at)
+              const serverNewer = (serverItem.last_seen_at || '') > (local.last_seen_at || '');
+              const serverMoreSeen = serverItem.times_seen > local.times_seen;
+              if (serverNewer || serverMoreSeen) {
+                merged[itemId] = {
+                  ...serverItem,
+                  // Keep the maximum of counters
+                  times_seen: Math.max(local.times_seen, serverItem.times_seen),
+                  times_correct: Math.max(local.times_correct, serverItem.times_correct),
+                  times_incorrect: Math.max(local.times_incorrect, serverItem.times_incorrect),
+                  // Union lesson/exercise sources
+                  source_lesson_ids: [...new Set([...local.source_lesson_ids, ...serverItem.source_lesson_ids])],
+                  source_exercise_ids: [...new Set([...local.source_exercise_ids, ...serverItem.source_exercise_ids])].slice(-20),
+                };
+              }
+            }
+          }
+          return {
+            items: merged,
+            last_updated: new Date().toISOString(),
+          };
+        });
       },
     }),
     {

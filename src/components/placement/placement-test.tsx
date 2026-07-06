@@ -21,6 +21,7 @@ import {
   checkSentenceReconstruction,
 } from '@/lib/placement/engine';
 import { useUserKnowledgeStore } from '@/stores/user-knowledge-store';
+import { syncManager } from '@/lib/sync/sync-manager';
 import {
   ChevronRight,
   ChevronLeft,
@@ -271,23 +272,31 @@ export function PlacementTest() {
             onSkipBeginner={() => {
               // Store a beginner placement result and go straight to HSK1
               try {
+                const skipData = {
+                  placementId: 'pre_hsk',
+                  estimatedHsk: 'Pre-HSK',
+                  estimatedCefr: 'A0',
+                  recommendedStart: 'HSK 1 – Module 1',
+                  trainingLevel: 'Chinese foundations then HSK 1',
+                  totalPercent: 0,
+                  profileTags: ['beginner_skip'],
+                  planIntensity: 'standard',
+                  strengths: [],
+                  weaknesses: [],
+                  completedAt: new Date().toISOString(),
+                  skipped: true,
+                };
                 localStorage.setItem(
                   'lingullio_placement_result',
-                  JSON.stringify({
-                    placementId: 'pre_hsk',
-                    estimatedHsk: 'Pre-HSK',
-                    estimatedCefr: 'A0',
-                    recommendedStart: 'HSK 1 – Module 1',
-                    trainingLevel: 'Chinese foundations then HSK 1',
-                    totalPercent: 0,
-                    profileTags: ['beginner_skip'],
-                    planIntensity: 'standard',
-                    strengths: [],
-                    weaknesses: [],
-                    completedAt: new Date().toISOString(),
-                    skipped: true,
-                  })
+                  JSON.stringify(skipData)
                 );
+                // Sync skip result to Supabase
+                syncManager.pushPlacement({
+                  result_data: skipData,
+                  recommended_level: 'Pre-HSK',
+                  total_score: 0,
+                  profile_answers: ['beginner_skip'],
+                });
               } catch {
                 // localStorage might be unavailable
               }
@@ -1732,26 +1741,34 @@ function ResultCTA({ result, diagnosticAnswers, diagnosticQuestions }: {
     }
 
     // Store placement result in localStorage for onboarding adaptation
+    const placementData = {
+      placementId: result.placementId,
+      estimatedHsk: result.estimatedHsk,
+      estimatedCefr: result.estimatedCefr,
+      recommendedStart: result.recommendedStart,
+      trainingLevel: result.trainingLevel,
+      totalPercent: result.totalPercent,
+      profileTags: result.profileTags,
+      planIntensity: result.planIntensity,
+      strengths: result.strengths,
+      weaknesses: result.weaknesses,
+      completedAt: new Date().toISOString(),
+    };
     try {
       localStorage.setItem(
         'lingullio_placement_result',
-        JSON.stringify({
-          placementId: result.placementId,
-          estimatedHsk: result.estimatedHsk,
-          estimatedCefr: result.estimatedCefr,
-          recommendedStart: result.recommendedStart,
-          trainingLevel: result.trainingLevel,
-          totalPercent: result.totalPercent,
-          profileTags: result.profileTags,
-          planIntensity: result.planIntensity,
-          strengths: result.strengths,
-          weaknesses: result.weaknesses,
-          completedAt: new Date().toISOString(),
-        })
+        JSON.stringify(placementData)
       );
     } catch {
       // localStorage might be unavailable
     }
+    // Sync placement result to Supabase
+    syncManager.pushPlacement({
+      result_data: placementData,
+      recommended_level: result.estimatedHsk,
+      total_score: result.totalPercent,
+      profile_answers: result.profileTags,
+    });
     setTimeout(() => {
       router.push(`/courses/${courseSlug}`);
     }, 300);

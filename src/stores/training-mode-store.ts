@@ -7,6 +7,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { syncManager } from '@/lib/sync/sync-manager';
 
 // ─── HSK Vocabulary Counts (from DB) ──────────────────────────────────────
 export const HSK_VOCAB_COUNTS: Record<number, number> = {
@@ -107,6 +108,14 @@ export interface TrainingModeStore {
 
   // Computed
   calculateRoadmap: () => ParcoursInverseRoadmap | null;
+
+  /** Hydrate store from server data (called on login) */
+  hydrateFromServer: (serverState: Partial<{
+    active_mode: TrainingMode;
+    parcours_config: ParcoursInverseConfig | null;
+    parcours_words_learned_snapshot: number;
+    coach_state: CoachAutonomeState;
+  }>) => void;
 }
 
 // ─── Roadmap Calculator ──────────────────────────────────────────────────
@@ -189,10 +198,10 @@ function computeRoadmap(
       target_hsk_checkpoint: checkpoint,
       has_mock_exam: mockExamWeeks.includes(w),
       description: checkpoint
-        ? `Objectif HSK${checkpoint} atteint !`
+        ? `HSK${checkpoint} goal reached!`
         : mockExamWeeks.includes(w)
-          ? 'Examen blanc programme'
-          : `+${wordsPerWeek} mots`,
+          ? 'Mock exam scheduled'
+          : `+${wordsPerWeek} words`,
     });
   }
 
@@ -246,6 +255,14 @@ export const useTrainingModeStore = create<TrainingModeStore>()(
             coach_state: { ...s.coach_state, auto_activated: false, activated_at: null },
           }));
         }
+        // Sync to server
+        const s = get();
+        syncManager.pushTrainingMode({
+          active_mode: s.active_mode,
+          parcours_config: s.parcours_config,
+          parcours_words_learned_snapshot: s.parcours_words_learned_snapshot,
+          coach_state: s.coach_state,
+        });
       },
 
       configureParcours: (config) => {
@@ -254,10 +271,25 @@ export const useTrainingModeStore = create<TrainingModeStore>()(
           parcours_config: config,
           parcours_words_learned_snapshot: 0,
         });
+        // Sync to server
+        syncManager.pushTrainingMode({
+          active_mode: 'parcours_inverse',
+          parcours_config: config,
+          parcours_words_learned_snapshot: 0,
+          coach_state: get().coach_state,
+        });
       },
 
       updateParcoursProgress: (wordsLearned) => {
         set({ parcours_words_learned_snapshot: wordsLearned });
+        // Sync to server
+        const s = get();
+        syncManager.pushTrainingMode({
+          active_mode: s.active_mode,
+          parcours_config: s.parcours_config,
+          parcours_words_learned_snapshot: wordsLearned,
+          coach_state: s.coach_state,
+        });
       },
 
       resetToStandard: () => {
@@ -267,17 +299,32 @@ export const useTrainingModeStore = create<TrainingModeStore>()(
           parcours_words_learned_snapshot: 0,
           coach_state: { ...INITIAL_STATE.coach_state },
         });
+        // Sync to server
+        syncManager.pushTrainingMode({
+          active_mode: 'standard',
+          parcours_config: null,
+          parcours_words_learned_snapshot: 0,
+          coach_state: { ...INITIAL_STATE.coach_state },
+        });
       },
 
       activateCoachAutonome: () => {
+        const coachState = {
+          auto_activated: true,
+          activated_at: new Date().toISOString(),
+          dismissed_until: null,
+          prescribed_sessions: [] as PrescribedSession[],
+        };
         set({
           active_mode: 'coach_autonome',
-          coach_state: {
-            auto_activated: true,
-            activated_at: new Date().toISOString(),
-            dismissed_until: null,
-            prescribed_sessions: [],
-          },
+          coach_state: coachState,
+        });
+        // Sync to server
+        syncManager.pushTrainingMode({
+          active_mode: 'coach_autonome',
+          parcours_config: get().parcours_config,
+          parcours_words_learned_snapshot: get().parcours_words_learned_snapshot,
+          coach_state: coachState,
         });
       },
 
@@ -297,12 +344,31 @@ export const useTrainingModeStore = create<TrainingModeStore>()(
           active_mode: 'standard',
           coach_state: { ...INITIAL_STATE.coach_state },
         });
+        // Sync to server
+        syncManager.pushTrainingMode({
+          active_mode: 'standard',
+          parcours_config: get().parcours_config,
+          parcours_words_learned_snapshot: get().parcours_words_learned_snapshot,
+          coach_state: { ...INITIAL_STATE.coach_state },
+        });
       },
 
       calculateRoadmap: () => {
         const state = get();
         if (!state.parcours_config) return null;
         return computeRoadmap(state.parcours_config, state.parcours_words_learned_snapshot);
+      },
+
+      // ── Hydrate from server data ─────────────────────────────────
+      hydrateFromServer: (serverState) => {
+        set((state) => ({
+          active_mode: (serverState.active_mode as TrainingMode) || state.active_mode,
+          parcours_config: serverState.parcours_config ?? state.parcours_config,
+          parcours_words_learned_snapshot: serverState.parcours_words_learned_snapshot ?? state.parcours_words_learned_snapshot,
+          coach_state: serverState.coach_state
+            ? (serverState.coach_state as CoachAutonomeState)
+            : state.coach_state,
+        }));
       },
     }),
     {

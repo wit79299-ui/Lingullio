@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 import { XP_CONFIG, levelFromXp, levelTitle } from '@/lib/gamification/xp-config';
 import { BADGES, checkNewBadges, type UserBadgeStats, type BadgeDefinition } from '@/lib/gamification/badges';
 import type { AttemptPayload, SessionSummary, GamificationState } from '@/lib/gamification/progress-service';
+import { syncManager } from '@/lib/sync/sync-manager';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ export interface GamificationStore {
   getStats: () => UserBadgeStats;
   getLevelInfo: () => { level: number; currentXp: number; nextLevelXp: number; progress: number; title: string };
   reset: () => void;
+  hydrateFromServer: (serverState: Partial<GamificationStore>) => void;
 }
 
 export interface SessionHistoryEntry {
@@ -211,7 +213,7 @@ export const useGamificationStore = create<GamificationStore>()(
           notifications.push({
             id: `lvl-${ts}`,
             type: 'level_up',
-            title: `Niveau ${finalLevel} !`,
+            title: `Level ${finalLevel}!`,
             description: levelTitle(finalLevel),
             new_level: finalLevel,
             icon: '🎉',
@@ -224,7 +226,7 @@ export const useGamificationStore = create<GamificationStore>()(
           notifications.push({
             id: `perfect-${ts}`,
             type: 'perfect',
-            title: 'Session parfaite !',
+            title: 'Perfect session!',
             description: `${totalCount}/${totalCount} - +${XP_CONFIG.perfect_session} XP bonus`,
             icon: '✨',
             created_at: ts + 2,
@@ -250,8 +252,8 @@ export const useGamificationStore = create<GamificationStore>()(
           notifications.push({
             id: `streak-${streakDays}-${ts}`,
             type: 'streak',
-            title: `${streakDays} jours de suite !`,
-            description: `Record : ${longestStreak} jours`,
+            title: `${streakDays} days in a row!`,
+            description: `Record: ${longestStreak} days`,
             icon: '🔥',
             created_at: ts + 10,
           });
@@ -272,7 +274,7 @@ export const useGamificationStore = create<GamificationStore>()(
         const history = [...state.sessions_history, historyEntry].slice(-90);
 
         // ── Commit state ──
-        set({
+        const newState = {
           total_xp: totalXp,
           level: finalLevel,
           streak_days: streakDays,
@@ -288,6 +290,25 @@ export const useGamificationStore = create<GamificationStore>()(
           daily_xp: dailyXp + xpEarned,
           sessions_history: history,
           pending_notifications: [...state.pending_notifications, ...notifications],
+        };
+        set(newState);
+
+        // Sync to server (debounced)
+        syncManager.pushGamification({
+          total_xp: totalXp,
+          level: finalLevel,
+          streak_days: streakDays,
+          longest_streak: longestStreak,
+          badges_unlocked: allBadges,
+          perfect_sessions: perfectSessions,
+          total_exercises: totalExercises,
+          total_correct: totalCorrect,
+          total_study_minutes: totalStudyMinutes,
+          last_activity_date: todayStr,
+          daily_exercises: dailyExercises + totalCount,
+          daily_correct: dailyCorrect + correctCount,
+          daily_xp: dailyXp + xpEarned,
+          sessions_history: history,
         });
 
         return {
@@ -311,7 +332,7 @@ export const useGamificationStore = create<GamificationStore>()(
           notifications.push({
             id: `lvl-${Date.now()}`,
             type: 'level_up',
-            title: `Niveau ${newLevel} !`,
+            title: `Level ${newLevel}!`,
             description: levelTitle(newLevel),
             new_level: newLevel,
             icon: '🎉',
@@ -323,6 +344,25 @@ export const useGamificationStore = create<GamificationStore>()(
           total_xp: totalXp,
           level: newLevel,
           pending_notifications: [...state.pending_notifications, ...notifications],
+        });
+
+        // Sync to server
+        const updated = get();
+        syncManager.pushGamification({
+          total_xp: updated.total_xp,
+          level: updated.level,
+          streak_days: updated.streak_days,
+          longest_streak: updated.longest_streak,
+          badges_unlocked: updated.badges_unlocked,
+          perfect_sessions: updated.perfect_sessions,
+          total_exercises: updated.total_exercises,
+          total_correct: updated.total_correct,
+          total_study_minutes: updated.total_study_minutes,
+          last_activity_date: updated.last_activity_date,
+          daily_exercises: updated.daily_exercises,
+          daily_correct: updated.daily_correct,
+          daily_xp: updated.daily_xp,
+          sessions_history: updated.sessions_history,
         });
       },
 
@@ -363,6 +403,34 @@ export const useGamificationStore = create<GamificationStore>()(
       },
 
       reset: () => set(INITIAL_STATE),
+
+      // ── Hydrate from server data ─────────────────────────────────
+      hydrateFromServer: (serverState) => {
+        set((state) => {
+          // Merge strategy: take the maximum of counters
+          return {
+            total_xp: Math.max(state.total_xp, serverState.total_xp || 0),
+            level: Math.max(state.level, serverState.level || 1),
+            streak_days: Math.max(state.streak_days, serverState.streak_days || 0),
+            longest_streak: Math.max(state.longest_streak, serverState.longest_streak || 0),
+            badges_unlocked: [...new Set([...state.badges_unlocked, ...(serverState.badges_unlocked || [])])],
+            perfect_sessions: Math.max(state.perfect_sessions, serverState.perfect_sessions || 0),
+            total_exercises: Math.max(state.total_exercises, serverState.total_exercises || 0),
+            total_correct: Math.max(state.total_correct, serverState.total_correct || 0),
+            total_study_minutes: Math.max(state.total_study_minutes, serverState.total_study_minutes || 0),
+            last_activity_date: [state.last_activity_date, serverState.last_activity_date]
+              .filter(Boolean)
+              .sort()
+              .pop() || null,
+            daily_exercises: serverState.daily_exercises ?? state.daily_exercises,
+            daily_correct: serverState.daily_correct ?? state.daily_correct,
+            daily_xp: serverState.daily_xp ?? state.daily_xp,
+            sessions_history: serverState.sessions_history 
+              ? (serverState.sessions_history as typeof state.sessions_history)
+              : state.sessions_history,
+          };
+        });
+      },
     }),
     {
       name: 'lingullio-gamification',
