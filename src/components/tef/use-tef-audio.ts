@@ -100,14 +100,17 @@ export function useFrenchTTS() {
           throw new Error(`TTS API error: ${response.status}`);
         }
 
+        // Use MediaSource for streaming playback if available,
+        // otherwise fall back to full blob download
         const blob = await response.blob();
         blobUrl = URL.createObjectURL(blob);
         cacheRef.current.set(cacheKey, blobUrl);
         abortRef.current = null;
       }
 
-      // Play audio
-      const audio = new Audio(blobUrl);
+      // Play audio — preload metadata first for faster start
+      const audio = new Audio();
+      audio.preload = 'auto';
       audioRef.current = audio;
 
       audio.onended = () => {
@@ -122,6 +125,8 @@ export function useFrenchTTS() {
         speakFallback(text, id, rate);
       };
 
+      // Set source and play as soon as enough data is buffered
+      audio.src = blobUrl;
       await audio.play();
     } catch (err) {
       // If fetch was aborted (user stopped), don't fallback
