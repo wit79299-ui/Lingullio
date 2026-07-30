@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { getAudioUrl } from './tef-lexique-audio-map';
 
 /**
  * TEF-specific audio & evaluation hooks.
  *
- * 1. French TTS via OpenAI API (primary) with SpeechSynthesis fallback
- *    Supports France and Quebec accents
+ * 1. French TTS via pre-generated MP3 (lexique) or OpenAI API (long texts) 
+ *    with SpeechSynthesis fallback
  * 2. Speech Recognition via Web Speech API (for EO exercises)
  * 3. Text analysis (local, fast) + AI evaluation (server-side, thorough)
  * 4. Speech analysis (local, fast) + AI evaluation (server-side, thorough)
@@ -92,43 +93,57 @@ export function useFrenchTTS() {
     const cacheKey = `${accent}:${safeRate}:${text.slice(0, 200)}`;
 
     try {
-      let blobUrl = cacheRef.current.get(cacheKey);
+      // Priority 1: Check for pre-generated static MP3 (lexique terms)
+      // These are instant — no API call, no latency
+      const pregenUrl = getAudioUrl(text);
+      
+      let audioSrc: string;
 
-      if (!blobUrl) {
-        // Fetch from OpenAI TTS API
-        const controller = new AbortController();
-        abortRef.current = controller;
+      if (pregenUrl) {
+        // Use pre-generated static MP3 file — instant playback
+        audioSrc = pregenUrl;
+      } else {
+        // Priority 2: Check cache for previously fetched API audio
+        let blobUrl = cacheRef.current.get(cacheKey);
 
-        const response = await fetch('/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, accent, speed: safeRate }),
-          signal: controller.signal,
-        });
+        if (!blobUrl) {
+          // Priority 3: Fetch from OpenAI TTS API (for long texts, CO, EO, etc.)
+          const controller = new AbortController();
+          abortRef.current = controller;
 
-        if (!response.ok) {
-          throw new Error(`TTS API error: ${response.status}`);
+          const response = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, accent, speed: safeRate }),
+            signal: controller.signal,
+          });
+
+          if (!response.ok) {
+            throw new Error(`TTS API error: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          
+          // Only cache if blob has meaningful size (> 1KB)
+          // Prevents caching corrupted/empty responses from aborted fetches
+          if (blob.size < 1000) {
+            console.warn(`[TTS] Response too small (${blob.size}B), skipping cache`);
+          }
+          
+          blobUrl = URL.createObjectURL(blob);
+          if (blob.size >= 1000) {
+            cacheRef.current.set(cacheKey, blobUrl);
+          }
+          abortRef.current = null;
         }
-
-        const blob = await response.blob();
         
-        // Only cache if blob has meaningful size (> 1KB)
-        // Prevents caching corrupted/empty responses from aborted fetches
-        if (blob.size < 1000) {
-          console.warn(`[TTS] Response too small (${blob.size}B), skipping cache`);
-        }
-        
-        blobUrl = URL.createObjectURL(blob);
-        if (blob.size >= 1000) {
-          cacheRef.current.set(cacheKey, blobUrl);
-        }
-        abortRef.current = null;
+        audioSrc = blobUrl;
       }
 
       // Check if we were stopped while fetching
       if (speakingIdRef.current !== id) return;
 
-      const audio = new Audio(blobUrl);
+      const audio = new Audio(audioSrc);
       audioRef.current = audio;
 
       audio.onended = () => {
@@ -140,9 +155,11 @@ export function useFrenchTTS() {
 
       audio.onerror = () => {
         console.warn('[TTS] Audio playback error, falling back to SpeechSynthesis');
-        // Remove from cache if playback failed
-        cacheRef.current.delete(cacheKey);
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
+        // Remove from cache if playback failed (only for API-fetched audio)
+        if (!pregenUrl) {
+          cacheRef.current.delete(cacheKey);
+          if (audioSrc.startsWith('blob:')) URL.revokeObjectURL(audioSrc);
+        }
         audioRef.current = null;
         speakFallback(text, id, rate);
       };

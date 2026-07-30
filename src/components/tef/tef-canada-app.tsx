@@ -16,6 +16,7 @@ import type {
 import { TEF_XP_CONFIG, SECTION_CONFIG, estimateNCLC } from './tef-types';
 import { useFrenchTTS, useSpeechRecognition, analyzeText, analyzeSpeech, useAIEvaluation } from './use-tef-audio';
 import type { AIWritingEvaluation, AISpeakingEvaluation } from './use-tef-audio';
+import { getAudioUrl } from './tef-lexique-audio-map';
 import { useGamificationStore } from '@/stores/gamification-store';
 import {
   BookOpen, ChevronRight, ChevronDown, Target, Award, FileText,
