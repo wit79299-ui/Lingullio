@@ -110,19 +110,34 @@ export interface CourseStats {
 // COURSES LIST (for /courses page)
 // -------------------------------------------------------------------
 
-export async function fetchLearnerCourses(locale: string): Promise<CourseCard[]> {
+export async function fetchLearnerCourses(
+  locale: string,
+  accessibleCourseIds?: string[] | null
+): Promise<CourseCard[]> {
   const supabase = createServiceRoleClient();
 
-  // Fetch all published courses with their translations and content counts
-  const { data: courses, error } = await supabase
+  // If accessibleCourseIds is null, user has no active licenses → return empty
+  if (accessibleCourseIds === null) {
+    return [];
+  }
+
+  // Build query
+  let query = supabase
     .from('courses')
     .select(`
       id, slug, exam_type, status,
       course_translations ( locale, title, description ),
       modules ( id )
     `)
-    .in('status', ['published', 'draft']) // show draft too for demo
-    .order('slug');
+    .in('status', ['published', 'draft']); // show draft too for demo
+
+  // If accessibleCourseIds provided, filter to only those courses
+  if (accessibleCourseIds !== undefined && accessibleCourseIds.length > 0) {
+    query = query.in('id', accessibleCourseIds);
+  }
+  // If undefined → no filtering (admin/demo mode)
+
+  const { data: courses, error } = await query.order('slug');
 
   if (error) throw new Error(`fetchLearnerCourses: ${error.message}`);
 
@@ -162,8 +177,9 @@ export async function fetchLearnerCourses(locale: string): Promise<CourseCard[]>
   return (courses ?? []).map((c) => {
     const translations = (c.course_translations as Array<{ locale: string; title: string; description: string | null }>) ?? [];
     const t = pickTranslation(translations, locale);
-    // Extract HSK level number from slug (e.g., "hsk-1" -> "1")
-    const hskLevel = c.slug.replace('hsk-', '');
+    // Extract level from slug (e.g., "hsk-1" -> "1", "tef-co" -> "co")
+    const slugParts = c.slug.split('-');
+    const hskLevel = slugParts.length > 1 ? slugParts.slice(1).join('-') : c.slug;
 
     return {
       id: c.id,

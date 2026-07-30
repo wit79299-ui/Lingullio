@@ -86,11 +86,33 @@ export const TOPIK: ExamSystem = {
   ],
 };
 
+// ----- TEF (Test d'Evaluation de Français) -----
+export const TEF: ExamSystem = {
+  id: 'tef',
+  name: 'TEF',
+  fullName: "Test d'Evaluation de Français",
+  language: 'Français',
+  targetLang: 'fr',
+  slugPrefix: 'tef',
+  flag: '🇫🇷',
+  levels: [
+    // TEF sections are not "levels" in the same way as HSK,
+    // but we model them here for consistency.
+    // TEF scores map to CEFR levels: 0-1 = below A1, 1 = A1, 2 = A2, 3 = B1, 4 = B2, 5 = C1, 6 = C2
+    { level: 'co', cefr: 'A1~C2', vocabTarget: 0, grammarTarget: 0 }, // Comprehension orale
+    { level: 'ce', cefr: 'A1~C2', vocabTarget: 0, grammarTarget: 0 }, // Comprehension ecrite
+    { level: 'eo', cefr: 'A1~C2', vocabTarget: 0, grammarTarget: 0 }, // Expression orale
+    { level: 'ee', cefr: 'A1~C2', vocabTarget: 0, grammarTarget: 0 }, // Expression ecrite
+    { level: 'ls', cefr: 'A1~C2', vocabTarget: 0, grammarTarget: 0 }, // Lexique et Structure
+  ],
+};
+
 // ----- Registry of all exam systems -----
 export const EXAM_SYSTEMS: Record<string, ExamSystem> = {
   HSK,
   JLPT,
   TOPIK,
+  TEF,
 };
 
 /**
