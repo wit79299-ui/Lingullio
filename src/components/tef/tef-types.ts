@@ -1,4 +1,4 @@
-// ─── TEF Exercise Engine — Dedicated Types ─────────────────────────────
+// ─── TEF Exercise Engine : Dedicated Types ─────────────────────────────
 // Separate from HSK exercise system, calibrated for NCLC scoring
 
 // ── Exercise categories ──

@@ -5,8 +5,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 /**
  * TEF-specific audio hook.
  *
- * 1. French TTS via SpeechSynthesis (for CO exercises — examiner reads)
- * 2. Speech Recognition via Web Speech API (for EO exercises — learner speaks)
+ * 1. French TTS via SpeechSynthesis (for CO exercises : examiner reads)
+ * 2. Speech Recognition via Web Speech API (for EO exercises : learner speaks)
  *
  * Same approach as HSK's useAudioPlayer but for French voices
  * and with added speech recognition capabilities.
@@ -153,7 +153,7 @@ export function useFrenchTTS() {
     const delay = voicesReadyRef.current ? 100 : 300;
     setTimeout(doSpeak, delay);
 
-    // Safety timeout — auto-clear state if TTS hangs
+    // Safety timeout : auto-clear state if TTS hangs
     const safetyMs = Math.max(text.length * 150, 10000);
     setTimeout(() => {
       setSpeakingId((prev) => (prev === id ? null : prev));
@@ -173,7 +173,7 @@ export function useFrenchTTS() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SPEECH RECOGNITION (for EO — learner speaks French)
+// SPEECH RECOGNITION (for EO : learner speaks French)
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface SpeechRecognitionResult {
@@ -275,7 +275,7 @@ export function useSpeechRecognition() {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          // This segment just became final — append it
+          // This segment just became final : append it
           const segmentText = result[0].transcript.trim();
           if (segmentText) {
             finalPartsRef.current.push(segmentText);
@@ -343,7 +343,7 @@ export function useSpeechRecognition() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TEXT ANALYSIS (for EE auto-scoring — no API needed)
+// TEXT ANALYSIS (for EE auto-scoring : no API needed)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface TextAnalysis {
@@ -485,7 +485,7 @@ export function analyzeText(text: string, minWords: number, maxWords: number): T
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SPEECH ANALYSIS (for EO auto-scoring — no API needed)
+// SPEECH ANALYSIS (for EO auto-scoring : no API needed)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface SpeechAnalysis {
@@ -536,7 +536,7 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
     }
   }
 
-  // Detect repetition — penalize heavily repeated speech
+  // Detect repetition : penalize heavily repeated speech
   const { uniqueRatio, repeatedWords } = computeRepetitionPenalty(transcript);
   // If uniqueRatio < 0.3 the speaker is essentially repeating the same words
   const repetitionPenalty = uniqueRatio < 0.3 ? 0.3 : uniqueRatio < 0.5 ? 0.6 : uniqueRatio < 0.7 ? 0.85 : 1.0;
@@ -554,7 +554,7 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
   fluencyScore = Math.round(fluencyScore * repetitionPenalty);
   fluencyScore = Math.max(2, Math.min(fluencyScore, 20));
 
-  // Content: unique word count and connectors (not total words — to penalize repetition)
+  // Content: unique word count and connectors (not total words : to penalize repetition)
   const uniqueWordCount = new Set(words.map(w => w.toLowerCase())).size;
   let contentScore = 4;
   if (uniqueWordCount >= 15) contentScore += 4;

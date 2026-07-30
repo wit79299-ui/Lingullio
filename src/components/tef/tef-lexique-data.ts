@@ -180,7 +180,7 @@ const rawDomains: Omit<LexiqueDomain, 'quizQuestions'>[] = [
       { term: 'la formation continue', definition: 'Apprentissage tout au long de la vie professionnelle', example: 'Mon employeur finance la **formation continue**.', synonyms: ['le perfectionnement'], stage: 2, register: 'courant' },
       { term: "l'équivalence de diplôme", definition: 'Reconnaissance officielle qu\'un diplôme étranger vaut un diplôme local', example: "J'attends mon **équivalence de diplôme** du WES.", synonyms: ['la reconnaissance des acquis'], stage: 2, register: 'courant' },
       { term: "l'accréditation professionnelle", definition: "Reconnaissance officielle permettant d'exercer une profession réglementée", example: "**L'accréditation professionnelle** est obligatoire pour les ingénieurs.", synonyms: ['la certification', "l'agrément"], stage: 3, register: 'soutenu' },
-      { term: 'la VAE', definition: "Validation des acquis de l'expérience — obtenir un diplôme grâce à l'expérience", example: 'Grâce à la **VAE**, elle a obtenu son diplôme sans retourner à l\'université.', synonyms: ['la validation des acquis'], stage: 3, register: 'soutenu' },
+      { term: 'la VAE', definition: "Validation des acquis de l'expérience, permettant d'obtenir un diplôme grâce à l'expérience", example: 'Grâce à la **VAE**, elle a obtenu son diplôme sans retourner à l\'université.', synonyms: ['la validation des acquis'], stage: 3, register: 'soutenu' },
     ],
   },
   {

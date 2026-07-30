@@ -1,4 +1,4 @@
-// ─── TEF Exercises — Structured exercise data ──────────────────────────
+// ─── TEF Exercises : Structured exercise data ──────────────────────────
 // Converts the raw tef-data.ts content into typed TEFExercise objects
 // for the exercise engine.
 
@@ -37,7 +37,7 @@ export const ceExercises: TEFQCMExercise[] = ceItems.map((item, idx) => ({
 }));
 
 // ══════════════════════════════════════════════════════════════════════════
-// CO EXERCISES (Compréhension orale — with TTS)
+// CO EXERCISES (Compréhension orale, with TTS)
 // ══════════════════════════════════════════════════════════════════════════
 
 export const coExercises: TEFQCMExercise[] = coItems.map((item, idx) => ({
@@ -84,7 +84,7 @@ export const eeExercises: TEFWritingExercise[] = eeItems.map((item, idx) => ({
   nclcTarget: 7,
   difficulty: (idx === 0 ? 1 : 2) as 1 | 2 | 3,
   points: 50,
-  meta: idx === 0 ? 'Section A — Fait divers · NCLC 5-9' : 'Section B — Argumentation · NCLC 5-9',
+  meta: idx === 0 ? 'Section A : Fait divers · NCLC 5-9' : 'Section B : Argumentation · NCLC 5-9',
   sujet: item.sujet,
   minWords: idx === 0 ? 80 : 200,
   maxWords: idx === 0 ? 150 : 350,
@@ -105,7 +105,7 @@ export const eeExercises: TEFWritingExercise[] = eeItems.map((item, idx) => ({
 }));
 
 // ══════════════════════════════════════════════════════════════════════════
-// EO EXERCISES (Expression orale — with Speech Recognition)
+// EO EXERCISES (Expression orale, with Speech Recognition)
 // ══════════════════════════════════════════════════════════════════════════
 
 export const eoExercises: TEFSpeakingExercise[] = eoItems.map((item, idx) => ({
@@ -136,7 +136,7 @@ export const eoExercises: TEFSpeakingExercise[] = eoItems.map((item, idx) => ({
     'Utilisez des connecteurs oraux (alors, voyons, effectivement) pour structurer votre réflexion',
     'Relancez l\'interlocuteur avec des questions',
     'Variez les connecteurs : cependant, par ailleurs, en revanche',
-    'Ne mémorisez pas un script — entraînez la réaction',
+    'Ne mémorisez pas un script : entraînez la réaction',
   ],
 }));
 
@@ -151,7 +151,7 @@ export const diagnosticExercises: TEFQCMExercise[] = diagQuestions.map((q, idx) 
   nclcTarget: (idx < 2 ? 5 : idx < 4 ? 6 : idx < 6 ? 7 : 9) as 5 | 6 | 7 | 9,
   difficulty: (idx < 2 ? 1 : idx < 5 ? 2 : 3) as 1 | 2 | 3,
   points: 10,
-  meta: `Question ${idx + 1}/8 — Diagnostic`,
+  meta: `Question ${idx + 1}/8 · Diagnostic`,
   questions: [{
     prompt: q.q,
     choices: q.choices.map((c) => ({ text: c })),
