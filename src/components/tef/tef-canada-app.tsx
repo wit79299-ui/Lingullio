@@ -562,6 +562,7 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
   const [score, setScore] = useState(0);
   const [total, setTotal] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [accent, setAccent] = useState<'france' | 'quebec'>('france');
   const tts = useFrenchTTS();
   const addXp = useGamificationStore(s => s.addXp);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -579,11 +580,11 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
   useEffect(() => {
     if (entry && !checked) {
       // Auto-play TTS after a short delay
-      const t = setTimeout(() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8), 500);
+      const t = setTimeout(() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8, accent), 500);
       return () => clearTimeout(t);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIdx, checked, entry]);
+  }, [currentIdx, checked, entry, accent]);
 
   if (!entry || showResult) {
     const pct = total > 0 ? Math.round((score / total) * 100) : 0;
@@ -646,13 +647,19 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
       <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
         <p className="text-sm text-navy-500 text-center">Écoutez le mot ou l&apos;expression, puis écrivez-le.</p>
 
+        {/* Accent selector */}
+        <div className="flex justify-center gap-2">
+          <button onClick={() => setAccent('france')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${accent === 'france' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>🇫🇷 France</button>
+          <button onClick={() => setAccent('quebec')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${accent === 'quebec' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>🇨🇦 Québec</button>
+        </div>
+
         {/* TTS buttons */}
         <div className="flex justify-center gap-3">
-          <button onClick={() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8)}
+          <button onClick={() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8, accent)}
             className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${tts.speakingId === `dict-${currentIdx}` ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'}`}>
             <Volume2 className="w-4 h-4" />Écouter
           </button>
-          <button onClick={() => tts.speak(entry.term, `dict-slow-${currentIdx}`, 0.55)}
+          <button onClick={() => tts.speak(entry.term, `dict-slow-${currentIdx}`, 0.55, accent)}
             className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${tts.speakingId === `dict-slow-${currentIdx}` ? 'bg-blue-600 text-white' : 'bg-cream-50 text-navy-600 border border-cream-200 hover:bg-cream-100'}`}>
             <Volume2 className="w-4 h-4" />Lent
           </button>
@@ -757,15 +764,32 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
   const [streak, setStreak] = useState(0);
   const [sessionXP, setSessionXP] = useState(0);
   const [startedAt, setStartedAt] = useState(0);
+  const [accent, setAccent] = useState<'france' | 'quebec'>('france');
+  const [elapsed, setElapsed] = useState(0);
+  const [showTranscript, setShowTranscript] = useState(false);
   const addXp = useGamificationStore(s => s.addXp);
   const tts = useFrenchTTS();
   const config = SECTION_CONFIG[section];
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeLimits: Record<string, number> = { CE: 60 * 60, CO: 40 * 60, EE: 60 * 60, EO: 15 * 60 };
+  const timeLimit = timeLimits[section] || 60 * 60;
+
+  // Timer effect
+  useEffect(() => {
+    if (phase === 'exercise' && startedAt > 0) {
+      timerRef.current = setInterval(() => {
+        setElapsed(Math.round((Date.now() - startedAt) / 1000));
+      }, 1000);
+      return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [phase, startedAt]);
 
   const current = exercises[currentIdx];
   const totalQuestions = exercises.reduce((s, e) => s + e.questions.length, 0);
 
-  const start = () => { setPhase('exercise'); setCurrentIdx(0); setAnswers([]); setCurrentAnswer({}); setStreak(0); setSessionXP(0); setStartedAt(Date.now()); };
-  const restart = () => { setPhase('intro'); setCurrentIdx(0); setAnswers([]); setCurrentAnswer({}); setStreak(0); setSessionXP(0); };
+  const start = () => { setPhase('exercise'); setCurrentIdx(0); setAnswers([]); setCurrentAnswer({}); setStreak(0); setSessionXP(0); setStartedAt(Date.now()); setElapsed(0); setShowTranscript(false); };
+  const restart = () => { setPhase('intro'); setCurrentIdx(0); setAnswers([]); setCurrentAnswer({}); setStreak(0); setSessionXP(0); setElapsed(0); setShowTranscript(false); };
 
   const handleQCMAnswer = (qIdx: number, choiceIdx: number) => {
     if (currentAnswer[qIdx] !== undefined) return;
@@ -813,7 +837,15 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
             <div><span className="text-2xl font-bold text-navy-900">{totalQuestions}</span><p className="text-navy-400 text-xs">questions</p></div>
             <div><span className="text-2xl font-bold text-teal-600">{exercises.reduce((s, e) => s + e.points * e.questions.length, 0)}</span><p className="text-navy-400 text-xs">XP max</p></div>
           </div>
-          {withTTS && <p className="text-xs text-navy-400 mt-3 flex items-center justify-center gap-1"><Volume2 className="w-3.5 h-3.5" /> Audio TTS français activé</p>}
+          {withTTS && (
+            <div className="mt-4 space-y-2">
+              <p className="text-xs text-navy-400 flex items-center justify-center gap-1"><Volume2 className="w-3.5 h-3.5" /> Audio TTS naturel (France et Québec)</p>
+              <div className="flex justify-center gap-2">
+                <button onClick={() => setAccent('france')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${accent === 'france' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>🇫🇷 France</button>
+                <button onClick={() => setAccent('quebec')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${accent === 'quebec' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>🇨🇦 Québec</button>
+              </div>
+            </div>
+          )}
           <button onClick={start} className="mt-6 px-8 py-3 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 transition-colors inline-flex items-center gap-2">
             <Zap className="w-4 h-4" /> Commencer l&apos;entraînement
           </button>
@@ -865,10 +897,16 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
   if (!current) return null;
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-      {/* Progress bar */}
+      {/* Progress bar + Timer */}
       <div className="flex items-center gap-3">
         <div className="flex-1 bg-cream-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${((currentIdx + 1) / exercises.length) * 100}%` }} /></div>
         <span className="text-xs font-medium text-navy-400">{currentIdx + 1}/{exercises.length}</span>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-full border ${elapsed > timeLimit * 0.8 ? 'bg-red-50 border-red-200' : 'bg-cream-50 border-cream-200'}`}>
+          <Clock className={`w-3 h-3 ${elapsed > timeLimit * 0.8 ? 'text-red-500' : 'text-navy-400'}`} />
+          <span className={`text-xs font-bold font-mono ${elapsed > timeLimit * 0.8 ? 'text-red-600' : 'text-navy-500'}`}>
+            {Math.floor(elapsed / 60)}:{(elapsed % 60).toString().padStart(2, '0')}
+          </span>
+        </div>
         <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 border border-amber-200"><Zap className="w-3 h-3 text-amber-600" /><span className="text-xs font-bold text-amber-700">{sessionXP}</span></div>
         {streak >= 2 && <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-50 border border-orange-200"><span className="text-xs font-bold text-orange-600">🔥 {streak}</span></div>}
       </div>
@@ -876,19 +914,40 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
       <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
         <p className="text-xs font-medium text-navy-400">{current.meta}</p>
 
-        {/* CO: TTS audio button */}
+        {/* CO: TTS audio button with accent selector */}
         {withTTS && current.ttsText && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
-            <button onClick={() => tts.speak(current.ttsText!, current.id, current.ttsSpeed)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${tts.speakingId === current.id ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-100'}`}>
-              {tts.speakingId === current.id ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-            <div><p className="text-sm font-medium text-blue-800">Écouter le passage audio</p><p className="text-xs text-blue-600">Cliquez pour écouter · Vitesse : {current.ttsSpeed}x</p></div>
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 space-y-2">
+            <div className="flex items-center gap-3">
+              <button onClick={() => tts.speak(current.ttsText!, current.id, current.ttsSpeed, accent)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${tts.speakingId === current.id ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-100'}`}>
+                {tts.speakingId === current.id ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-800">Écouter le passage audio {accent === 'france' ? '🇫🇷' : '🇨🇦'}</p>
+                <p className="text-xs text-blue-600">Cliquez pour écouter · Vitesse : {current.ttsSpeed}x</p>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => setAccent('france')} className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${accent === 'france' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200'}`}>🇫🇷</button>
+                <button onClick={() => setAccent('quebec')} className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${accent === 'quebec' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200'}`}>🇨🇦</button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Stimulus text (CE: always visible, CO: hidden until listened) */}
+        {/* Stimulus text (CE: always visible, CO: hidden, revealed after all answered) */}
         {current.stimulus && !withTTS && (
           <div className="bg-cream-50 border-l-[3px] border-navy-300 px-4 py-3 text-sm text-navy-700 leading-relaxed italic whitespace-pre-line">{current.stimulus}</div>
+        )}
+        {/* CO: Show transcript button after answering */}
+        {withTTS && current.stimulus && allCurrentAnswered && (
+          <div>
+            <button onClick={() => setShowTranscript(!showTranscript)} className="flex items-center gap-2 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
+              {showTranscript ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              {showTranscript ? 'Masquer la transcription' : 'Voir la transcription audio'}
+            </button>
+            {showTranscript && (
+              <div className="mt-2 bg-cream-50 border-l-[3px] border-blue-300 px-4 py-3 text-sm text-navy-700 leading-relaxed italic whitespace-pre-line">{current.stimulus}</div>
+            )}
+          </div>
         )}
 
         {/* Questions */}
@@ -935,7 +994,7 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
         })}
 
         {allCurrentAnswered && (
-          <button onClick={nextExercise} className="w-full px-6 py-3 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 transition-colors flex items-center justify-center gap-2">
+          <button onClick={() => { setShowTranscript(false); nextExercise(); }} className="w-full px-6 py-3 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 transition-colors flex items-center justify-center gap-2">
             {currentIdx + 1 >= exercises.length ? 'Voir les résultats' : 'Exercice suivant'}
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -954,8 +1013,18 @@ function EETrainingPanel() {
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeText> | null>(null);
   const [showModel, setShowModel] = useState(false);
   const [sessionXP, setSessionXP] = useState(0);
+  const [eeStartedAt, setEeStartedAt] = useState(0);
+  const [eeElapsed, setEeElapsed] = useState(0);
   const addXp = useGamificationStore(s => s.addXp);
   const aiEval = useAIEvaluation();
+
+  // Timer for EE (60 min limit)
+  useEffect(() => {
+    if (selectedExercise !== null && !analysis && eeStartedAt > 0) {
+      const t = setInterval(() => setEeElapsed(Math.round((Date.now() - eeStartedAt) / 1000)), 1000);
+      return () => clearInterval(t);
+    }
+  }, [selectedExercise, analysis, eeStartedAt]);
 
   const exercise = selectedExercise !== null ? eeExercises[selectedExercise] : null;
 
@@ -972,7 +1041,7 @@ function EETrainingPanel() {
     aiEval.evaluateWriting(userText, exercise.sujet, section as 'A' | 'B', exercise.minWords, exercise.maxWords);
   };
 
-  const reset = () => { setSelectedExercise(null); setUserText(''); setAnalysis(null); setShowModel(false); setSessionXP(0); aiEval.resetEvaluation(); };
+  const reset = () => { setSelectedExercise(null); setUserText(''); setAnalysis(null); setShowModel(false); setSessionXP(0); setEeStartedAt(0); setEeElapsed(0); aiEval.resetEvaluation(); };
 
   if (selectedExercise === null) {
     return (
@@ -984,7 +1053,7 @@ function EETrainingPanel() {
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b-2 border-navy-100">{eeGrille.headers.map((h, i) => <th key={i} className="text-left py-2 px-3 text-[11px] font-semibold tracking-wider uppercase text-navy-400">{h}</th>)}</tr></thead><tbody className="divide-y divide-cream-100">{eeGrille.rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={ci} className={`py-2 px-3 ${ci === 0 ? 'font-medium text-navy-800' : 'text-navy-500'} text-sm`}>{cell}</td>)}</tr>)}</tbody></table></div>
         </div>
         {eeExercises.map((ex, idx) => (
-          <button key={idx} onClick={() => setSelectedExercise(idx)} className="w-full rounded-xl border border-cream-200 bg-white p-5 text-left hover:shadow-md transition-shadow">
+          <button key={idx} onClick={() => { setSelectedExercise(idx); setEeStartedAt(Date.now()); setEeElapsed(0); }} className="w-full rounded-xl border border-cream-200 bg-white p-5 text-left hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-emerald-100 text-emerald-700">EE</span>
               <span className="text-sm font-semibold text-navy-800">{ex.meta}</span>
@@ -1001,7 +1070,17 @@ function EETrainingPanel() {
     <div className="space-y-5 animate-in fade-in duration-300">
       <button onClick={reset} className="text-sm text-navy-400 hover:text-navy-700 flex items-center gap-1"><ChevronDown className="w-4 h-4 rotate-90" /> Retour aux sujets</button>
       <div className="rounded-xl border border-cream-200 bg-white p-5">
-        <p className="text-xs font-medium text-navy-400 mb-2">{exercise!.meta}</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-medium text-navy-400">{exercise!.meta}</p>
+          {!analysis && (
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full border ${eeElapsed > 3000 ? 'bg-red-50 border-red-200' : 'bg-cream-50 border-cream-200'}`}>
+              <Clock className={`w-3 h-3 ${eeElapsed > 3000 ? 'text-red-500' : 'text-navy-400'}`} />
+              <span className={`text-xs font-bold font-mono ${eeElapsed > 3000 ? 'text-red-600' : 'text-navy-500'}`}>
+                {Math.floor(eeElapsed / 60)}:{(eeElapsed % 60).toString().padStart(2, '0')}
+              </span>
+            </div>
+          )}
+        </div>
         <h3 className="text-sm font-semibold text-navy-800 mb-4">{exercise!.sujet}</h3>
         <textarea value={userText} onChange={e => setUserText(e.target.value)} placeholder="Rédigez votre texte ici…" className="w-full min-h-[200px] p-4 rounded-lg border border-cream-200 text-sm text-navy-700 focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-y" disabled={!!analysis} />
         <div className="flex items-center justify-between mt-3">

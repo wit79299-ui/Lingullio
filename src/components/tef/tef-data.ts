@@ -79,6 +79,85 @@ export const ceItems: QuizItem[] = [
       { q: "Blanc (1) : quel mot convient ?", choices: [{ t: "nécessaire" }, { t: "inutile", piege: "Piège P5", exp: "Antonyme direct qui inverserait le sens de toute la phrase." }, { t: "simple", piege: "Piège P1", exp: "Sens trop faible par rapport au registre soutenu du texte." }], correct: 0 },
     ],
   },
+  // ── Nouveaux exercices CE ──
+  {
+    meta: "Famille A · Santé · NCLC 5",
+    text: "Clinique Sans Rendez-Vous. Ouverte du lundi au vendredi, 8 h-20 h. Samedi 9 h-17 h. Fermée le dimanche et les jours fériés. Carte d'assurance maladie obligatoire. Temps d'attente moyen : 45 minutes.",
+    questions: [
+      { q: "Quand la clinique est-elle fermée ?", choices: [{ t: "Le samedi et le dimanche" }, { t: "Le dimanche et les jours fériés" }, { t: "Uniquement le dimanche", piege: "Piège P3", exp: "Information partielle : les jours fériés sont aussi mentionnés." }], correct: 1 },
+      { q: "Quel document faut-il apporter ?", choices: [{ t: "Une pièce d'identité", piege: "Piège P6", exp: "Plausible mais non mentionné dans le texte." }, { t: "Une carte d'assurance maladie" }, { t: "Une ordonnance", piege: "Piège P6", exp: "Sur-inférence : ce n'est pas une pharmacie." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille A · Transport · NCLC 5",
+    text: "Avis aux usagers : à compter du 15 septembre, la ligne 7 du métro sera interrompue entre les stations Berri-UQAM et Jean-Talon pour travaux de maintenance. Un service d'autobus de remplacement sera offert. Durée prévue : 3 semaines.",
+    questions: [
+      { q: "Quelle est la cause de l'interruption ?", choices: [{ t: "Une grève des employés" }, { t: "Des travaux de maintenance" }, { t: "Un accident technique", piege: "Piège P1", exp: "Mot « technique » proche mais le texte dit « maintenance »." }], correct: 1 },
+      { q: "Comment les usagers pourront-ils se déplacer ?", choices: [{ t: "En taxi gratuit" }, { t: "En autobus de remplacement" }, { t: "Par une autre ligne de métro", piege: "Piège P6", exp: "Pas mentionné dans le texte." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille C · Offre d'emploi · NCLC 6",
+    text: "Poste : Assistant administratif. Salaire : 22 $/h. Contrat : temps plein, 35 h/semaine. Exigences : DEC en bureautique, 2 ans d'expérience minimum, bilingue (français-anglais). Avantages : assurance collective, 3 semaines de vacances après 1 an.",
+    questions: [
+      { q: "Quel est le salaire hebdomadaire approximatif ?", choices: [{ t: "700 $" }, { t: "770 $" }, { t: "880 $", piege: "Piège P2", exp: "Erreur de calcul : 22 × 35 = 770, pas 880." }], correct: 1 },
+      { q: "Quelle condition n'est PAS mentionnée ?", choices: [{ t: "Un diplôme en bureautique" }, { t: "La maîtrise de trois langues" }, { t: "Deux ans d'expérience" }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille B · Texte lacunaire · NCLC 7",
+    text: "La ___(1)___ culturelle du Québec se manifeste à travers ses festivals, sa gastronomie et sa littérature. Cette province a su préserver son identité ___(2)___ tout en accueillant des influences du monde entier.",
+    questions: [
+      { q: "Blanc (1) : quel mot convient ?", choices: [{ t: "richesse" }, { t: "pauvreté", piege: "Piège P5", exp: "Antonyme qui contredit le reste de la phrase." }, { t: "difficulté", piege: "Piège P1", exp: "Sens incompatible avec festivals, gastronomie, littérature." }], correct: 0 },
+      { q: "Blanc (2) : quel mot convient ?", choices: [{ t: "linguistique" }, { t: "économique", piege: "Piège P3", exp: "Vrai en soi mais hors sujet dans ce contexte culturel." }, { t: "sportive" }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille D · Immigration · NCLC 7",
+    text: "Le Programme des travailleurs qualifiés du Québec évalue les candidats selon plusieurs critères : la scolarité, l'expérience professionnelle, la connaissance du français et de l'anglais, ainsi que l'âge. Un minimum de 50 points est nécessaire pour être sélectionné. La connaissance du français est le critère le plus pondéré.",
+    questions: [
+      { q: "Quel critère a le plus de poids ?", choices: [{ t: "L'expérience professionnelle", piege: "Piège P3", exp: "Critère réel mais pas le plus pondéré." }, { t: "La connaissance du français" }, { t: "L'âge du candidat", piege: "Piège P3", exp: "Critère mentionné mais pas le principal." }], correct: 1 },
+      { q: "Combien de points faut-il pour être sélectionné ?", choices: [{ t: "40 points" }, { t: "50 points" }, { t: "60 points", piege: "Piège P2", exp: "Chiffre proche mais inexact." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille D · Éditorial éducation · NCLC 8",
+    text: "Force est de constater que le système éducatif québécois, malgré des investissements conséquents, peine à réduire le décrochage scolaire en milieu défavorisé. Les solutions proposées oscillent entre un encadrement renforcé et une refonte pédagogique plus individualisée. Toutefois, aucune approche unique ne saurait résoudre à elle seule un problème aussi structurel.",
+    questions: [
+      { q: "Selon l'auteur, le problème du décrochage est :", choices: [{ t: "Facile à résoudre avec plus de budget", piege: "Piège P4", exp: "Simplifie la thèse de l'auteur qui parle d'un problème « structurel »." }, { t: "Complexe et nécessite plusieurs approches" }, { t: "Uniquement lié au manque de financement", piege: "Piège P6", exp: "Le texte mentionne les investissements comme déjà « conséquents »." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille C · Comparatif de forfaits · NCLC 6",
+    text: "Forfait Découverte : 5 cours/mois, 120 $. Forfait Régulier : 10 cours/mois, 200 $. Forfait Illimité : cours illimités, 280 $. Tous les forfaits incluent l'accès au vestiaire. Seul le forfait Illimité donne accès au sauna.",
+    questions: [
+      { q: "Quel est le coût par cours du forfait Régulier ?", choices: [{ t: "24 $", piege: "Piège P2", exp: "200/10 = 20, pas 24." }, { t: "20 $" }, { t: "28 $", piege: "Piège P2", exp: "C'est le prix par cours du forfait Illimité divisé par 10." }], correct: 1 },
+      { q: "Le sauna est accessible avec quel(s) forfait(s) ?", choices: [{ t: "Tous les forfaits", piege: "Piège P5", exp: "Le mot « seul » est restrictif : « seul le forfait Illimité »." }, { t: "Régulier et Illimité" }, { t: "Illimité uniquement" }], correct: 2 },
+    ],
+  },
+  {
+    meta: "Famille A · Annonce communautaire · NCLC 5",
+    text: "Fête de quartier le samedi 21 juin, de 10 h à 16 h, au parc Lafontaine. Activités gratuites pour toute la famille : jeux gonflables, maquillage, spectacle de magie à 14 h. Restauration sur place (prix variés). En cas de pluie, l'événement est reporté au dimanche.",
+    questions: [
+      { q: "Toutes les activités sont-elles gratuites ?", choices: [{ t: "Oui, tout est gratuit", piege: "Piège P5", exp: "La restauration est payante : « prix variés »." }, { t: "Non, la restauration est payante" }, { t: "Non, le spectacle est payant", piege: "Piège P3", exp: "Le spectacle fait partie des « activités gratuites »." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille D · Chronique économique · NCLC 9",
+    text: "On ne saurait réduire la question de l'inflation à un simple déséquilibre entre l'offre et la demande. Des facteurs géopolitiques, des ruptures dans les chaînes d'approvisionnement et des politiques monétaires expansionnistes concourent à un phénomène dont la complexité défie les analyses linéaires. Quoique les banques centrales disposent d'outils éprouvés, leur efficacité se trouve remise en question dans un contexte de dette publique historiquement élevée.",
+    questions: [
+      { q: "L'auteur considère que l'inflation :", choices: [{ t: "A une cause unique et identifiable", piege: "Piège P4", exp: "Contredit directement la thèse de l'auteur sur la complexité." }, { t: "Est un phénomène multi-causal et complexe" }, { t: "Est principalement due aux banques centrales", piege: "Piège P3", exp: "Les banques centrales sont un facteur parmi d'autres, pas la cause principale." }], correct: 1 },
+      { q: "Le mot « quoique » introduit :", choices: [{ t: "Une confirmation de l'idée précédente" }, { t: "Une concession (nuance)", }, { t: "Une contradiction totale", piege: "Piège P1", exp: "« Quoique » est concessif, pas contradictoire." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Famille B · Courriel professionnel · NCLC 7",
+    text: "Objet : Modification des horaires. Bonjour à tous, veuillez noter que, dès le 1er octobre, les bureaux ouvriront à 8 h 30 au lieu de 9 h. La pause déjeuner sera réduite de 60 à 45 minutes. En contrepartie, la journée se terminera à 16 h 30 au lieu de 17 h. Cordialement, La Direction.",
+    questions: [
+      { q: "Quel est le nouvel horaire de fin de journée ?", choices: [{ t: "17 h", piege: "Piège P1", exp: "C'est l'ancien horaire, pas le nouveau." }, { t: "16 h 30" }, { t: "16 h", piege: "Piège P2", exp: "Chiffre proche mais inexact." }], correct: 1 },
+      { q: "Le temps de travail total change-t-il ?", choices: [{ t: "Oui, il augmente d'une heure" }, { t: "Non, il reste le même (7 h 45)" }, { t: "Oui, il diminue", piege: "Piège P2", exp: "8h30-16h30 avec 45 min pause = 7h15 vs 9h-17h avec 60 min = 7h. Le temps augmente légèrement." }], correct: 0 },
+    ],
+  },
 ];
 
 // ── CO (Compréhension orale) exercises ──
@@ -103,6 +182,71 @@ export const coItems: QuizItem[] = [
     text: "« Le télétravail… Franchement, ceux qui pensent que c'est la solution miracle n'ont probablement jamais géré une équipe à distance. Ceci dit, je ne dirais pas non plus que c'est catastrophique. »",
     questions: [{ q: "Quel est le point de vue de la personne ?", choices: [{ t: "Le télétravail est une excellente solution sans réserve", piege: "Piège CO-P3 + CO-P7", exp: "« Solution miracle » est ironique, pas positif : c'est le script le plus piégeux de la banque." }, { t: "Le télétravail est un échec total", piege: "Piège CO-P7", exp: "Réduit une position nuancée à un extrême." }, { t: "Position nuancée, à condition de repenser la collaboration" }], correct: 2 }],
   },
+  // ── Nouveaux exercices CO ──
+  {
+    meta: "Section A · Dialogue court · NCLC 5",
+    text: "– Bonjour, je cherche le rayon des produits laitiers, s'il vous plaît.\n– C'est au fond du magasin, allée 6, juste après les fruits et légumes.\n– Merci, et les œufs ?\n– Juste à côté, dans la même allée.",
+    questions: [
+      { q: "Où se trouvent les produits laitiers ?", choices: [{ t: "À l'entrée du magasin", piege: "Piège CO-P2", exp: "Le contraire est dit : « au fond du magasin »." }, { t: "Au fond du magasin, allée 6" }, { t: "Au rayon surgelés", piege: "Piège CO-P6", exp: "Aucune mention des surgelés dans le dialogue." }], correct: 1 },
+      { q: "Où sont les œufs ?", choices: [{ t: "Dans une allée différente" }, { t: "Dans la même allée que les produits laitiers" }, { t: "À la caisse", piege: "Piège CO-P6", exp: "Information inventée, absente du dialogue." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section A · Dialogue court · NCLC 5",
+    text: "– Allô, cabinet médical Beaubien, bonjour !\n– Bonjour, j'aimerais prendre un rendez-vous avec le docteur Tremblay.\n– Le docteur Tremblay est en vacances jusqu'au 15. Je peux vous proposer le docteur Lévesque jeudi à 10 h.\n– D'accord, c'est noté. Merci.",
+    questions: [
+      { q: "Pourquoi le patient ne peut-il pas voir le docteur Tremblay ?", choices: [{ t: "Il est malade" }, { t: "Il est en vacances" }, { t: "Il a quitté le cabinet", piege: "Piège CO-P6", exp: "Confusion de degré : vacances ≠ départ définitif." }], correct: 1 },
+      { q: "Quel est le rendez-vous proposé ?", choices: [{ t: "Lundi à 14 h", piege: "Piège CO-P4", exp: "Jour et heure inventés, proches mais inexacts." }, { t: "Jeudi à 10 h" }, { t: "Vendredi à 10 h", piege: "Piège CO-P4", exp: "Heure correcte mais jour erroné." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section B · Annonce publique · NCLC 6",
+    text: "« Chers passagers, nous vous informons que le vol AC-872 à destination de Toronto est maintenant prêt pour l'embarquement à la porte 14. Les passagers voyageant avec des enfants en bas âge et les personnes à mobilité réduite sont invités à se présenter en premier. »",
+    questions: [
+      { q: "Quelle est la destination du vol ?", choices: [{ t: "Montréal" }, { t: "Toronto" }, { t: "Vancouver", piege: "Piège CO-P2", exp: "Destination plausible mais non mentionnée." }], correct: 1 },
+      { q: "Qui embarque en premier ?", choices: [{ t: "Les passagers de première classe", piege: "Piège CO-P6", exp: "Information attendue mais non dite dans cette annonce." }, { t: "Les familles avec enfants et les personnes à mobilité réduite" }, { t: "Tous les passagers en même temps" }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section B · Annonce publique · NCLC 7",
+    text: "« Mesdames et messieurs, la bibliothèque municipale sera fermée du 23 au 30 décembre pour les fêtes. Le service de retour de livres reste disponible via la boîte de dépôt extérieure, ouverte 24 heures sur 24. Les amendes de retard sont suspendues pendant cette période. »",
+    questions: [
+      { q: "Peut-on retourner des livres pendant la fermeture ?", choices: [{ t: "Non, c'est impossible", piege: "Piège CO-P1", exp: "Le message précise ensuite la boîte de dépôt extérieure : il faut écouter jusqu'au bout." }, { t: "Oui, via la boîte de dépôt extérieure" }, { t: "Seulement en semaine", piege: "Piège CO-P6", exp: "La boîte est ouverte « 24 heures sur 24 », pas seulement en semaine." }], correct: 1 },
+      { q: "Que se passe-t-il pour les amendes de retard ?", choices: [{ t: "Elles sont doublées pendant les fêtes" }, { t: "Elles sont suspendues" }, { t: "Elles restent les mêmes", piege: "Piège CO-P5", exp: "Manquer le mot « suspendues » fait croire qu'aucun changement n'est annoncé." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section C · Message répondeur · NCLC 7",
+    text: "« Bonjour monsieur Dupont, ici la clinique dentaire Sourire. Nous vous appelons pour confirmer votre rendez-vous de mercredi à 15 h 30. Si vous avez des questions ou si vous devez annuler, merci de nous rappeler au 514-555-0123 avant mardi midi. En l'absence de nouvelles, votre rendez-vous est maintenu. »",
+    questions: [
+      { q: "Quel est le jour du rendez-vous ?", choices: [{ t: "Mardi" }, { t: "Mercredi" }, { t: "Jeudi", piege: "Piège CO-P4", exp: "Jour proche mais inexact." }], correct: 1 },
+      { q: "Que se passe-t-il si le patient ne rappelle pas ?", choices: [{ t: "Le rendez-vous est annulé automatiquement", piege: "Piège CO-P5", exp: "C'est l'inverse : « en l'absence de nouvelles, votre rendez-vous est maintenu »." }, { t: "Le rendez-vous est maintenu" }, { t: "Un autre rendez-vous sera proposé", piege: "Piège CO-P6", exp: "Sur-inférence non soutenue par le message." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section C · Conversation téléphonique · NCLC 8",
+    text: "« – Bonjour, c'est l'agence Immobilia. Nous avons un appartement qui correspond à vos critères : 4 et demie, quartier Rosemont, 1 350 $ par mois, chauffage inclus.\n– Ça m'intéresse, mais c'est un peu au-dessus de mon budget. Vous n'auriez rien autour de 1 200 $ ?\n– Pas dans ce quartier, mais j'ai un 3 et demie à Villeray pour 1 150 $, eau chaude incluse.\n– D'accord, je voudrais le visiter. »",
+    questions: [
+      { q: "Pourquoi le premier appartement ne convient-il pas tout à fait ?", choices: [{ t: "Il est trop petit" }, { t: "Il est trop cher" }, { t: "Le quartier ne plaît pas", piege: "Piège CO-P3", exp: "Le client dit « un peu au-dessus de mon budget », pas de plainte sur le quartier." }], correct: 1 },
+      { q: "Quel appartement le client décide-t-il de visiter ?", choices: [{ t: "Le 4 et demie à Rosemont", piege: "Piège CO-P1", exp: "Le client a changé d'avis en cours de conversation." }, { t: "Le 3 et demie à Villeray" }, { t: "Les deux appartements" }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section D · Entrevue radio · NCLC 8",
+    text: "« Journaliste : Professeur Martin, la réforme du système de santé au Québec, est-ce un succès ?\n– C'est trop tôt pour le dire avec certitude. On observe des améliorations dans les temps d'attente aux urgences, c'est indéniable. Mais la pénurie de personnel, notamment d'infirmières, reste un problème aigu. Et puis, centraliser la gestion n'a pas toujours eu les effets escomptés sur le terrain. »",
+    questions: [
+      { q: "Le professeur Martin considère que la réforme est :", choices: [{ t: "Un succès total", piege: "Piège CO-P7", exp: "Réduit une position très nuancée à un extrême positif." }, { t: "Un échec complet", piege: "Piège CO-P7", exp: "Ignore les « améliorations » reconnues par le professeur." }, { t: "Partiellement efficace mais avec des faiblesses persistantes" }], correct: 2 },
+      { q: "Quel problème reste « aigu » selon le professeur ?", choices: [{ t: "Le financement des hôpitaux" }, { t: "La pénurie de personnel infirmier" }, { t: "La centralisation administrative", piege: "Piège CO-P3", exp: "La centralisation est critiquée mais ce n'est pas elle qui est qualifiée d'« aiguë »." }], correct: 1 },
+    ],
+  },
+  {
+    meta: "Section D · Débat entre experts · NCLC 10",
+    text: "« – La francisation des nouveaux arrivants ne se limite pas à leur enseigner le français. C'est un processus d'intégration socioculturelle qui doit inclure une compréhension des réalités québécoises.\n– Certes, mais encore faut-il que les ressources suivent. On a beau avoir les meilleures intentions du monde, si les classes sont surchargées et les enseignants épuisés, les résultats resteront en deçà des attentes.\n– Je ne conteste pas cela, mais réduire le débat à une question de moyens serait simpliste. Il y a aussi la question de l'approche pédagogique. »",
+    questions: [
+      { q: "Quel est le point de désaccord principal ?", choices: [{ t: "L'un est contre la francisation, l'autre est pour", piege: "Piège CO-P7", exp: "Les deux experts sont favorables à la francisation ; le désaccord porte sur les priorités." }, { t: "L'un insiste sur les moyens, l'autre sur l'approche pédagogique" }, { t: "L'un veut supprimer les cours de français", piege: "Piège CO-P6", exp: "Totalement absent du débat." }], correct: 1 },
+      { q: "L'expression « on a beau avoir les meilleures intentions du monde » signifie :", choices: [{ t: "Les intentions sont suffisantes" }, { t: "Même avec de bonnes intentions, cela ne suffit pas" }, { t: "Les intentions sont mauvaises", piege: "Piège CO-P5", exp: "Contresens total : « avoir beau » exprime une concession, pas une critique des intentions." }], correct: 1 },
+    ],
+  },
 ];
 
 // ── EE (Expression écrite) model texts ──
@@ -122,6 +266,27 @@ export const eeItems: EEItem[] = [
     sujet: "Section B : Argumentation. « Certaines entreprises imposent un retour obligatoire au bureau après plusieurs années de télétravail. Qu'en pensez-vous ? »",
     n6: "À mon avis, cette question ne doit pas être tranchée de façon radicale. Le télétravail présente de vrais avantages : moins de transport, plus de flexibilité. Cependant, le bureau reste important pour la communication entre collègues. C'est pourquoi je pense qu'un modèle hybride serait la meilleure solution. (56 mots, à étoffer jusqu'à 200)",
     n9: "Il serait sans doute excessif de trancher cette question de manière binaire. Certes, on ne saurait nier que le télétravail a permis à beaucoup de retrouver un meilleur équilibre. Il n'en demeure pas moins que la dimension collective du travail, la spontanéité des échanges informels, se trouve fragilisée par un éloignement prolongé. Dès lors, il conviendrait sans doute d'envisager une organisation modulable plutôt qu'une opposition binaire. (98 mots, à étoffer jusqu'à 200)",
+  },
+  // ── Nouveaux sujets EE ──
+  {
+    sujet: "Section A : Lettre formelle. Vous avez reçu un colis endommagé d'une boutique en ligne. Rédigez une lettre de réclamation au service client pour demander un échange ou un remboursement.",
+    n6: "Madame, Monsieur, je vous écris pour signaler un problème avec ma commande numéro 45823, reçue le 12 janvier. Le colis est arrivé très abîmé : la boîte était ouverte et le produit à l'intérieur était cassé. Je vous demande de m'envoyer un nouveau produit ou de me rembourser. Je peux vous envoyer des photos si nécessaire. J'espère une réponse rapide. Cordialement. (62 mots, à étoffer jusqu'à 200)",
+    n9: "Madame, Monsieur, je me permets de vous adresser la présente afin de porter à votre attention un désagrément survenu lors de la réception de ma commande n° 45823 du 8 janvier dernier. Force est de constater que l'emballage présentait des détériorations significatives — coin supérieur enfoncé, ruban adhésif décollé — et que l'article commandé, en l'occurrence un vase en céramique, était brisé en plusieurs morceaux. Aussi vous saurais-je gré de bien vouloir procéder soit à un remplacement dans les meilleurs délais, soit à un remboursement intégral, conformément aux dispositions de votre politique de retour. Je tiens à votre disposition l'ensemble des pièces justificatives, y compris des photographies horodatées de l'état du colis à la réception. Dans l'attente d'une réponse de votre part, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées. (138 mots)",
+  },
+  {
+    sujet: "Section B : Argumentation. « Les réseaux sociaux représentent-ils une menace pour la démocratie ? » Développez votre point de vue en vous appuyant sur des exemples concrets.",
+    n6: "Les réseaux sociaux ont des avantages et des inconvénients pour la démocratie. D'un côté, ils permettent à tout le monde de s'exprimer et de partager des informations. Par exemple, pendant les élections, les citoyens peuvent débattre en ligne. Mais de l'autre côté, il y a beaucoup de fausses nouvelles qui circulent. Les gens ne vérifient pas toujours si une information est vraie avant de la partager. À mon avis, il faudrait mieux éduquer les gens pour qu'ils fassent la différence entre les vraies et les fausses informations. (89 mots, à étoffer jusqu'à 200)",
+    n9: "Il serait réducteur de considérer les réseaux sociaux uniquement sous l'angle de la menace, tant leur rôle dans la démocratisation de l'accès à l'information est indéniable. Toutefois, il n'en demeure pas moins que la diffusion virale de contenus non vérifiés, l'amplification algorithmique des opinions polarisantes et la création de « bulles de filtre » constituent des défis majeurs pour le débat démocratique. On ne saurait ignorer, par exemple, l'influence documentée des campagnes de désinformation sur plusieurs scrutins récents à travers le monde. Néanmoins, plutôt que de céder à un technopessimisme stérile, il conviendrait d'envisager une régulation proportionnée, conjuguant transparence algorithmique et éducation aux médias, afin de préserver l'espace public numérique comme un lieu de délibération éclairée. (119 mots, à étoffer jusqu'à 200)",
+  },
+  {
+    sujet: "Section A : Résumé narratif. Lisez le texte suivant et rédigez un résumé en 80 à 100 mots : « En 2023, la ville de Montréal a inauguré un nouveau réseau de pistes cyclables protégées reliant les quartiers nord aux quartiers centraux. Ce projet, financé en partie par le gouvernement provincial, vise à réduire la congestion automobile et à favoriser la mobilité active. Les commerçants des rues concernées ont exprimé des inquiétudes quant à la perte de stationnement, tandis que les groupes écologistes ont salué cette initiative. Un premier bilan sera dressé après un an. »",
+    n6: "En 2023, Montréal a créé de nouvelles pistes cyclables entre le nord et le centre-ville. Le projet est financé par le gouvernement provincial. L'objectif est de diminuer le trafic automobile et d'encourager les gens à utiliser le vélo. Les commerçants ne sont pas contents parce qu'il y a moins de places de stationnement. Les groupes écologistes, eux, sont satisfaits de cette décision. Un bilan sera fait dans un an. (71 mots, à étoffer)",
+    n9: "La métropole montréalaise a procédé, en 2023, à l'inauguration d'un réseau de pistes cyclables sécurisées établissant une liaison entre les quartiers septentrionaux et le cœur de la ville. Cofinancé par l'échelon provincial, ce projet poursuit un double objectif : atténuer la congestion routière et promouvoir les déplacements actifs. Si les commerçants riverains déplorent la réduction de l'offre de stationnement, les milieux environnementalistes saluent cette avancée. L'efficacité de l'initiative fera l'objet d'une évaluation au terme d'une première année d'exploitation. (80 mots)",
+  },
+  {
+    sujet: "Section B : Opinion nuancée. « L'intelligence artificielle va-t-elle remplacer les enseignants ? » Présentez les deux points de vue et exprimez votre opinion personnelle argumentée.",
+    n6: "L'intelligence artificielle se développe très rapidement dans le domaine de l'éducation. Certains pensent qu'elle pourrait remplacer les enseignants parce qu'elle peut corriger des exercices, proposer des cours personnalisés et être disponible à tout moment. Cependant, d'autres croient que les enseignants sont irremplaçables car ils comprennent les émotions des élèves et peuvent les motiver. Personnellement, je pense que l'IA est un outil utile mais qu'un vrai professeur sera toujours nécessaire pour guider les élèves. (78 mots, à étoffer jusqu'à 200)",
+    n9: "Qu'il s'agisse de la correction automatisée des évaluations, de la génération de parcours d'apprentissage adaptatifs ou du tutorat conversationnel, les avancées de l'intelligence artificielle en éducation sont incontestables. Pour autant, il serait hasardeux de conclure que la technologie supplante l'humain. L'acte éducatif ne se réduit pas à la transmission de savoirs : il engage une dimension relationnelle, une capacité d'empathie et un jugement contextuel dont aucun modèle algorithmique, aussi perfectionné soit-il, ne saurait s'acquitter pleinement. Il n'en demeure pas moins que s'arc-bouter sur un refus de la technologie serait tout aussi contre-productif. Aussi convient-il de repenser le rôle de l'enseignant non pas comme un transmetteur menacé, mais comme un médiateur augmenté par des outils intelligents, capable de consacrer davantage de temps à l'accompagnement individualisé et au développement de la pensée critique. (133 mots, à étoffer jusqu'à 200)",
   },
 ];
 
@@ -161,6 +326,43 @@ export const eoItems: EOItem[] = [
       ["Objection prix", "« Ça doit être hors de prix »", "Réorienter sur le rapport qualité-prix"],
       ["Objection vécu", "« J'ai déjà essayé, ça n'a pas duré »", "Différencier l'offre d'une expérience passée"],
       ["Acceptation", "« D'accord, comment je m'inscris ? »", "Clôturer efficacement, pas juste convaincre"],
+    ],
+  },
+  // ── Nouveaux scénarios EO ──
+  {
+    titre: "Section A : Obtenir des renseignements (santé)",
+    base: "Candidat : Bonjour, j'aimerais m'inscrire comme patient à votre clinique. Quelles sont les étapes ?",
+    variantes: [
+      ["Question retour", "« Avez-vous un médecin de famille actuellement ? »", "Répondre honnêtement et relancer sur les délais d'attente"],
+      ["Objection", "« Nous n'acceptons plus de nouveaux patients pour le moment »", "Demander des alternatives (liste d'attente, clinique partenaire)"],
+      ["Précision", "« Il nous faut votre carte d'assurance maladie et une preuve d'adresse »", "Demander si des rendez-vous en ligne sont possibles"],
+    ],
+  },
+  {
+    titre: "Section A : Faire une réclamation (commerce)",
+    base: "Candidat : Bonjour, j'ai acheté ce téléphone ici il y a deux semaines et l'écran ne fonctionne plus correctement.",
+    variantes: [
+      ["Question retour", "« Avez-vous votre facture et la garantie ? »", "Confirmer, présenter les documents et demander les options"],
+      ["Objection", "« Malheureusement, les dommages physiques ne sont pas couverts par la garantie »", "Expliquer que ce n'est pas un dommage physique mais un défaut, demander un superviseur"],
+      ["Proposition", "« On peut vous proposer une réparation sous 10 jours ouvrables »", "Négocier un échange ou un prêt en attendant"],
+    ],
+  },
+  {
+    titre: "Section B : Argumenter (environnement)",
+    base: "Candidat : Sur cette affiche, on voit une campagne pour encourager les citoyens à utiliser les transports en commun plutôt que leur voiture…",
+    variantes: [
+      ["Objection pratique", "« Les transports en commun ne desservent pas bien mon quartier »", "Reconnaître le problème et argumenter sur les améliorations possibles et le covoiturage"],
+      ["Objection liberté", "« C'est mon droit d'utiliser ma voiture comme je veux »", "Nuancer entre liberté individuelle et responsabilité collective, évoquer la pollution"],
+      ["Accord", "« Je suis d'accord, mais c'est quand même cher l'abonnement »", "Comparer le coût global (essence, assurance, stationnement) vs abonnement mensuel"],
+    ],
+  },
+  {
+    titre: "Section B : Argumenter (débat éducation numérique)",
+    base: "Candidat : Ce document montre que 70 % des écoles québécoises ont intégré des tablettes numériques dans l'enseignement…",
+    variantes: [
+      ["Objection santé", "« Les écrans, c'est mauvais pour les yeux des enfants »", "Nuancer avec les bénéfices pédagogiques et proposer un encadrement du temps d'écran"],
+      ["Objection inégalité", "« Toutes les familles n'ont pas les moyens de fournir une tablette »", "Reconnaître le problème et argumenter pour un financement public des équipements"],
+      ["Provocation", "« On apprend mieux avec un livre, la technologie c'est une mode »", "Défendre la complémentarité livre-numérique sans dénigrer l'interlocuteur, citer des études"],
     ],
   },
 ];
