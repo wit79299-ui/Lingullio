@@ -8,7 +8,9 @@ import { lexiqueDomains, LEXIQUE_STATS } from './tef-lexique-data';
 import type { LexiqueDomain, VocabEntry, QuizQuestion } from './tef-lexique-data';
 import {
   ceExercises, coExercises, eeExercises, eoExercises, diagnosticExercises,
+  convertedMockExams,
 } from './tef-exercises';
+import type { ConvertedMockExam } from './tef-exercises';
 import type {
   TEFQCMExercise, TEFWritingExercise, TEFSpeakingExercise,
   TEFSection, TEFChoice, TEFExerciseAnswer,
@@ -25,14 +27,14 @@ import {
   BarChart3, Home, CheckCircle2, XCircle, Info, Volume2, VolumeX,
   Mic, MicOff, Play, Square, RotateCcw, Zap, Trophy, Star, Eye, EyeOff,
   Send, Clock, TrendingUp, Shuffle, Layers, GraduationCap, Sparkles,
-  ArrowLeft, ArrowRight, ThumbsUp, ThumbsDown, Pen, Globe,
+  ArrowLeft, ArrowRight, ThumbsUp, ThumbsDown, Pen, Globe, ClipboardList,
 } from 'lucide-react';
 
 // ── Navigation ──
 type Section =
   | 'accueil' | 'referentiel' | 'lexique' | 'pieges'
   | 'ce' | 'co' | 'ee' | 'eo'
-  | 'diagnostic' | 'bareme';
+  | 'examens' | 'diagnostic' | 'bareme';
 
 interface NavItem { id: Section; labelKey: string; num: string; icon: React.ReactNode; }
 
@@ -48,6 +50,9 @@ const navGroupsDef: { titleKey: string; items: NavItem[] }[] = [
     { id: 'co', labelKey: 'nav.co', num: 'CO', icon: <Headphones className="w-4 h-4" /> },
     { id: 'ee', labelKey: 'nav.ee', num: 'EE', icon: <PenTool className="w-4 h-4" /> },
     { id: 'eo', labelKey: 'nav.eo', num: 'EO', icon: <MessageCircle className="w-4 h-4" /> },
+  ]},
+  { titleKey: 'nav.mockExams', items: [
+    { id: 'examens', labelKey: 'nav.examens', num: '📝', icon: <ClipboardList className="w-4 h-4" /> },
   ]},
   { titleKey: 'nav.training', items: [
     { id: 'diagnostic', labelKey: 'nav.diagnostic', num: '→', icon: <Target className="w-4 h-4" /> },
@@ -128,6 +133,7 @@ export function TEFCanadaApp() {
           {activeSection === 'co' && <COTrainingPanel />}
           {activeSection === 'ee' && <EETrainingPanel />}
           {activeSection === 'eo' && <EOTrainingPanel />}
+          {activeSection === 'examens' && <MockExamsPanel />}
           {activeSection === 'diagnostic' && <DiagnosticPanel />}
           {activeSection === 'bareme' && <BaremePanel />}
         </div>
@@ -839,9 +845,12 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
                   else cls += 'border-cream-100 bg-cream-50/50 text-navy-300';
                   return (
                     <button key={ci} onClick={() => handleQCMAnswer(qIdx, ci)} disabled={answered} className={cls}>
-                      <div className="flex items-center gap-2">
+                      <div className={`flex items-center gap-2 ${c.img ? 'flex-col sm:flex-row' : ''}`}>
                         {answered && ci === q.correctIndex && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
                         {answered && ci === chosenIdx && ci !== q.correctIndex && <XCircle className="w-4 h-4 text-red-500 shrink-0" />}
+                        {c.img && (
+                          <img src={c.img} alt={c.text} className="w-24 h-18 sm:w-28 sm:h-20 object-cover rounded-md border border-cream-200 shrink-0" loading="lazy" />
+                        )}
                         <span>{c.text}</span>
                       </div>
                     </button>
@@ -1235,6 +1244,222 @@ function EOTrainingPanel() {
             <button onClick={reset} className="w-full px-6 py-3 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" />{t('eo.newExercise')}</button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MOCK EXAMS PANEL
+// ══════════════════════════════════════════════════════════════════════════
+function MockExamsPanel() {
+  const [selectedExam, setSelectedExam] = useState<ConvertedMockExam | null>(null);
+  const [selectedSection, setSelectedSection] = useState<'CE' | 'CO' | 'EE' | 'EO' | null>(null);
+  const { t } = useTefLocale();
+
+  // If a section is selected within an exam, render the appropriate training component
+  if (selectedExam && selectedSection) {
+    const back = () => { setSelectedSection(null); };
+    return (
+      <div className="space-y-4 animate-in fade-in duration-300">
+        <button onClick={back} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+          <ArrowLeft className="w-4 h-4" /> {t('mock.backToList')}
+        </button>
+        <div className="px-3 py-2 rounded-lg bg-blue-50 text-sm font-medium text-blue-800 flex items-center gap-2">
+          <ClipboardList className="w-4 h-4" /> {selectedExam.label} — {selectedSection}
+        </div>
+        {selectedSection === 'CE' && (
+          <GamifiedQCMSession exercises={selectedExam.ce} section="CE" title={`${selectedExam.label} · CE`} description={t('ce.description')} />
+        )}
+        {selectedSection === 'CO' && (
+          <GamifiedQCMSession exercises={selectedExam.co} section="CO" title={`${selectedExam.label} · CO`} description={t('co.description')} withTTS />
+        )}
+        {selectedSection === 'EE' && (
+          <MockEESession exercises={selectedExam.ee} examLabel={selectedExam.label} />
+        )}
+        {selectedSection === 'EO' && (
+          <MockEOSession exercises={selectedExam.eo} examLabel={selectedExam.label} />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div>
+        <p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">{t('mock.title')}</p>
+        <h2 className="text-xl font-bold text-navy-900 mb-2">{t('mock.title')}</h2>
+        <p className="text-sm text-navy-400 leading-relaxed max-w-2xl">{t('mock.subtitle')}</p>
+      </div>
+
+      <div className="grid gap-4">
+        {convertedMockExams.map((exam) => (
+          <div key={exam.id} className="rounded-xl border border-cream-200 bg-white p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-navy-900 flex items-center gap-2">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-mono text-sm font-bold">{exam.id}</span>
+                {exam.label}
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {([
+                { key: 'CE' as const, icon: <FileText className="w-4 h-4" />, count: exam.ce.length, unit: t('mock.exercises'), color: 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' },
+                { key: 'CO' as const, icon: <Headphones className="w-4 h-4" />, count: exam.co.length, unit: t('mock.exercises'), color: 'text-sky-600 bg-sky-50 border-sky-200 hover:bg-sky-100' },
+                { key: 'EE' as const, icon: <PenTool className="w-4 h-4" />, count: exam.ee.length, unit: t('mock.subjects'), color: 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100' },
+                { key: 'EO' as const, icon: <MessageCircle className="w-4 h-4" />, count: exam.eo.length, unit: t('mock.scenarios'), color: 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' },
+              ]).map(({ key, icon, count, unit, color }) => (
+                <button key={key} onClick={() => { setSelectedExam(exam); setSelectedSection(key); }}
+                  className={`flex flex-col items-center gap-1 px-3 py-3 rounded-lg border text-sm font-medium transition-all cursor-pointer ${color}`}>
+                  {icon}
+                  <span className="font-bold">{key}</span>
+                  <span className="text-[10px] opacity-70">{count} {unit}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Simplified EE session for mock exams (reuses same pattern as EETrainingPanel)
+function MockEESession({ exercises, examLabel }: { exercises: TEFWritingExercise[]; examLabel: string }) {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [userText, setUserText] = useState('');
+  const [showModel, setShowModel] = useState(false);
+  const { t } = useTefLocale();
+  const aiEval = useAIEvaluation();
+
+  if (selectedIdx === null) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-navy-900">{t('mock.selectSection')} — EE</h3>
+        {exercises.map((ex, idx) => (
+          <button key={idx} onClick={() => setSelectedIdx(idx)}
+            className="w-full text-left p-4 rounded-xl border border-cream-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
+            <p className="text-xs font-medium text-navy-400 mb-1">{ex.meta}</p>
+            <p className="text-sm text-navy-700">{ex.sujet}</p>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const ex = exercises[selectedIdx];
+  return (
+    <div className="space-y-4">
+      <button onClick={() => { setSelectedIdx(null); setUserText(''); setShowModel(false); }} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+        <ArrowLeft className="w-4 h-4" /> {t('mock.backToList')}
+      </button>
+      <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
+        <p className="text-xs font-medium text-navy-400">{ex.meta}</p>
+        <p className="text-sm text-navy-700 font-medium">{ex.sujet}</p>
+        <textarea value={userText} onChange={(e) => setUserText(e.target.value)} rows={10} placeholder={t('ee.placeholder')}
+          className="w-full p-3 border border-cream-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none resize-y" />
+        <div className="flex gap-2 flex-wrap">
+          <span className="text-xs text-navy-400">{userText.trim().split(/\s+/).filter(Boolean).length} {t('ee.words')}</span>
+          <button onClick={() => setShowModel(!showModel)} className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+            {showModel ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            {showModel ? t('ee.hideModel') : t('ee.showModel')}
+          </button>
+          {userText.trim().length > 20 && (
+            <button onClick={() => aiEval.evaluateWriting(userText, ex.sujet, ex.sujet.includes('Section A') ? 'A' : 'B', ex.minWords, ex.maxWords)} disabled={aiEval.isEvaluating}
+              className="ml-auto px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2">
+              {aiEval.isEvaluating ? <Clock className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {t('ee.aiEval')}
+            </button>
+          )}
+        </div>
+        {showModel && (
+          <div className="space-y-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs font-semibold text-amber-700 mb-1">NCLC 6</p>
+              <p className="text-sm text-navy-700 whitespace-pre-line">{ex.modelTexts?.nclc6}</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs font-semibold text-blue-700 mb-1">NCLC 9</p>
+              <p className="text-sm text-navy-700 whitespace-pre-line">{ex.modelTexts?.nclc9}</p>
+            </div>
+          </div>
+        )}
+        {aiEval.writingEval && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 space-y-2">
+            <p className="text-sm font-semibold text-blue-800 flex items-center gap-2"><Sparkles className="w-4 h-4" /> {t('ee.aiResult')}</p>
+            <p className="text-sm text-navy-700 whitespace-pre-line">{aiEval.writingEval.globalFeedback}</p>
+            {aiEval.writingEval.estimatedNCLC && <p className="text-xs font-mono font-bold text-blue-700">NCLC {t('ee.estimated')}: {aiEval.writingEval.estimatedNCLC}</p>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Simplified EO session for mock exams
+function MockEOSession({ exercises, examLabel }: { exercises: TEFSpeakingExercise[]; examLabel: string }) {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const { t } = useTefLocale();
+  const tts = useFrenchTTS();
+  const recognition = useSpeechRecognition();
+
+  if (selectedIdx === null) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-navy-900">{t('mock.selectSection')} — EO</h3>
+        {exercises.map((ex, idx) => (
+          <button key={idx} onClick={() => setSelectedIdx(idx)}
+            className="w-full text-left p-4 rounded-xl border border-cream-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
+            <p className="text-xs font-medium text-navy-400 mb-1">{ex.meta}</p>
+            <p className="text-sm text-navy-700">{ex.scenario}</p>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const ex = exercises[selectedIdx];
+  return (
+    <div className="space-y-4">
+      <button onClick={() => setSelectedIdx(null)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+        <ArrowLeft className="w-4 h-4" /> {t('mock.backToList')}
+      </button>
+      <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
+        <p className="text-xs font-medium text-navy-400">{ex.meta}</p>
+        <h3 className="text-base font-semibold text-navy-900">{ex.scenario}</h3>
+        <div className="bg-blue-50 border-l-[3px] border-blue-400 px-4 py-3">
+          <p className="text-sm text-navy-700 italic">{ex.ttsPrompt}</p>
+          <button onClick={() => tts.speak(ex.ttsPrompt ?? '', `mock-eo-opening-${selectedIdx}`)} className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium">
+            <Volume2 className="w-3.5 h-3.5" /> {t('eo.listenOpening')}
+          </button>
+        </div>
+        <div className="space-y-3">
+          <p className="text-xs font-semibold tracking-wider uppercase text-navy-400">{t('eo.variants')}</p>
+          {ex.variants?.map((v, vi) => (
+            <div key={vi} className="bg-cream-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-navy-100 text-navy-600 text-[10px] font-bold">{v.type}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-navy-700 italic flex-1">« {v.examinerLine} »</p>
+                <button onClick={() => tts.speak(v.examinerLine, `mock-eo-variant-${vi}`)} className="text-blue-600 hover:text-blue-800 shrink-0">
+                  <Volume2 className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-xs text-navy-500"><strong>{t('eo.expectedSkill')}:</strong> {v.expectedSkill}</p>
+            </div>
+          ))}
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <p className="text-xs font-semibold text-amber-700 mb-1 flex items-center gap-1"><Mic className="w-3 h-3" /> {t('eo.practiceTitle')}</p>
+          <p className="text-xs text-navy-500">{t('eo.practiceDesc')}</p>
+          <button onClick={() => recognition.isListening ? recognition.stopListening() : recognition.startListening()}
+            className={`mt-2 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${recognition.isListening ? 'bg-red-500 text-white' : 'bg-navy-800 text-white hover:bg-navy-700'}`}>
+            {recognition.isListening ? <><MicOff className="w-3.5 h-3.5" /> {t('eo.stopRecording')}</> : <><Mic className="w-3.5 h-3.5" /> {t('eo.startRecording')}</>}
+          </button>
+          {recognition.transcript && (
+            <p className="mt-2 text-sm text-navy-700 bg-white rounded p-2 border border-cream-200">{recognition.transcript}</p>
+          )}
+        </div>
       </div>
     </div>
   );

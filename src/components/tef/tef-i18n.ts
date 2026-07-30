@@ -19,6 +19,8 @@ const dictionaries: Record<TefLocale, Record<string, string>> = {
     'nav.foundations': 'Fondations',
     'nav.exams': 'Les 4 épreuves',
     'nav.training': 'Entraînement',
+    'nav.mockExams': 'Examens blancs',
+    'nav.examens': 'Examens blancs (×5)',
     'nav.accueil': 'Accueil',
     'nav.referentiel': 'Référentiel NCLC',
     'nav.lexique': 'Banque lexicale',
@@ -269,6 +271,19 @@ const dictionaries: Record<TefLocale, Record<string, string>> = {
     'bareme.nclcFinal': 'NCLC final',
     'bareme.lowestOf4': '= le plus bas des 4',
 
+    // ── Mock Exams ──
+    'mock.title': 'Examens blancs',
+    'mock.subtitle': '5 examens blancs complets couvrant les 4 épreuves du TEF Canada. Chaque examen contient des exercices de CE, CO, EE et EO.',
+    'mock.selectExam': 'Choisir un examen',
+    'mock.selectSection': 'Choisir une épreuve',
+    'mock.startSection': 'Commencer',
+    'mock.backToList': 'Retour aux examens',
+    'mock.exercises': 'exercices',
+    'mock.subjects': 'sujets',
+    'mock.scenarios': 'scénarios',
+    'mock.fullExam': 'Examen complet',
+    'mock.bySection': 'Par épreuve',
+
     // ── Section labels (from SECTION_CONFIG) ──
     'section.CE': 'Compréhension écrite',
     'section.CO': 'Compréhension orale',
@@ -289,6 +304,8 @@ const dictionaries: Record<TefLocale, Record<string, string>> = {
     'nav.foundations': 'Foundations',
     'nav.exams': 'The 4 Tests',
     'nav.training': 'Training',
+    'nav.mockExams': 'Mock Exams',
+    'nav.examens': 'Mock Exams (×5)',
     'nav.accueil': 'Home',
     'nav.referentiel': 'NCLC Framework',
     'nav.lexique': 'Vocabulary Bank',
@@ -537,6 +554,19 @@ const dictionaries: Record<TefLocale, Record<string, string>> = {
     'bareme.score': 'Score',
     'bareme.nclcFinal': 'Final NCLC',
     'bareme.lowestOf4': '= lowest of the 4',
+
+    // ── Mock Exams ──
+    'mock.title': 'Mock Exams',
+    'mock.subtitle': '5 complete mock exams covering all 4 TEF Canada sections. Each exam contains CE, CO, EE and EO exercises.',
+    'mock.selectExam': 'Choose an exam',
+    'mock.selectSection': 'Choose a section',
+    'mock.startSection': 'Start',
+    'mock.backToList': 'Back to exams',
+    'mock.exercises': 'exercises',
+    'mock.subjects': 'subjects',
+    'mock.scenarios': 'scenarios',
+    'mock.fullExam': 'Full exam',
+    'mock.bySection': 'By section',
 
     // ── Section labels (from SECTION_CONFIG) ──
     'section.CE': 'Reading Comprehension',

@@ -45,6 +45,7 @@ export interface TEFExercise {
 // ── QCM Exercise (CE & CO) ──
 export interface TEFChoice {
   text: string;
+  img?: string;        // optional image path for image-based questions (CO Section A)
   piege?: string;      // trap name if this is a distractor
   explanation?: string; // shown after selecting this choice
 }

@@ -5,6 +5,9 @@
 import {
   ceItems, coItems, eeItems, eeGrille, eoItems, diagQuestions,
 } from './tef-data';
+import type { QuizItem, EEItem, EOItem } from './tef-data';
+import { mockExams } from './tef-mock-exams';
+import type { MockExam } from './tef-mock-exams';
 import type {
   TEFQCMExercise,
   TEFWritingExercise,
@@ -29,6 +32,7 @@ export const ceExercises: TEFQCMExercise[] = ceItems.map((item, idx) => ({
     prompt: q.q,
     choices: q.choices.map((c) => ({
       text: c.t,
+      ...(c.img ? { img: c.img } : {}),
       piege: c.piege,
       explanation: c.exp,
     })),
@@ -55,6 +59,7 @@ export const coExercises: TEFQCMExercise[] = coItems.map((item, idx) => ({
     prompt: q.q,
     choices: q.choices.map((c) => ({
       text: c.t,
+      ...(c.img ? { img: c.img } : {}),
       piege: c.piege,
       explanation: c.exp,
     })),
@@ -157,6 +162,103 @@ export const diagnosticExercises: TEFQCMExercise[] = diagQuestions.map((q, idx) 
     choices: q.choices.map((c) => ({ text: c })),
     correctIndex: q.correct,
   }],
+}));
+
+// ══════════════════════════════════════════════════════════════════════════
+// MOCK EXAM CONVERTERS
+// ══════════════════════════════════════════════════════════════════════════
+
+function quizItemsToQCM(items: QuizItem[], section: 'CE' | 'CO', prefix: string): TEFQCMExercise[] {
+  return items.map((item, idx) => ({
+    id: `${prefix}-${idx + 1}`,
+    section,
+    type: (section === 'CO' ? 'listening_qcm' : 'qcm') as 'qcm' | 'listening_qcm',
+    nclcTarget: parseNCLC(item.meta),
+    difficulty: parseDifficulty(item.meta),
+    points: section === 'CO' ? 20 : 15,
+    meta: item.meta,
+    stimulus: item.text,
+    ...(section === 'CO' ? { ttsText: item.text ?? '', ttsSpeed: item.meta.includes('NCLC 9') ? 1.0 : item.meta.includes('NCLC 7') ? 0.9 : 0.85 } : {}),
+    questions: item.questions.map((q) => ({
+      prompt: q.q,
+      choices: q.choices.map((c) => ({
+        text: c.t,
+        ...(c.img ? { img: c.img } : {}),
+        piege: c.piege,
+        explanation: c.exp,
+      })),
+      correctIndex: q.correct,
+    })),
+  }));
+}
+
+function eeItemsToWriting(items: EEItem[], prefix: string): TEFWritingExercise[] {
+  return items.map((item, idx) => ({
+    id: `${prefix}-${idx + 1}`,
+    section: 'EE' as const,
+    type: 'writing_free' as const,
+    nclcTarget: 7 as const,
+    difficulty: (item.sujet.includes('Section A') ? 1 : 2) as 1 | 2 | 3,
+    points: 50,
+    meta: item.sujet.includes('Section A') ? 'EE Section A' : 'EE Section B',
+    sujet: item.sujet,
+    minWords: item.sujet.includes('Section A') ? 80 : 200,
+    maxWords: item.sujet.includes('Section A') ? 150 : 350,
+    criteria: eeWritingCriteria,
+    modelTexts: { nclc6: item.n6, nclc9: item.n9 },
+  }));
+}
+
+function eoItemsToSpeaking(items: EOItem[], prefix: string): TEFSpeakingExercise[] {
+  return items.map((item, idx) => ({
+    id: `${prefix}-${idx + 1}`,
+    section: 'EO' as const,
+    type: 'speaking_roleplay' as const,
+    nclcTarget: 7 as const,
+    difficulty: (item.titre.includes('Section A') ? 1 : 2) as 1 | 2 | 3,
+    points: 50,
+    meta: item.titre,
+    scenario: item.titre,
+    ttsPrompt: item.base,
+    ttsSpeed: 0.9,
+    variants: item.variantes.map((v) => ({
+      type: v[0],
+      examinerLine: v[1],
+      expectedSkill: v[2],
+    })),
+    evaluationCriteria: [
+      'Fluidité et aisance',
+      'Richesse du vocabulaire',
+      'Capacité d\'interaction (reformuler, relancer)',
+      'Utilisation de connecteurs',
+      'Registre de langue adapté',
+    ],
+    tipsForNCLC7: [
+      'Reformulez avant de répondre sur le fond',
+      'Utilisez des connecteurs oraux pour structurer votre réflexion',
+      'Relancez l\'interlocuteur avec des questions',
+      'Variez les connecteurs : cependant, par ailleurs, en revanche',
+      'Ne mémorisez pas un script : entraînez la réaction',
+    ],
+  }));
+}
+
+export interface ConvertedMockExam {
+  id: number;
+  label: string;
+  ce: TEFQCMExercise[];
+  co: TEFQCMExercise[];
+  ee: TEFWritingExercise[];
+  eo: TEFSpeakingExercise[];
+}
+
+export const convertedMockExams: ConvertedMockExam[] = mockExams.map((exam) => ({
+  id: exam.id,
+  label: exam.label,
+  ce: quizItemsToQCM(exam.ce, 'CE', `mock${exam.id}-ce`),
+  co: quizItemsToQCM(exam.co, 'CO', `mock${exam.id}-co`),
+  ee: eeItemsToWriting(exam.ee, `mock${exam.id}-ee`),
+  eo: eoItemsToSpeaking(exam.eo, `mock${exam.id}-eo`),
 }));
 
 // ══════════════════════════════════════════════════════════════════════════

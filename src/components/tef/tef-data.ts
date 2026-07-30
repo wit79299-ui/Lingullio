@@ -23,6 +23,7 @@ export const diagQuestions: DiagQuestion[] = [
 // ── CE (Compréhension écrite) exercises ──
 export interface QuizChoice {
   t: string;
+  img?: string;  // optional image path for image-based questions (CO Section A)
   piege?: string;
   exp?: string;
 }
@@ -158,6 +159,127 @@ export const ceItems: QuizItem[] = [
       { q: "Le temps de travail total change-t-il ?", choices: [{ t: "Oui, il augmente d'une heure" }, { t: "Non, il reste le même (7 h 45)" }, { t: "Oui, il diminue", piege: "Piège P2", exp: "8h30-16h30 avec 45 min pause = 7h15 vs 9h-17h avec 60 min = 7h. Le temps augmente légèrement." }], correct: 0 },
     ],
   },
+  // ── 15 nouveaux exercices CE (fichier CE_Entrainement_Ajout15) ──
+  {
+    meta: "Famille A · Ouverture succursale · NCLC 5",
+    text: "Ouverture d'une nouvelle succursale de la banque, lundi prochain, au 88 boulevard Saint-Laurent. Café et pâtisseries offerts aux premiers 50 visiteurs, dès 9h.",
+    questions: [
+      { q: "Que reçoivent les 50 premiers visiteurs ?", choices: [{ t: "Café et pâtisseries" }, { t: "Un cadeau surprise", piege: "Piège P6", exp: "Plausible pour une ouverture mais non mentionné." }, { t: "Un rabais bancaire", piege: "Piège P6", exp: "Sur-inférence non soutenue par le texte." }], correct: 0 },
+      { q: "À partir de quelle heure ?", choices: [{ t: "9h" }, { t: "8h", piege: "Piège P2", exp: "Heure proche, teste la lecture précise." }, { t: "10h", piege: "Piège P2", exp: "Heure proche." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille A · Navette gratuite · NCLC 6",
+    text: "Le service de navette gratuite vers le centre commercial fonctionne désormais tous les jours, y compris les jours fériés, de 9h à 21h, départ toutes les 20 minutes depuis la station de métro.",
+    questions: [
+      { q: "La navette fonctionne-t-elle les jours fériés ?", choices: [{ t: "Oui" }, { t: "Non", piege: "Piège P5", exp: "Contredit « y compris les jours fériés »." }, { t: "Seulement certains jours fériés", piege: "Piège P6", exp: "Nuance absente du texte." }], correct: 0 },
+      { q: "Toutes les combien de minutes part la navette ?", choices: [{ t: "20 minutes" }, { t: "30 minutes", piege: "Piège P2", exp: "Intervalle plausible mais inexact." }, { t: "15 minutes", piege: "Piège P2", exp: "Intervalle plausible mais inexact." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille A · Garde d'enfants · NCLC 5",
+    text: "Recherche gardienne pour deux enfants (5 et 8 ans), les mercredis après-midi de 13h à 17h. Expérience avec jeunes enfants requise. Salaire : 16$/heure. Doit habiter à distance de marche.",
+    questions: [
+      { q: "Quel jour la gardienne est-elle nécessaire ?", choices: [{ t: "Le mercredi" }, { t: "Le samedi", piege: "Piège P6", exp: "Jour plausible pour de la garde mais non mentionné." }, { t: "Tous les jours", piege: "Piège P5", exp: "Contredit « les mercredis » seulement." }], correct: 0 },
+      { q: "Quelle condition de localisation est exigée ?", choices: [{ t: "Habiter à distance de marche" }, { t: "Avoir une voiture", piege: "Piège P1", exp: "Inverse le sens, le texte demande justement l'absence de besoin de véhicule." }, { t: "Habiter dans le même immeuble", piege: "Piège P6", exp: "Plus restrictif que ce qui est réellement demandé." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille A · Centre sportif · NCLC 6",
+    text: "Le centre sportif municipal offre désormais des cours d'essai gratuits pour toutes ses activités durant la première semaine de septembre. Aucune inscription préalable requise, présentez-vous simplement 15 minutes avant le début du cours.",
+    questions: [
+      { q: "Faut-il s'inscrire à l'avance pour le cours d'essai ?", choices: [{ t: "Non" }, { t: "Oui, en ligne", piege: "Piège P5", exp: "Contredit « aucune inscription préalable requise »." }, { t: "Oui, par téléphone", piege: "Piège P5", exp: "Même contradiction." }], correct: 0 },
+      { q: "Combien de temps avant le cours faut-il arriver ?", choices: [{ t: "15 minutes" }, { t: "30 minutes", piege: "Piège P2", exp: "Durée plausible mais inexacte." }, { t: "5 minutes", piege: "Piège P2", exp: "Durée plausible mais inexacte." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille B · Texte lacunaire (commande) · NCLC 6",
+    text: "Bonjour Madame Tremblay, je vous écris ___(1)___ vous informer que votre commande est prête à être récupérée en magasin. Vous avez jusqu'au 15 du mois ___(2)___ venir la chercher, après quoi elle sera remise en vente.",
+    questions: [
+      { q: "Blanc (1) : quel mot convient ?", choices: [{ t: "pour" }, { t: "par", piege: "Piège P1", exp: "« par » ne convient pas pour exprimer un but ici." }, { t: "de", piege: "Piège P1", exp: "Préposition incorrecte dans cette construction." }], correct: 0 },
+      { q: "Blanc (2) : quel mot convient ?", choices: [{ t: "pour" }, { t: "à", piege: "Piège P1", exp: "Construction incorrecte, « jusqu'à... pour » est la structure attendue." }, { t: "sans", piege: "Piège P5", exp: "Inverserait le sens (il FAUT venir la chercher, pas l'inverse)." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille B · Texte lacunaire (élections) · NCLC 7",
+    text: "Malgré les efforts déployés ces dernières années, le taux de participation aux élections municipales ___(1)___ préoccupant, ce ___(2)___ plusieurs experts attribuent à un désintérêt croissant envers la politique locale.",
+    questions: [
+      { q: "Blanc (1) : quel mot convient ?", choices: [{ t: "demeure" }, { t: "demeurent", piege: "Piège P1", exp: "Le sujet « taux » est singulier, accord incorrect avec le pluriel." }, { t: "demeurait", piege: "Piège P1", exp: "Temps incohérent avec le contexte présent du texte." }], correct: 0 },
+      { q: "Blanc (2) : quel mot convient ?", choices: [{ t: "que" }, { t: "qui", piege: "Piège P1", exp: "« que » est complément d'objet de « attribuent », « qui » serait sujet, incorrect ici." }, { t: "dont", piege: "Piège P1", exp: "Construction incorrecte dans ce contexte précis." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille B · Texte lacunaire (automatisation) · NCLC 8",
+    text: "Si l'automatisation ___(1)___ certes des emplois dans certains secteurs, elle en crée également de nouveaux, ___(2)___ nécessitent des compétences différentes, ce qui pose la question de la formation professionnelle adaptée.",
+    questions: [
+      { q: "Blanc (1) : quel mot convient ?", choices: [{ t: "supprime" }, { t: "supprimait", piege: "Piège P1", exp: "Incohérence avec le présent général employé dans le reste de la phrase." }, { t: "aurait supprimé", piege: "Piège P1", exp: "Conditionnel non justifié, l'automatisation supprime réellement des emplois." }], correct: 0 },
+      { q: "Blanc (2) : quel mot convient ?", choices: [{ t: "qui" }, { t: "que", piege: "Piège P1", exp: "« qui » est sujet du verbe « nécessitent », « que » serait complément, incorrect ici." }, { t: "dont", piege: "Piège P1", exp: "Construction incorrecte dans ce contexte." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille B · Texte lacunaire (avancées technologiques) · NCLC 9",
+    text: "On ne saurait ___(1)___ que les avancées technologiques récentes aient transformé le marché du travail, ___(2)___ cette transformation ne s'opère pas de manière uniforme selon les secteurs, creusant parfois des inégalités préoccupantes.",
+    questions: [
+      { q: "Blanc (1) : quel mot convient ?", choices: [{ t: "nier" }, { t: "dire", piege: "Piège P1", exp: "« on ne saurait dire » changerait le sens, l'expression figée attendue est « on ne saurait nier »." }, { t: "croire", piege: "Piège P1", exp: "Sens incohérent avec la suite de la phrase, qui confirme le fait." }], correct: 0 },
+      { q: "Blanc (2) : quel mot convient ?", choices: [{ t: "quoique" }, { t: "parce que", piege: "Piège P5", exp: "Inverserait la relation concessive voulue en relation causale." }, { t: "donc", piege: "Piège P5", exp: "Inverserait la logique concessive en conséquence directe." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille C · Tableau cours du soir · NCLC 6",
+    text: "| Cours du soir | Jour | Durée | Prix |\n| Espagnol débutant | Lundi | 8 semaines | 180$ |\n| Yoga | Mercredi | 10 semaines | 150$ |\n| Photographie | Vendredi | 6 semaines | 210$ |",
+    questions: [
+      { q: "Quel cours dure le moins longtemps ?", choices: [{ t: "Photographie" }, { t: "Espagnol débutant", piege: "Piège P2", exp: "Durée intermédiaire, proche de la plus courte." }, { t: "Yoga", piege: "Piège P2", exp: "Durée la plus longue, distracteur par inversion." }], correct: 0 },
+      { q: "Quel cours a lieu le mercredi ?", choices: [{ t: "Yoga" }, { t: "Espagnol débutant", piege: "Piège P2", exp: "Jour différent (lundi), confusion de ligne." }, { t: "Photographie", piege: "Piège P2", exp: "Jour différent (vendredi), confusion de ligne." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille C · Tableau assurances · NCLC 7",
+    text: "| Compagnie | Prime annuelle | Franchise | Couverture dégât d'eau |\n| Assurco | 850$ | 500$ | Oui |\n| Protectia | 720$ | 750$ | Non |\n| Securex | 900$ | 300$ | Oui |",
+    questions: [
+      { q: "Quelle compagnie a la franchise la plus basse ?", choices: [{ t: "Securex" }, { t: "Assurco", piege: "Piège P2", exp: "Franchise intermédiaire, proche de la plus basse." }, { t: "Protectia", piege: "Piège P2", exp: "Franchise la plus élevée, distracteur par inversion." }], correct: 0 },
+      { q: "Quelle compagnie ne couvre pas les dégâts d'eau ?", choices: [{ t: "Protectia" }, { t: "Assurco", piege: "Piège P5", exp: "Le tableau indique « Oui » pour cette compagnie." }, { t: "Securex", piege: "Piège P5", exp: "Le tableau indique « Oui » pour cette compagnie." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille C · Tableau candidats · NCLC 8",
+    text: "| Candidat | Années d'expérience | Langues parlées | Disponibilité |\n| Candidat 1 | 3 | Français, anglais | Immédiate |\n| Candidat 2 | 7 | Français, anglais, espagnol | Dans 1 mois |\n| Candidat 3 | 5 | Français | Immédiate |",
+    questions: [
+      { q: "Quel candidat parle le plus de langues ET a le plus d'expérience ?", choices: [{ t: "Candidat 2" }, { t: "Candidat 1", piege: "Piège P3", exp: "Parle deux langues mais a le moins d'expérience des trois." }, { t: "Candidat 3", piege: "Piège P3", exp: "Ne parle qu'une langue, ne remplit pas le premier critère." }], correct: 0 },
+      { q: "Quel candidat est disponible immédiatement ET a le plus d'expérience parmi ceux disponibles ?", choices: [{ t: "Candidat 3" }, { t: "Candidat 1", piege: "Piège P2", exp: "Disponible immédiatement mais moins d'expérience que le Candidat 3." }, { t: "Candidat 2", piege: "Piège P5", exp: "N'est PAS disponible immédiatement, contredit le premier critère." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille D · Paiement sans contact · NCLC 7",
+    text: "Alors que de plus en plus de commerces adoptent le paiement sans contact, certains groupes de défense des consommateurs s'inquiètent de l'exclusion progressive des personnes sans compte bancaire ou peu familières avec les technologies numériques. Plusieurs municipalités étudient des mesures pour garantir un accès équitable aux services essentiels.",
+    questions: [
+      { q: "Quelle est l'inquiétude soulevée dans le texte ?", choices: [{ t: "L'exclusion de certaines personnes du paiement sans contact" }, { t: "La hausse des prix liée au sans-contact", piege: "Piège P6", exp: "Préoccupation plausible en général mais absente de ce texte." }, { t: "Le risque de fraude bancaire", piege: "Piège P6", exp: "Sur-inférence non soutenue par le texte." }], correct: 0 },
+      { q: "Que font certaines municipalités face à cette situation ?", choices: [{ t: "Elles étudient des mesures pour un accès équitable" }, { t: "Elles interdisent le paiement sans contact", piege: "Piège P6", exp: "Mesure plus radicale que ce qui est réellement décrit." }, { t: "Elles ignorent le problème", piege: "Piège P5", exp: "Contredit directement « étudient des mesures »." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille D · Labels écologiques · NCLC 8",
+    text: "La multiplication des labels écologiques sur les produits de consommation, censée guider les choix des consommateurs vers des options plus durables, produit paradoxalement l'effet inverse chez une partie du public, submergé par une profusion de certifications aux critères peu transparents et parfois contradictoires entre elles.",
+    questions: [
+      { q: "Quel est l'effet paradoxal décrit dans le texte ?", choices: [{ t: "La profusion de labels peut décourager plutôt qu'aider les consommateurs" }, { t: "Les labels ont fait baisser les prix", piege: "Piège P6", exp: "Conséquence plausible en général mais absente du texte." }, { t: "Les entreprises ont cessé d'utiliser des labels", piege: "Piège P6", exp: "Contredit « multiplication des labels »." }], correct: 0 },
+      { q: "Qu'est-ce qui est reproché à ces certifications ?", choices: [{ t: "Des critères peu transparents et parfois contradictoires" }, { t: "Un coût trop élevé pour les entreprises", piege: "Piège P6", exp: "Préoccupation plausible en général mais non mentionnée." }, { t: "Leur absence totale de réglementation", piege: "Piège P6", exp: "Sur-inférence, le texte ne parle pas de réglementation." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille D · Crise du logement · NCLC 9",
+    text: "Réduire la crise du logement à un simple déséquilibre entre l'offre et la demande relève d'une lecture pour le moins partielle du phénomène. S'il est vrai que la construction peine à suivre la croissance démographique dans plusieurs grands centres urbains, cette explication occulte des dynamiques tout aussi déterminantes, telles que la financiarisation croissante du marché immobilier ou la multiplication des logements utilisés comme placements plutôt que comme résidences.",
+    questions: [
+      { q: "Quelle est la thèse principale de l'auteur ?", choices: [{ t: "La crise du logement ne se résume pas au seul déséquilibre offre-demande" }, { t: "La crise du logement est uniquement due à un manque de construction", piege: "Piège P4", exp: "C'est précisément l'explication que l'auteur juge partielle, pas sa position." }, { t: "La crise du logement n'existe pas réellement", piege: "Piège P6", exp: "Contredit l'ensemble du texte, qui traite bien d'une crise réelle." }], correct: 0 },
+      { q: "Quelles dynamiques l'auteur ajoute-t-il à l'explication traditionnelle ?", choices: [{ t: "La financiarisation du marché et les logements utilisés comme placements" }, { t: "Le manque de main-d'œuvre en construction", piege: "Piège P6", exp: "Cause plausible en général mais non mentionnée dans ce texte." }, { t: "La hausse des taux d'intérêt", piege: "Piège P6", exp: "Sur-inférence non soutenue par le texte." }], correct: 0 },
+    ],
+  },
+  {
+    meta: "Famille D · Bénévolat ponctuel · NCLC 8",
+    text: "L'essor du bénévolat ponctuel, favorisé par des plateformes numériques permettant de s'engager pour quelques heures seulement, bouscule le modèle traditionnel des organismes communautaires, historiquement bâtis sur un engagement bénévole régulier et durable. Certains y voient une adaptation nécessaire aux modes de vie contemporains, d'autres craignent un affaiblissement du tissu associatif à long terme.",
+    questions: [
+      { q: "Qu'est-ce qui bouscule le modèle traditionnel du bénévolat ?", choices: [{ t: "L'essor du bénévolat ponctuel via des plateformes numériques" }, { t: "La baisse générale de l'intérêt pour le bénévolat", piege: "Piège P6", exp: "Contredit « essor », qui indique une augmentation, pas une baisse." }, { t: "Le manque de financement des organismes", piege: "Piège P6", exp: "Cause plausible en général mais absente du texte." }], correct: 0 },
+      { q: "Quelle inquiétude est mentionnée par certains ?", choices: [{ t: "Un affaiblissement du tissu associatif à long terme" }, { t: "Une hausse des coûts de gestion", piege: "Piège P6", exp: "Sur-inférence non soutenue par le texte." }, { t: "Une baisse de la qualité des services rendus", piege: "Piège P6", exp: "Sur-inférence, non mentionnée dans le texte." }], correct: 0 },
+    ],
+  },
 ];
 
 // ── CO (Compréhension orale) exercises ──
@@ -247,6 +369,47 @@ export const coItems: QuizItem[] = [
       { q: "L'expression « on a beau avoir les meilleures intentions du monde » signifie :", choices: [{ t: "Les intentions sont suffisantes" }, { t: "Même avec de bonnes intentions, cela ne suffit pas" }, { t: "Les intentions sont mauvaises", piege: "Piège CO-P5", exp: "Contresens total : « avoir beau » exprime une concession, pas une critique des intentions." }], correct: 1 },
     ],
   },
+  // ── 8 nouveaux exercices CO (fichier CO_Entrainement_Ajout8) ──
+  {
+    meta: "Section A · Dialogue court · NCLC 5",
+    text: "– Vous avez la taille en dessous pour ce chandail ?\n– Laissez-moi vérifier... oui, on en a un en petit, dans la cabine d'essayage à votre gauche.\n– Parfait, merci !",
+    questions: [{ q: "Quelle image correspond ?", choices: [{ t: "Une personne qui essaie un vêtement dans un magasin", img: "/static/images/co/train1_q1_a.jpg" }, { t: "Une personne qui retourne un article", img: "/static/images/co/train1_q1_b.jpg", piege: "Piège CO-P2", exp: "Aucun ancrage dans le dialogue, générique." }, { t: "Une personne qui paie à la caisse", img: "/static/images/co/train1_q1_c.jpg", piege: "Piège CO-P2", exp: "Étape ultérieure non mentionnée dans ce dialogue." }], correct: 0 }],
+  },
+  {
+    meta: "Section A · Dialogue court · NCLC 7",
+    text: "– Tu as des nouvelles de ton dossier de prêt étudiant ?\n– Oui, ils m'ont dit que ça allait prendre encore deux ou trois semaines à cause du volume de demandes en ce moment.\n– Ah, c'est plus long que ce que tu pensais alors.\n– Oui, un peu, mais au moins j'ai la confirmation que le dossier avance.",
+    questions: [{ q: "Quelle est la situation actuelle du dossier ?", choices: [{ t: "Il avance, mais avec un délai plus long que prévu" }, { t: "Il a été refusé", piege: "Piège CO-P1", exp: "Contredit « j'ai la confirmation que le dossier avance »." }, { t: "Il est complètement terminé", piege: "Piège CO-P1", exp: "Contredit « encore deux ou trois semaines »." }], correct: 0 }],
+  },
+  {
+    meta: "Section B · Annonce publique · NCLC 6",
+    text: "« Mesdames et messieurs, nous vous rappelons que les bagages laissés sans surveillance seront saisis par la sécurité. Merci de garder vos effets personnels avec vous en tout temps. »",
+    questions: [{ q: "Quel est l'objectif de cette annonce ?", choices: [{ t: "Rappeler une consigne de sécurité sur les bagages" }, { t: "Annoncer la perte d'un bagage", piege: "Piège CO-P6", exp: "Rien n'indique un incident réel, c'est une consigne préventive générale." }, { t: "Annoncer une fouille obligatoire des bagages", piege: "Piège CO-P6", exp: "Mesure plus stricte que ce qui est réellement annoncé." }], correct: 0 }],
+  },
+  {
+    meta: "Section B · Annonce publique · NCLC 8",
+    text: "« En raison de l'affluence exceptionnelle liée à l'événement de ce soir, nous invitons notre clientèle à prévoir un temps d'attente supplémentaire pour le service au comptoir. Nous vous remercions de votre patience. »",
+    questions: [{ q: "Quel est l'objectif de cette annonce ?", choices: [{ t: "Prévenir d'un délai d'attente plus long que d'habitude" }, { t: "Annoncer la fermeture du comptoir", piege: "Piège CO-P6", exp: "Confond une attente prolongée avec une fermeture." }, { t: "Annoncer l'annulation de l'événement", piege: "Piège CO-P6", exp: "Aucun lien, l'événement a bien lieu, c'est le service qui est affecté." }], correct: 0 }],
+  },
+  {
+    meta: "Section C · Message répondeur · NCLC 6",
+    text: "« Bonjour, c'est le pressing qui vous appelle pour vous dire que vos vêtements sont prêts depuis hier. On ferme à 18h ce soir, n'hésitez pas à passer avant si possible. »",
+    questions: [{ q: "Pourquoi le pressing appelle-t-il ?", choices: [{ t: "Pour informer que la commande est prête" }, { t: "Pour annoncer un problème avec les vêtements", piege: "Piège CO-P6", exp: "Rien n'indique un problème, seulement que la commande est prête." }, { t: "Pour annoncer une fermeture définitive", piege: "Piège CO-P6", exp: "« ferme à 18h ce soir » concerne l'horaire du jour, pas une fermeture permanente." }], correct: 0 }],
+  },
+  {
+    meta: "Section C · Message répondeur · NCLC 8",
+    text: "« Bonjour, c'est l'école qui appelle au sujet de votre enfant. Rien d'inquiétant, mais il s'est légèrement blessé au genou pendant la récréation. L'infirmière l'a examiné et tout va bien, on voulait simplement vous tenir informé au cas où vous remarqueriez un petit bleu ce soir. »",
+    questions: [{ q: "Pourquoi l'école appelle-t-elle ?", choices: [{ t: "Pour informer d'une blessure mineure déjà prise en charge" }, { t: "Pour demander de venir chercher l'enfant en urgence", piege: "Piège CO-P6", exp: "Contredit « rien d'inquiétant » et « tout va bien »." }, { t: "Pour signaler un problème de comportement", piege: "Piège CO-P2", exp: "Hors sujet, aucun lien avec le contenu réel de l'appel." }], correct: 0 }],
+  },
+  {
+    meta: "Section D · Micro-trottoir · NCLC 7",
+    text: "« Les commerces de proximité, moi j'essaie d'y aller le plus possible, mais faut être honnête, c'est souvent plus cher qu'en ligne. Donc je fais un compromis : les produits frais, je les achète au quartier, et le reste, ça dépend vraiment du prix. »",
+    questions: [{ q: "Quelle est la position de la personne ?", choices: [{ t: "Un compromis entre soutien local et considération du prix" }, { t: "Elle achète toujours en ligne par principe", piege: "Piège CO-P7", exp: "Contredit « j'essaie d'y aller le plus possible » pour les commerces locaux." }, { t: "Elle refuse catégoriquement d'acheter en ligne", piege: "Piège CO-P7", exp: "Contredit « le reste, ça dépend vraiment du prix », qui inclut l'achat en ligne." }], correct: 0 }],
+  },
+  {
+    meta: "Section D · Micro-trottoir · NCLC 9",
+    text: "« La retraite à 65 ans, disons que c'est un chiffre qui a été fixé il y a des décennies, dans un contexte complètement différent d'aujourd'hui. Je ne dis pas qu'il faut la repousser à tout prix, mais je pense qu'on devrait au moins ouvrir la discussion sérieusement, plutôt que de traiter ce chiffre comme gravé dans la pierre. »",
+    questions: [{ q: "Quel est le point de vue de la personne ?", choices: [{ t: "Elle appelle à rouvrir le débat, sans prendre position tranchée sur l'âge exact" }, { t: "Elle est fermement pour repousser l'âge de la retraite", piege: "Piège CO-P7", exp: "Contredit « je ne dis pas qu'il faut la repousser à tout prix »." }, { t: "Elle pense que l'âge actuel est parfaitement adapté", piege: "Piège CO-P7", exp: "Contredit « fixé... dans un contexte complètement différent d'aujourd'hui »." }], correct: 0 }],
+  },
 ];
 
 // ── EE (Expression écrite) model texts ──
@@ -287,6 +450,27 @@ export const eeItems: EEItem[] = [
     sujet: "Section B : Opinion nuancée. « L'intelligence artificielle va-t-elle remplacer les enseignants ? » Présentez les deux points de vue et exprimez votre opinion personnelle argumentée.",
     n6: "L'intelligence artificielle se développe très rapidement dans le domaine de l'éducation. Certains pensent qu'elle pourrait remplacer les enseignants parce qu'elle peut corriger des exercices, proposer des cours personnalisés et être disponible à tout moment. Cependant, d'autres croient que les enseignants sont irremplaçables car ils comprennent les émotions des élèves et peuvent les motiver. Personnellement, je pense que l'IA est un outil utile mais qu'un vrai professeur sera toujours nécessaire pour guider les élèves. (78 mots, à étoffer jusqu'à 200)",
     n9: "Qu'il s'agisse de la correction automatisée des évaluations, de la génération de parcours d'apprentissage adaptatifs ou du tutorat conversationnel, les avancées de l'intelligence artificielle en éducation sont incontestables. Pour autant, il serait hasardeux de conclure que la technologie supplante l'humain. L'acte éducatif ne se réduit pas à la transmission de savoirs : il engage une dimension relationnelle, une capacité d'empathie et un jugement contextuel dont aucun modèle algorithmique, aussi perfectionné soit-il, ne saurait s'acquitter pleinement. Il n'en demeure pas moins que s'arc-bouter sur un refus de la technologie serait tout aussi contre-productif. Aussi convient-il de repenser le rôle de l'enseignant non pas comme un transmetteur menacé, mais comme un médiateur augmenté par des outils intelligents, capable de consacrer davantage de temps à l'accompagnement individualisé et au développement de la pensée critique. (133 mots, à étoffer jusqu'à 200)",
+  },
+  // ── 4 nouveaux sujets EE (fichier EE_EO_Entrainement_Ajout) ──
+  {
+    sujet: "Section A : Fait divers. « Un facteur a eu la surprise de découvrir, en glissant le courrier dans une boîte aux lettres, qu'un petit chat s'y était réfugié pendant la nuit... » Continuez cet article.",
+    n6: "Le facteur a d'abord eu peur en entendant un bruit, puis a découvert le chaton tremblant de froid. Il a immédiatement contacté le propriétaire de la maison, qui n'était au courant de rien. Ensemble, ils ont réalisé que le chat appartenait probablement à un voisin, puisqu'il portait un collier avec un nom. Le propriétaire de la boîte aux lettres a proposé de garder le chaton au chaud en attendant de retrouver ses vrais propriétaires. (82 mots)",
+    n9: "C'est en entendant un bruit suspect provenant de la boîte aux lettres que le facteur a fait cette découverte pour le moins inattendue : un chaton, visiblement transi de froid, s'y était réfugié durant la nuit. Ayant aussitôt alerté le propriétaire des lieux, totalement étranger à cette présence, les deux hommes ont rapidement constaté, grâce au collier orné d'un nom, que l'animal appartenait vraisemblablement à un voisin. En attendant de retrouver ses propriétaires légitimes, le résident s'est proposé spontanément d'accueillir le petit félin au chaud, épargnant ainsi à celui-ci une plus longue exposition au froid. (114 mots)",
+  },
+  {
+    sujet: "Section A : Fait divers. « Les résidents d'un immeuble ont eu la surprise, en descendant chercher leur courrier hier matin, de découvrir une fresque murale entièrement nouvelle dans le hall d'entrée... » Continuez cet article.",
+    n6: "Personne ne savait qui avait peint cette fresque colorée représentant le quartier. Après quelques recherches, les résidents ont découvert que c'était l'œuvre d'un jeune artiste local qui avait demandé la permission au syndic quelques semaines plus tôt, mais dont la réponse s'était perdue dans les communications. Finalement, tout le monde a trouvé la fresque magnifique et personne ne s'est plaint. Le syndic a même proposé d'organiser un petit événement pour célébrer officiellement l'œuvre. (80 mots)",
+    n9: "Nul, parmi les résidents, n'était en mesure d'expliquer l'origine de cette fresque haute en couleur représentant fidèlement le quartier environnant. Ce n'est qu'après quelques recherches que l'on a fini par identifier son auteur : un jeune artiste local ayant, quelques semaines auparavant, sollicité l'autorisation du syndic — demande dont la réponse s'était malheureusement égarée dans les méandres administratifs habituels. Loin de susciter la moindre plainte, l'œuvre a au contraire fait l'unanimité, au point que le syndic envisage désormais d'organiser un événement pour en célébrer officiellement l'existence. (108 mots)",
+  },
+  {
+    sujet: "Section B : Argumentation. Devrait-on interdire l'usage du téléphone portable dans les salles de classe, même pendant les pauses ?",
+    n6: "Je pense que oui, ça devrait être interdit, même pendant les pauses. Les téléphones distraient beaucoup les élèves et les empêchent de vraiment se reposer ou de socialiser avec leurs camarades pendant les pauses. Par contre, je pense qu'il faudrait faire une exception pour les urgences, par exemple si un parent a besoin de joindre son enfant rapidement. L'important c'est de trouver un équilibre entre la discipline et le bon sens. (80 mots)",
+    n9: "Il me semble que cette interdiction, aussi stricte puisse-t-elle paraître, se justifie pleinement au regard des effets bien documentés des écrans sur la concentration et les interactions sociales entre élèves. Certes, on pourrait objecter qu'une pause devrait rester un moment de liberté ; il n'en demeure pas moins que l'omniprésence des téléphones tend justement à appauvrir ces moments d'échange informel, pourtant essentiels au développement social des jeunes. Une exception raisonnable pourrait néanmoins être envisagée pour les situations d'urgence familiale, à condition qu'elle demeure encadrée et ne devienne pas un prétexte généralisé. (112 mots)",
+  },
+  {
+    sujet: "Section B : Argumentation. Les restaurants devraient-ils être obligés d'indiquer la provenance exacte de tous leurs ingrédients sur leur menu ?",
+    n6: "Je pense que ce serait une bonne idée, mais difficile à appliquer partout. Pour les grands restaurants, ça pourrait être possible, mais pour les petits restaurants avec peu de personnel, ça demanderait beaucoup de travail supplémentaire. Je pense que les clients ont le droit de savoir d'où vient leur nourriture, surtout s'ils ont des préoccupations environnementales ou éthiques. Peut-être qu'on pourrait commencer par obliger seulement les grandes chaînes de restaurants. (78 mots)",
+    n9: "Si le principe de transparence alimentaire me paraît difficilement contestable sur le fond, sa mise en œuvre pratique soulève en revanche de réelles interrogations, notamment pour les petits établissements dont les ressources administratives demeurent limitées. Il conviendrait sans doute d'envisager une application progressive, en commençant par les grandes chaînes disposant des moyens nécessaires, avant d'étendre progressivement l'obligation. Cela dit, on ne saurait ignorer que les consommateurs sont de plus en plus nombreux à réclamer cette information, ne serait-ce que pour des raisons éthiques ou environnementales, ce qui plaide en faveur d'une évolution — même graduelle — de la réglementation actuelle. (112 mots)",
   },
 ];
 
@@ -363,6 +547,25 @@ export const eoItems: EOItem[] = [
       ["Objection santé", "« Les écrans, c'est mauvais pour les yeux des enfants »", "Nuancer avec les bénéfices pédagogiques et proposer un encadrement du temps d'écran"],
       ["Objection inégalité", "« Toutes les familles n'ont pas les moyens de fournir une tablette »", "Reconnaître le problème et argumenter pour un financement public des équipements"],
       ["Provocation", "« On apprend mieux avec un livre, la technologie c'est une mode »", "Défendre la complémentarité livre-numérique sans dénigrer l'interlocuteur, citer des études"],
+    ],
+  },
+  // ── 2 nouveaux scénarios EO (fichier EE_EO_Entrainement_Ajout) ──
+  {
+    titre: "Section A : Obtenir des renseignements (changement d'adresse bancaire)",
+    base: "Candidat : Bonjour, j'ai déménagé récemment et j'aimerais mettre à jour mon adresse pour mon compte bancaire.",
+    variantes: [
+      ["Précision (identité)", "« Pour des raisons de sécurité, je vais devoir vérifier votre identité, vous avez une pièce d'identité sur vous ? »", "Répondre avec assurance à une vérification de sécurité, sans être déstabilisé"],
+      ["Question retour", "« Vous voulez aussi mettre à jour l'adresse sur votre carte de crédit, ou seulement pour le compte principal ? »", "Clarifier sa demande avec précision"],
+      ["Objection (délai)", "« Sachez que la mise à jour peut prendre jusqu'à 5 jours ouvrables avant d'être effective. »", "Réagir à un délai, demander si une confirmation immédiate est possible en attendant"],
+    ],
+  },
+  {
+    titre: "Section B : Argumenter (atelier réparation vélos communautaire)",
+    base: "Candidat : Cette annonce présente un atelier communautaire où on peut apprendre à réparer son vélo soi-même, avec l'aide de bénévoles. Je pense que ça pourrait vous être utile.",
+    variantes: [
+      ["Objection (compétence)", "« Je ne connais absolument rien à la mécanique, ça me semble intimidant. »", "Rassurer sur l'accompagnement offert, insister sur l'aspect débutant bienvenu"],
+      ["Objection (utilité)", "« De toute façon, je peux juste payer quelqu'un pour réparer mon vélo, ça revient au même. »", "Réorienter l'argument sur l'aspect économique à long terme (autonomie, économies futures)"],
+      ["Acceptation immédiate", "« D'accord, ça a l'air intéressant, ça se passe quand exactement ? »", "Clôturer efficacement avec une information concrète (jour, lieu)"],
     ],
   },
 ];
