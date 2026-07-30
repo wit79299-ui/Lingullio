@@ -16,7 +16,7 @@ import type {
 import { TEF_XP_CONFIG, SECTION_CONFIG, estimateNCLC } from './tef-types';
 import { useFrenchTTS, useSpeechRecognition, analyzeText, analyzeSpeech, useAIEvaluation } from './use-tef-audio';
 import type { AIWritingEvaluation, AISpeakingEvaluation } from './use-tef-audio';
-import { getAudioUrl } from './tef-lexique-audio-map';
+// getAudioUrl is used internally by useFrenchTTS hook (use-tef-audio.ts)
 import { useGamificationStore } from '@/stores/gamification-store';
 import {
   BookOpen, ChevronRight, ChevronDown, Target, Award, FileText,
@@ -564,6 +564,7 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
   const [total, setTotal] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [accent, setAccent] = useState<'france' | 'quebec'>('france');
+  const [hasInteracted, setHasInteracted] = useState(false);
   const tts = useFrenchTTS();
   const addXp = useGamificationStore(s => s.addXp);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -574,18 +575,26 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
     const shuffled = [...domain.entries].sort(() => Math.random() - 0.5).slice(0, DICTEE_SIZE);
     setEntries(shuffled);
     setCurrentIdx(0); setUserInput(''); setChecked(false); setScore(0); setTotal(0); setShowResult(false);
+    setHasInteracted(false);
   }, [domain]);
 
   const entry = entries[currentIdx];
 
   useEffect(() => {
-    if (entry && !checked) {
-      // Auto-play TTS after a short delay
+    // Auto-play only after user has interacted at least once (browser autoplay policy)
+    if (entry && !checked && hasInteracted) {
       const t = setTimeout(() => tts.speak(entry.term, `dict-${currentIdx}`, 0.9, accent), 600);
       return () => clearTimeout(t);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIdx, checked, entry, accent]);
+  }, [currentIdx, checked, entry, accent, hasInteracted]);
+
+  // Mark user interaction on first manual play
+  const playAudio = useCallback((termText: string, audioId: string, speed: number) => {
+    if (!hasInteracted) setHasInteracted(true);
+    tts.speak(termText, audioId, speed, accent);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accent, hasInteracted, tts]);
 
   if (!entry || showResult) {
     const pct = total > 0 ? Math.round((score / total) * 100) : 0;
@@ -646,7 +655,12 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
       </div>
 
       <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
-        <p className="text-sm text-navy-500 text-center">Écoutez le mot ou l&apos;expression, puis écrivez-le.</p>
+        <p className="text-sm text-navy-500 text-center">
+          {!hasInteracted
+            ? <>Cliquez sur <strong>Écouter</strong> pour commencer</>
+            : <>Écoutez le mot ou l&apos;expression, puis écrivez-le.</>
+          }
+        </p>
 
         {/* Accent selector */}
         <div className="flex justify-center gap-2">
@@ -656,11 +670,11 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
 
         {/* TTS buttons */}
         <div className="flex justify-center gap-3">
-          <button onClick={() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8, accent)}
+          <button onClick={() => playAudio(entry.term, `dict-${currentIdx}`, 0.8)}
             className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${tts.speakingId === `dict-${currentIdx}` ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'}`}>
             <Volume2 className="w-4 h-4" />Écouter
           </button>
-          <button onClick={() => tts.speak(entry.term, `dict-slow-${currentIdx}`, 0.55, accent)}
+          <button onClick={() => playAudio(entry.term, `dict-slow-${currentIdx}`, 0.55)}
             className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${tts.speakingId === `dict-slow-${currentIdx}` ? 'bg-blue-600 text-white' : 'bg-cream-50 text-navy-600 border border-cream-200 hover:bg-cream-100'}`}>
             <Volume2 className="w-4 h-4" />Lent
           </button>

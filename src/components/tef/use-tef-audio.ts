@@ -77,10 +77,8 @@ export function useFrenchTTS() {
 
     if (!text || text.trim().length === 0) return;
 
-    // For very short texts (single words), pad with context for better TTS output.
-    // OpenAI TTS struggles with isolated short words — they get clipped.
-    // We wrap them in a carrier phrase then... actually, just ensure speed isn't too slow
-    // for short texts (below 0.7 causes truncation on words < 4 syllables)
+    // For very short texts (single words), ensure speed isn't too slow
+    // (below 0.7 causes truncation on words < 4 syllables with OpenAI TTS)
     const wordCount = text.trim().split(/\s+/).length;
     const minSpeed = wordCount <= 3 ? 0.7 : 0.5;
     const safeRate = Math.max(minSpeed, rate);
@@ -92,58 +90,94 @@ export function useFrenchTTS() {
 
     const cacheKey = `${accent}:${safeRate}:${text.slice(0, 200)}`;
 
+    // Priority 1: Check for pre-generated static MP3 (lexique terms)
+    const pregenUrl = getAudioUrl(text);
+
+    if (pregenUrl) {
+      // ── Static MP3 path — instant, no API call ──
+      try {
+        const audio = new Audio(pregenUrl);
+        audioRef.current = audio;
+
+        // Wait for the audio to be ready before playing
+        await new Promise<void>((resolve, reject) => {
+          audio.oncanplaythrough = () => resolve();
+          audio.onerror = () => reject(new Error('MP3 load error'));
+          // Safety timeout — if canplaythrough doesn't fire in 5s, try playing anyway
+          setTimeout(() => resolve(), 5000);
+          audio.load();
+        });
+
+        // Check if we were stopped while loading
+        if (speakingIdRef.current !== id) return;
+
+        audio.onended = () => {
+          setSpeakingId(null);
+          speakingIdRef.current = null;
+          setIsSpeaking(false);
+          audioRef.current = null;
+        };
+
+        audio.onerror = () => {
+          console.warn('[TTS] Static MP3 playback error for:', text);
+          audioRef.current = null;
+          // For static files, try SpeechSynthesis as last resort
+          speakFallback(text, id, rate);
+        };
+
+        await audio.play();
+        return; // Success — exit early
+      } catch (playErr) {
+        // NotAllowedError = autoplay blocked — user needs to interact first
+        if (playErr instanceof DOMException && playErr.name === 'NotAllowedError') {
+          console.warn('[TTS] Autoplay blocked — user interaction required');
+          setSpeakingId(null);
+          speakingIdRef.current = null;
+          setIsSpeaking(false);
+          return;
+        }
+        console.warn('[TTS] Static MP3 failed, trying API fallback:', playErr);
+        // Fall through to API path below
+      }
+    }
+
+    // ── Priority 2/3: Blob cache or OpenAI TTS API ──
     try {
-      // Priority 1: Check for pre-generated static MP3 (lexique terms)
-      // These are instant — no API call, no latency
-      const pregenUrl = getAudioUrl(text);
-      
-      let audioSrc: string;
+      let blobUrl = cacheRef.current.get(cacheKey);
 
-      if (pregenUrl) {
-        // Use pre-generated static MP3 file — instant playback
-        audioSrc = pregenUrl;
-      } else {
-        // Priority 2: Check cache for previously fetched API audio
-        let blobUrl = cacheRef.current.get(cacheKey);
+      if (!blobUrl) {
+        const controller = new AbortController();
+        abortRef.current = controller;
 
-        if (!blobUrl) {
-          // Priority 3: Fetch from OpenAI TTS API (for long texts, CO, EO, etc.)
-          const controller = new AbortController();
-          abortRef.current = controller;
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, accent, speed: safeRate }),
+          signal: controller.signal,
+        });
 
-          const response = await fetch('/api/tts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, accent, speed: safeRate }),
-            signal: controller.signal,
-          });
+        if (!response.ok) {
+          throw new Error(`TTS API error: ${response.status}`);
+        }
 
-          if (!response.ok) {
-            throw new Error(`TTS API error: ${response.status}`);
-          }
-
-          const blob = await response.blob();
-          
-          // Only cache if blob has meaningful size (> 1KB)
-          // Prevents caching corrupted/empty responses from aborted fetches
-          if (blob.size < 1000) {
-            console.warn(`[TTS] Response too small (${blob.size}B), skipping cache`);
-          }
-          
-          blobUrl = URL.createObjectURL(blob);
-          if (blob.size >= 1000) {
-            cacheRef.current.set(cacheKey, blobUrl);
-          }
-          abortRef.current = null;
+        const blob = await response.blob();
+        
+        // Only cache if blob has meaningful size (> 1KB)
+        if (blob.size < 1000) {
+          console.warn(`[TTS] Response too small (${blob.size}B), skipping cache`);
         }
         
-        audioSrc = blobUrl;
+        blobUrl = URL.createObjectURL(blob);
+        if (blob.size >= 1000) {
+          cacheRef.current.set(cacheKey, blobUrl);
+        }
+        abortRef.current = null;
       }
 
       // Check if we were stopped while fetching
       if (speakingIdRef.current !== id) return;
 
-      const audio = new Audio(audioSrc);
+      const audio = new Audio(blobUrl);
       audioRef.current = audio;
 
       audio.onended = () => {
@@ -154,21 +188,26 @@ export function useFrenchTTS() {
       };
 
       audio.onerror = () => {
-        console.warn('[TTS] Audio playback error, falling back to SpeechSynthesis');
-        // Remove from cache if playback failed (only for API-fetched audio)
-        if (!pregenUrl) {
-          cacheRef.current.delete(cacheKey);
-          if (audioSrc.startsWith('blob:')) URL.revokeObjectURL(audioSrc);
-        }
+        console.warn('[TTS] API audio playback error, falling back to SpeechSynthesis');
+        cacheRef.current.delete(cacheKey);
+        if (blobUrl && blobUrl.startsWith('blob:')) URL.revokeObjectURL(blobUrl);
         audioRef.current = null;
         speakFallback(text, id, rate);
       };
 
       await audio.play();
     } catch (err) {
-      // If fetch was aborted (user stopped), don't fallback
+      // Aborted by user
       if (err instanceof DOMException && err.name === 'AbortError') {
         setSpeakingId(null);
+        setIsSpeaking(false);
+        return;
+      }
+      // Autoplay blocked
+      if (err instanceof DOMException && err.name === 'NotAllowedError') {
+        console.warn('[TTS] Autoplay blocked — user interaction required');
+        setSpeakingId(null);
+        speakingIdRef.current = null;
         setIsSpeaking(false);
         return;
       }

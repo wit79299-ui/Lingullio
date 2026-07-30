@@ -127,7 +127,7 @@ const rawDomains: Omit<LexiqueDomain, 'quizQuestions'>[] = [
     domaine: 'Identité & vie quotidienne',
     icon: '🏠',
     entries: [
-      { term: 'se lever', definition: 'Sortir du lit, commencer sa journée', example: 'Je dois **se lever** tôt pour aller au travail.', synonyms: ['se réveiller'], stage: 1, register: 'courant' },
+      { term: 'se lever', definition: 'Sortir du lit, commencer sa journée', example: 'Il faut **se lever** tôt pour aller au travail.', synonyms: ['se réveiller'], stage: 1, register: 'courant' },
       { term: 'la famille', definition: 'Ensemble des personnes liées par le sang ou le mariage', example: 'Ma **famille** habite à Montréal.', synonyms: ['les proches', 'le foyer'], stage: 1, register: 'courant' },
       { term: 'habiter', definition: 'Résider dans un lieu de manière stable', example: 'Nous **habitons** dans un quartier calme.', synonyms: ['résider', 'demeurer', 'vivre'], stage: 1, register: 'courant' },
       { term: 'le quotidien', definition: 'Ce qui se passe chaque jour, la routine', example: 'Le **quotidien** au Canada est très différent de chez moi.', synonyms: ['la routine', 'le train-train'], stage: 2, register: 'courant' },
