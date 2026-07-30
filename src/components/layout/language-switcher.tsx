@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { usePathname, useRouter } from '@/i18n/navigation';
+import { usePathname } from '@/i18n/navigation';
 import { locales, localeNames, type Locale } from '@/i18n/config';
 import { Globe, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
@@ -55,7 +55,6 @@ const FLAGS: Record<string, string> = {
 
 export function LanguageSwitcher() {
   const locale = useLocale() as Locale;
-  const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -73,7 +72,14 @@ export function LanguageSwitcher() {
 
   function switchLocale(newLocale: Locale) {
     setOpen(false);
-    router.replace(pathname, { locale: newLocale });
+    if (newLocale === locale) return;
+    // Build target URL: pathname from usePathname() is already locale-stripped
+    // For default locale (en) with localePrefix:'as-needed', no prefix needed
+    // For other locales, prepend /{locale}
+    const prefix = newLocale === 'en' ? '' : `/${newLocale}`;
+    const targetUrl = `${prefix}${pathname}`;
+    // Force full page navigation to ensure all components re-render with new locale
+    window.location.href = targetUrl;
   }
 
   return (
