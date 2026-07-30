@@ -165,7 +165,7 @@ export const coItems: QuizItem[] = [
   {
     meta: "Section A · Dialogue court · NCLC 5",
     text: "– Excusez-moi, vous savez où se trouve l'arrêt d'autobus le plus proche ?\n– Oui, continuez tout droit, puis tournez à gauche après la pharmacie. L'arrêt est juste en face du parc.\n– Merci beaucoup !",
-    questions: [{ q: "Quelle image correspond à cette conversation ?", choices: [{ t: "Une personne qui achète un billet de train" }, { t: "Une personne qui demande son chemin" }, { t: "Une personne qui attend un ami au parc", piege: "Piège CO-P2", exp: "Le parc n'est qu'un repère géographique donné dans la réponse, pas le sujet." }], correct: 1 }],
+    questions: [{ q: "Quelle situation correspond à cette conversation ?", choices: [{ t: "Une personne qui achète un billet de train" }, { t: "Une personne qui demande son chemin" }, { t: "Une personne qui attend un ami au parc", piege: "Piège CO-P2", exp: "Le parc n'est qu'un repère géographique donné dans la réponse, pas le sujet." }], correct: 1 }],
   },
   {
     meta: "Section B · Annonce publique · NCLC 7",
