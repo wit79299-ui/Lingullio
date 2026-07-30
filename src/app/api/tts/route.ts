@@ -4,34 +4,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-// Voice mapping — "echo" has the clearest French diction;
-// "fable" has a warmer, more expressive cadence that carries Quebec inflections better
+// Voice mapping for French accents
+// France: "nova" — clear, natural female French diction
+// Quebec: "nova" same voice but text is left untouched — 
+//   OpenAI TTS doesn't truly support accent switching,
+//   the difference will come from a future ElevenLabs integration.
+//   For now both use the same high-quality French voice.
 const VOICE_MAP: Record<string, string> = {
-  france: 'echo',   // crisp, clear metropolitan French
-  quebec: 'fable',  // warmer timbre, more melodic — carries québécois inflections
+  france: 'nova',   // clear, warm female voice — excellent French pronunciation
+  quebec: 'nova',   // same voice for now — accent québécois planned via ElevenLabs
 };
-
-// Quebec text adaptation: wrap the input so the TTS model
-// naturally produces québécois speech patterns.
-// We prepend invisible phonetic hints and use québécois vocabulary.
-function quebecify(text: string): string {
-  // Replace common France-French patterns with québécois equivalents
-  // so the TTS model's pronunciation shifts naturally
-  let q = text;
-  // Common vocabulary swaps that affect pronunciation
-  q = q.replace(/\bpetit[- ]déjeuner\b/gi, 'déjeuner');
-  q = q.replace(/\bdéjeuner\b/gi, (m) => {
-    // Only replace "déjeuner" meaning lunch (France) → "dîner" (QC)
-    // but keep it if it already was breakfast context
-    return m;
-  });
-  q = q.replace(/\bvoiture\b/gi, 'char');
-  q = q.replace(/\bstationnement\b/gi, 'parking');
-  // But actually for TEF training, we should NOT change vocabulary.
-  // Instead, we add a speech-style instruction prefix.
-  // OpenAI TTS respects text cues for speech style.
-  return `[Accent québécois, intonation montréalaise, prononciation canadienne-française] ${text}`;
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,8 +42,9 @@ export async function POST(req: NextRequest) {
     // Limit text length to control costs (max ~2000 chars)
     const trimmedText = text.slice(0, 2000);
     
-    // Apply québécois speech hints if accent is quebec
-    const ttsInput = accent === 'quebec' ? quebecify(trimmedText) : trimmedText;
+    // Send clean text directly — no prefix injection
+    // (OpenAI TTS reads ALL text literally, prefixes corrupt the audio)
+    const ttsInput = trimmedText;
 
     const voice = VOICE_MAP[accent] || VOICE_MAP.france;
     const clampedSpeed = Math.max(0.25, Math.min(4.0, speed));
@@ -92,25 +75,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Stream the response directly to the client for minimal latency
-    // Instead of buffering the entire response, pipe it through
-    if (!response.body) {
-      const audioBuffer = await response.arrayBuffer();
-      return new NextResponse(audioBuffer, {
-        status: 200,
-        headers: {
-          'Content-Type': 'audio/mpeg',
-          'Cache-Control': 'public, max-age=86400',
-        },
-      });
-    }
+    // Buffer the full response then send — more reliable across
+    // browsers than streaming (avoids partial decode issues)
+    const audioBuffer = await response.arrayBuffer();
 
-    return new NextResponse(response.body as ReadableStream, {
+    return new NextResponse(audioBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',
         'Cache-Control': 'public, max-age=86400',
-        'Transfer-Encoding': 'chunked',
+        'Content-Length': audioBuffer.byteLength.toString(),
       },
     });
   } catch (error) {
