@@ -4,6 +4,8 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   lexique, trapSections, bareme, eeGrille,
 } from './tef-data';
+import { lexiqueDomains, LEXIQUE_STATS } from './tef-lexique-data';
+import type { LexiqueDomain, VocabEntry, QuizQuestion } from './tef-lexique-data';
 import {
   ceExercises, coExercises, eeExercises, eoExercises, diagnosticExercises,
 } from './tef-exercises';
@@ -19,7 +21,8 @@ import {
   Headphones, PenTool, MessageCircle, BookMarked, AlertTriangle,
   BarChart3, Home, CheckCircle2, XCircle, Info, Volume2, VolumeX,
   Mic, MicOff, Play, Square, RotateCcw, Zap, Trophy, Star, Eye, EyeOff,
-  Send, Clock, TrendingUp,
+  Send, Clock, TrendingUp, Shuffle, Layers, GraduationCap, Sparkles,
+  ArrowLeft, ArrowRight, ThumbsUp, ThumbsDown, Pen,
 } from 'lucide-react';
 
 // ── Navigation ──
@@ -187,23 +190,509 @@ function ReferentielPanel() {
 // BANQUE LEXICALE
 // ══════════════════════════════════════════════════════════════════════════
 function LexiquePanel() {
-  const [openDomains, setOpenDomains] = useState<Set<number>>(new Set());
-  const toggle = (i: number) => setOpenDomains(p => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; });
+  const [selectedDomain, setSelectedDomain] = useState<LexiqueDomain | null>(null);
+  const [mode, setMode] = useState<'browse' | 'flashcard' | 'quiz' | 'dictee'>('browse');
+
+  if (selectedDomain) {
+    return (
+      <div className="space-y-5 animate-in fade-in duration-300">
+        <button onClick={() => { setSelectedDomain(null); setMode('browse'); }} className="text-sm text-navy-400 hover:text-navy-700 flex items-center gap-1">
+          <ChevronDown className="w-4 h-4 rotate-90" /> Retour aux domaines
+        </button>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-2xl">{selectedDomain.icon}</span>
+          <div>
+            <h2 className="text-lg font-bold text-navy-900">{selectedDomain.domaine}</h2>
+            <p className="text-xs text-navy-400">{selectedDomain.entries.length} termes · {selectedDomain.quizQuestions.length} questions</p>
+          </div>
+        </div>
+
+        {/* Mode tabs */}
+        <div className="flex gap-2 flex-wrap">
+          {([
+            { key: 'browse' as const, label: 'Explorer', icon: <BookOpen className="w-3.5 h-3.5" /> },
+            { key: 'flashcard' as const, label: 'Flashcards', icon: <Layers className="w-3.5 h-3.5" /> },
+            { key: 'quiz' as const, label: 'Quiz', icon: <Target className="w-3.5 h-3.5" /> },
+            { key: 'dictee' as const, label: 'Dictée', icon: <Headphones className="w-3.5 h-3.5" /> },
+          ]).map(m => (
+            <button key={m.key} onClick={() => setMode(m.key)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${mode === m.key ? 'bg-blue-600 text-white shadow-sm' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>
+              {m.icon}{m.label}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'browse' && <LexiqueBrowse domain={selectedDomain} />}
+        {mode === 'flashcard' && <LexiqueFlashcards domain={selectedDomain} />}
+        {mode === 'quiz' && <LexiqueQuiz domain={selectedDomain} />}
+        {mode === 'dictee' && <LexiqueDictee domain={selectedDomain} />}
+      </div>
+    );
+  }
+
+  // Domain selection grid
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">02 — Fondation</p><h2 className="text-xl font-bold text-navy-900 mb-2">Banque lexicale par domaine</h2><p className="text-sm text-navy-400 max-w-2xl">20 domaines thématiques, 3 stades. Cliquez pour développer.</p></div>
-      <div className="space-y-2">
-        {lexique.map((item, idx) => (
-          <div key={idx} className="rounded-xl border border-cream-200 bg-white overflow-hidden">
-            <button onClick={() => toggle(idx)} className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-cream-50 transition-colors">
-              <span className="text-sm font-semibold text-navy-800">{item.domaine}</span>
-              <ChevronDown className={`w-4 h-4 text-navy-300 transition-transform ${openDomains.has(idx) ? 'rotate-180' : ''}`} />
-            </button>
-            {openDomains.has(idx) && (
-              <div className="px-4 pb-4 border-t border-cream-100"><table className="w-full text-sm mt-3"><tbody className="divide-y divide-cream-100"><tr><td className="py-2 pr-3 text-[11px] font-bold tracking-wider uppercase text-navy-300 w-20 align-top">Stade I</td><td className="py-2 text-navy-600">{item.stadeI}</td></tr><tr><td className="py-2 pr-3 text-[11px] font-bold tracking-wider uppercase text-blue-500 w-20 align-top">Stade II</td><td className="py-2 text-navy-600">{item.stadeII} — <em className="text-blue-600">{item.exII}</em></td></tr><tr><td className="py-2 pr-3 text-[11px] font-bold tracking-wider uppercase text-amber-600 w-20 align-top">Stade III</td><td className="py-2 text-navy-600">{item.stadeIII} — <em className="text-amber-700">{item.exIII}</em></td></tr></tbody></table></div>
-            )}
+      <div>
+        <p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">02 — Fondation</p>
+        <h2 className="text-xl font-bold text-navy-900 mb-2">Banque lexicale interactive</h2>
+        <p className="text-sm text-navy-400 max-w-2xl">
+          {LEXIQUE_STATS.totalDomains} domaines · {LEXIQUE_STATS.totalEntries} termes · {LEXIQUE_STATS.totalQuestions} questions de quiz.
+          Choisissez un domaine pour explorer, réviser en flashcards, ou tester vos connaissances.
+        </p>
+      </div>
+
+      {/* Stats bar */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Stade I (NCLC 1-4)', count: LEXIQUE_STATS.byStage[1], color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+          { label: 'Stade II (NCLC 5-7)', count: LEXIQUE_STATS.byStage[2], color: 'bg-blue-50 text-blue-700 border-blue-200' },
+          { label: 'Stade III (NCLC 8-12)', count: LEXIQUE_STATS.byStage[3], color: 'bg-amber-50 text-amber-700 border-amber-200' },
+        ].map(s => (
+          <div key={s.label} className={`rounded-lg border p-3 text-center ${s.color}`}>
+            <p className="text-lg font-bold">{s.count}</p>
+            <p className="text-[10px] font-medium">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* Domain cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {lexiqueDomains.map(d => (
+          <button key={d.id} onClick={() => setSelectedDomain(d)}
+            className="rounded-xl border border-cream-200 bg-white p-4 text-left hover:shadow-md hover:border-blue-200 transition-all group">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-xl">{d.icon}</span>
+              <span className="text-sm font-semibold text-navy-800 group-hover:text-blue-700 transition-colors">{d.domaine}</span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-navy-400">
+              <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" />{d.entries.length} termes</span>
+              <span className="flex items-center gap-1"><Target className="w-3 h-3" />{d.quizQuestions.length} quiz</span>
+              <span className="flex items-center gap-1 ml-auto text-navy-300"><ChevronRight className="w-3.5 h-3.5" /></span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── BROWSE MODE ──
+function LexiqueBrowse({ domain }: { domain: LexiqueDomain }) {
+  const [filterStage, setFilterStage] = useState<0 | 1 | 2 | 3>(0);
+  const tts = useFrenchTTS();
+  const filtered = filterStage === 0 ? domain.entries : domain.entries.filter(e => e.stage === filterStage);
+  const stageLabels = { 1: 'Stade I', 2: 'Stade II', 3: 'Stade III' };
+  const stageColors = { 1: 'bg-emerald-100 text-emerald-700', 2: 'bg-blue-100 text-blue-700', 3: 'bg-amber-100 text-amber-700' };
+  const registerColors = { familier: 'text-orange-600', courant: 'text-navy-500', soutenu: 'text-purple-600' };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 flex-wrap">
+        {([0, 1, 2, 3] as const).map(s => (
+          <button key={s} onClick={() => setFilterStage(s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStage === s ? 'bg-navy-800 text-white' : 'bg-cream-50 text-navy-500 border border-cream-200'}`}>
+            {s === 0 ? `Tous (${domain.entries.length})` : `${stageLabels[s]} (${domain.entries.filter(e => e.stage === s).length})`}
+          </button>
+        ))}
+      </div>
+      {filtered.map((entry, idx) => (
+        <div key={idx} className="rounded-xl border border-cream-200 bg-white p-4 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-base font-bold text-navy-900">{entry.term}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${stageColors[entry.stage]}`}>{stageLabels[entry.stage]}</span>
+              <span className={`text-[10px] italic ${registerColors[entry.register]}`}>{entry.register}</span>
+            </div>
+            <button onClick={() => tts.speak(entry.term, `lex-${idx}`, 0.85)}
+              className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${tts.speakingId === `lex-${idx}` ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+              <Volume2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="text-sm text-navy-600">{entry.definition}</p>
+          <p className="text-sm text-navy-400 italic" dangerouslySetInnerHTML={{ __html: entry.example.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-blue-700 not-italic">$1</strong>') }} />
+          {entry.synonyms.length > 0 && (
+            <p className="text-xs text-navy-400">Synonymes : <span className="font-medium text-navy-600">{entry.synonyms.join(', ')}</span></p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── FLASHCARD MODE ──
+function LexiqueFlashcards({ domain }: { domain: LexiqueDomain }) {
+  const [cardIdx, setCardIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [known, setKnown] = useState<Set<number>>(new Set());
+  const [toReview, setToReview] = useState<Set<number>>(new Set());
+  const [shuffled, setShuffled] = useState<VocabEntry[]>([]);
+  const tts = useFrenchTTS();
+  const addXp = useGamificationStore(s => s.addXp);
+
+  useEffect(() => {
+    setShuffled([...domain.entries].sort(() => Math.random() - 0.5));
+    setCardIdx(0); setFlipped(false); setKnown(new Set()); setToReview(new Set());
+  }, [domain]);
+
+  const card = shuffled[cardIdx];
+  const total = shuffled.length;
+  const progress = total > 0 ? Math.round(((known.size + toReview.size) / total) * 100) : 0;
+
+  const markAndNext = (isKnown: boolean) => {
+    if (isKnown) {
+      setKnown(p => new Set(p).add(cardIdx));
+      addXp(TEF_XP_CONFIG.qcm_correct, 'TEF Lexique flashcard');
+    } else {
+      setToReview(p => new Set(p).add(cardIdx));
+    }
+    setFlipped(false);
+    if (cardIdx < total - 1) {
+      setCardIdx(cardIdx + 1);
+    }
+  };
+
+  const reshuffle = () => {
+    setShuffled([...domain.entries].sort(() => Math.random() - 0.5));
+    setCardIdx(0); setFlipped(false); setKnown(new Set()); setToReview(new Set());
+  };
+
+  const allDone = known.size + toReview.size >= total;
+  const stageColors = { 1: 'bg-emerald-100 text-emerald-700', 2: 'bg-blue-100 text-blue-700', 3: 'bg-amber-100 text-amber-700' };
+  const stageLabels = { 1: 'Stade I', 2: 'Stade II', 3: 'Stade III' };
+
+  if (!card || allDone) {
+    return (
+      <div className="rounded-xl border border-cream-200 bg-white p-6 text-center space-y-4">
+        <Trophy className="w-10 h-10 text-amber-500 mx-auto" />
+        <h3 className="text-lg font-bold text-navy-900">Session terminée !</h3>
+        <div className="flex justify-center gap-6 text-sm">
+          <span className="text-emerald-600 font-bold"><ThumbsUp className="w-4 h-4 inline mr-1" />{known.size} maîtrisés</span>
+          <span className="text-amber-600 font-bold"><ThumbsDown className="w-4 h-4 inline mr-1" />{toReview.size} à revoir</span>
+        </div>
+        <p className="text-xs text-navy-400">+{known.size * TEF_XP_CONFIG.qcm_correct} XP gagnés</p>
+        <button onClick={reshuffle} className="px-5 py-2.5 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 inline-flex items-center gap-2">
+          <Shuffle className="w-4 h-4" />Recommencer
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Progress */}
+      <div className="flex items-center gap-3 text-xs text-navy-400">
+        <span>{cardIdx + 1}/{total}</span>
+        <div className="flex-1 bg-cream-100 rounded-full h-2 overflow-hidden">
+          <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${progress}%` }} />
+        </div>
+        <span className="text-emerald-600 font-bold">{known.size} ✓</span>
+        <span className="text-amber-600 font-bold">{toReview.size} ↻</span>
+      </div>
+
+      {/* Card */}
+      <div onClick={() => setFlipped(!flipped)}
+        className="rounded-2xl border-2 border-cream-200 bg-white min-h-[250px] p-6 flex flex-col items-center justify-center cursor-pointer hover:shadow-lg transition-shadow relative">
+
+        {!flipped ? (
+          <div className="text-center space-y-4">
+            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${stageColors[card.stage]}`}>{stageLabels[card.stage]}</span>
+            <p className="text-2xl font-bold text-navy-900">{card.term}</p>
+            <button onClick={(e) => { e.stopPropagation(); tts.speak(card.term, `fc-${cardIdx}`, 0.85); }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100">
+              <Volume2 className="w-3.5 h-3.5" />Écouter
+            </button>
+            <p className="text-xs text-navy-300 mt-4">Tapez pour retourner</p>
+          </div>
+        ) : (
+          <div className="text-center space-y-3 animate-in fade-in duration-200">
+            <p className="text-lg font-bold text-navy-900">{card.term}</p>
+            <p className="text-sm text-navy-600">{card.definition}</p>
+            <p className="text-sm text-navy-400 italic" dangerouslySetInnerHTML={{ __html: card.example.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-blue-700 not-italic">$1</strong>') }} />
+            {card.synonyms.length > 0 && <p className="text-xs text-navy-400">≈ {card.synonyms.join(', ')}</p>}
+          </div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      {flipped && (
+        <div className="flex gap-3">
+          <button onClick={() => markAndNext(false)}
+            className="flex-1 py-3 rounded-xl bg-amber-50 text-amber-700 font-semibold text-sm border border-amber-200 hover:bg-amber-100 flex items-center justify-center gap-2">
+            <RotateCcw className="w-4 h-4" />À revoir
+          </button>
+          <button onClick={() => markAndNext(true)}
+            className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-500 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />Je sais !
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── QUIZ MODE ──
+function LexiqueQuiz({ domain }: { domain: LexiqueDomain }) {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [answered, setAnswered] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const addXp = useGamificationStore(s => s.addXp);
+
+  const QUIZ_SIZE = 10;
+
+  useEffect(() => {
+    const shuffled = [...domain.quizQuestions].sort(() => Math.random() - 0.5).slice(0, QUIZ_SIZE);
+    setQuestions(shuffled);
+    setCurrentIdx(0); setSelected(null); setScore(0); setAnswered(0); setShowResult(false);
+  }, [domain]);
+
+  const q = questions[currentIdx];
+  const isFinished = answered >= questions.length && questions.length > 0;
+
+  const handleSelect = (idx: number) => {
+    if (selected !== null) return;
+    setSelected(idx);
+    const correct = idx === q.correctIndex;
+    if (correct) {
+      setScore(s => s + 1);
+      addXp(TEF_XP_CONFIG.qcm_correct, 'TEF Lexique quiz');
+    }
+    setAnswered(a => a + 1);
+  };
+
+  const nextQuestion = () => {
+    if (currentIdx < questions.length - 1) {
+      setCurrentIdx(currentIdx + 1);
+      setSelected(null);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  const restart = () => {
+    const shuffled = [...domain.quizQuestions].sort(() => Math.random() - 0.5).slice(0, QUIZ_SIZE);
+    setQuestions(shuffled);
+    setCurrentIdx(0); setSelected(null); setScore(0); setAnswered(0); setShowResult(false);
+  };
+
+  if (questions.length === 0) {
+    return <p className="text-sm text-navy-400 py-8 text-center">Pas assez de questions pour ce domaine.</p>;
+  }
+
+  if (showResult || isFinished) {
+    const pct = Math.round((score / questions.length) * 100);
+    const nclc = pct >= 85 ? 9 : pct >= 70 ? 8 : pct >= 55 ? 7 : pct >= 40 ? 6 : 5;
+    return (
+      <div className="rounded-xl border border-cream-200 bg-white p-6 text-center space-y-4">
+        <div className={`rounded-xl p-5 text-white ${pct >= 70 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
+          <p className="text-3xl font-extrabold">{score}/{questions.length}</p>
+          <p className="text-sm opacity-80 mt-1">{pct}% — Niveau estimé NCLC {nclc}</p>
+          <div className="mt-2"><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-sm font-bold"><Zap className="h-3.5 w-3.5" />+{score * TEF_XP_CONFIG.qcm_correct} XP</span></div>
+        </div>
+        <button onClick={restart} className="px-5 py-2.5 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 inline-flex items-center gap-2">
+          <Shuffle className="w-4 h-4" />Nouveau quiz
+        </button>
+      </div>
+    );
+  }
+
+  const typeLabels: Record<string, string> = { synonym: 'Synonyme', definition: 'Définition', fill_blank: 'Complétez', register: 'Registre' };
+  const typeColors: Record<string, string> = { synonym: 'bg-purple-100 text-purple-700', definition: 'bg-blue-100 text-blue-700', fill_blank: 'bg-emerald-100 text-emerald-700', register: 'bg-amber-100 text-amber-700' };
+
+  return (
+    <div className="space-y-4">
+      {/* Progress */}
+      <div className="flex items-center gap-3 text-xs text-navy-400">
+        <span>Q{currentIdx + 1}/{questions.length}</span>
+        <div className="flex-1 bg-cream-100 rounded-full h-2 overflow-hidden">
+          <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${((currentIdx + (selected !== null ? 1 : 0)) / questions.length) * 100}%` }} />
+        </div>
+        <span className="text-emerald-600 font-bold">{score} ✓</span>
+      </div>
+
+      {/* Question */}
+      <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${typeColors[q.type] || 'bg-gray-100'}`}>{typeLabels[q.type]}</span>
+        </div>
+        <p className="text-sm font-semibold text-navy-800">{q.question}</p>
+
+        <div className="space-y-2">
+          {q.choices.map((choice, idx) => {
+            let style = 'border-cream-200 bg-cream-50 text-navy-700 hover:bg-cream-100';
+            if (selected !== null) {
+              if (idx === q.correctIndex) style = 'border-emerald-400 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-400';
+              else if (idx === selected && idx !== q.correctIndex) style = 'border-red-400 bg-red-50 text-red-700';
+              else style = 'border-cream-200 bg-cream-50 text-navy-400';
+            }
+            return (
+              <button key={idx} onClick={() => handleSelect(idx)} disabled={selected !== null}
+                className={`w-full text-left px-4 py-3 rounded-lg border text-sm font-medium transition-all ${style}`}>
+                <span className="font-mono text-[11px] mr-2 text-navy-300">{String.fromCharCode(65 + idx)}</span>
+                {choice}
+                {selected !== null && idx === q.correctIndex && <CheckCircle2 className="w-4 h-4 inline ml-2 text-emerald-600" />}
+                {selected !== null && idx === selected && idx !== q.correctIndex && <XCircle className="w-4 h-4 inline ml-2 text-red-500" />}
+              </button>
+            );
+          })}
+        </div>
+
+        {selected !== null && (
+          <button onClick={nextQuestion}
+            className="w-full py-2.5 rounded-lg bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 flex items-center justify-center gap-2">
+            {currentIdx < questions.length - 1 ? <><ArrowRight className="w-4 h-4" />Question suivante</> : <><Trophy className="w-4 h-4" />Voir résultat</>}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── DICTÉE MODE ──
+function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
+  const [entries, setEntries] = useState<VocabEntry[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [userInput, setUserInput] = useState('');
+  const [checked, setChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [score, setScore] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const tts = useFrenchTTS();
+  const addXp = useGamificationStore(s => s.addXp);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const DICTEE_SIZE = 8;
+
+  useEffect(() => {
+    const shuffled = [...domain.entries].sort(() => Math.random() - 0.5).slice(0, DICTEE_SIZE);
+    setEntries(shuffled);
+    setCurrentIdx(0); setUserInput(''); setChecked(false); setScore(0); setTotal(0); setShowResult(false);
+  }, [domain]);
+
+  const entry = entries[currentIdx];
+
+  useEffect(() => {
+    if (entry && !checked) {
+      // Auto-play TTS after a short delay
+      const t = setTimeout(() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8), 500);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIdx, checked, entry]);
+
+  if (!entry || showResult) {
+    const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+    return (
+      <div className="rounded-xl border border-cream-200 bg-white p-6 text-center space-y-4">
+        <Pen className="w-10 h-10 text-blue-500 mx-auto" />
+        <h3 className="text-lg font-bold text-navy-900">Dictée terminée !</h3>
+        <p className="text-2xl font-extrabold text-navy-900">{score}/{total} <span className="text-sm font-normal text-navy-400">({pct}%)</span></p>
+        <p className="text-xs text-navy-400">+{score * TEF_XP_CONFIG.qcm_correct} XP gagnés</p>
+        <button onClick={() => {
+          const shuffled = [...domain.entries].sort(() => Math.random() - 0.5).slice(0, DICTEE_SIZE);
+          setEntries(shuffled); setCurrentIdx(0); setUserInput(''); setChecked(false); setScore(0); setTotal(0); setShowResult(false);
+        }} className="px-5 py-2.5 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 inline-flex items-center gap-2">
+          <Shuffle className="w-4 h-4" />Nouvelle dictée
+        </button>
+      </div>
+    );
+  }
+
+  const normalize = (s: string) => s.toLowerCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
+    .replace(/['']/g, "'").replace(/\s+/g, ' ');
+
+  const checkAnswer = () => {
+    const normalizedUser = normalize(userInput);
+    const normalizedTerm = normalize(entry.term);
+    // Accept with or without accents
+    const correct = normalizedUser === normalizedTerm ||
+      userInput.toLowerCase().trim() === entry.term.toLowerCase().trim();
+    setIsCorrect(correct);
+    setChecked(true);
+    setTotal(t => t + 1);
+    if (correct) {
+      setScore(s => s + 1);
+      addXp(TEF_XP_CONFIG.qcm_correct, 'TEF Lexique dictée');
+    }
+  };
+
+  const nextWord = () => {
+    if (currentIdx < entries.length - 1) {
+      setCurrentIdx(currentIdx + 1);
+      setUserInput(''); setChecked(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Progress */}
+      <div className="flex items-center gap-3 text-xs text-navy-400">
+        <span>{currentIdx + 1}/{entries.length}</span>
+        <div className="flex-1 bg-cream-100 rounded-full h-2 overflow-hidden">
+          <div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${((currentIdx + (checked ? 1 : 0)) / entries.length) * 100}%` }} />
+        </div>
+        <span className="text-emerald-600 font-bold">{score} ✓</span>
+      </div>
+
+      <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
+        <p className="text-sm text-navy-500 text-center">Écoutez le mot ou l&apos;expression, puis écrivez-le.</p>
+
+        {/* TTS buttons */}
+        <div className="flex justify-center gap-3">
+          <button onClick={() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${tts.speakingId === `dict-${currentIdx}` ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'}`}>
+            <Volume2 className="w-4 h-4" />Écouter
+          </button>
+          <button onClick={() => tts.speak(entry.term, `dict-slow-${currentIdx}`, 0.55)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium inline-flex items-center gap-2 ${tts.speakingId === `dict-slow-${currentIdx}` ? 'bg-blue-600 text-white' : 'bg-cream-50 text-navy-600 border border-cream-200 hover:bg-cream-100'}`}>
+            <Volume2 className="w-4 h-4" />Lent
+          </button>
+        </div>
+
+        {/* Input */}
+        <div className="relative">
+          <input ref={inputRef} type="text" value={userInput}
+            onChange={e => setUserInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !checked && userInput.trim()) checkAnswer(); if (e.key === 'Enter' && checked) nextWord(); }}
+            disabled={checked} placeholder="Écrivez ce que vous entendez..."
+            className={`w-full px-4 py-3 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 ${checked ? (isCorrect ? 'border-emerald-400 bg-emerald-50 text-emerald-800 ring-emerald-400' : 'border-red-400 bg-red-50 text-red-700 ring-red-400') : 'border-cream-200 bg-white text-navy-800 focus:ring-blue-400 focus:border-blue-400'}`}
+            autoFocus autoComplete="off" autoCapitalize="off" spellCheck={false} />
+        </div>
+
+        {/* Check / Result */}
+        {!checked ? (
+          <button onClick={checkAnswer} disabled={!userInput.trim()}
+            className="w-full py-2.5 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-500 disabled:opacity-50 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />Vérifier
+          </button>
+        ) : (
+          <div className="space-y-3">
+            {isCorrect ? (
+              <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 rounded-lg px-4 py-2">
+                <CheckCircle2 className="w-5 h-5" /><span className="text-sm font-bold">Correct !</span>
+                <span className="ml-auto text-xs font-bold"><Zap className="w-3.5 h-3.5 inline" /> +{TEF_XP_CONFIG.qcm_correct} XP</span>
+              </div>
+            ) : (
+              <div className="bg-red-50 rounded-lg px-4 py-2 space-y-1">
+                <div className="flex items-center gap-2 text-red-700"><XCircle className="w-5 h-5" /><span className="text-sm font-bold">Incorrect</span></div>
+                <p className="text-sm text-red-600">Réponse : <strong>{entry.term}</strong></p>
+              </div>
+            )}
+            <p className="text-xs text-navy-400"><em>{entry.definition}</em></p>
+            <button onClick={nextWord}
+              className="w-full py-2.5 rounded-lg bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 flex items-center justify-center gap-2">
+              {currentIdx < entries.length - 1 ? <><ArrowRight className="w-4 h-4" />Suivant</> : <><Trophy className="w-4 h-4" />Résultat</>}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
