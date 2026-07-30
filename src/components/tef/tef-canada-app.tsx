@@ -576,9 +576,16 @@ function EOTrainingPanel() {
   const [recordingStart, setRecordingStart] = useState(0);
   const [speechResult, setSpeechResult] = useState<ReturnType<typeof analyzeSpeech> | null>(null);
   const [sessionXP, setSessionXP] = useState(0);
+  const [pendingAnalysis, setPendingAnalysis] = useState(false);
   const tts = useFrenchTTS();
   const sr = useSpeechRecognition();
   const addXp = useGamificationStore(s => s.addXp);
+  const transcriptRef = useRef(sr.transcript);
+  const confidenceRef = useRef(sr.confidence);
+
+  // Keep refs in sync with latest transcript/confidence
+  useEffect(() => { transcriptRef.current = sr.transcript; }, [sr.transcript]);
+  useEffect(() => { confidenceRef.current = sr.confidence; }, [sr.confidence]);
 
   const exercise = selectedExercise !== null ? eoExercises[selectedExercise] : null;
 
@@ -591,18 +598,30 @@ function EOTrainingPanel() {
 
   const stopAndAnalyze = () => {
     sr.stopListening();
-    const duration = Math.round((Date.now() - recordingStart) / 1000);
-    const result = analyzeSpeech(sr.transcript, sr.confidence, duration);
-    setSpeechResult(result);
-    const xp = TEF_XP_CONFIG.speaking_submit + (result.fluencyScore >= 14 ? TEF_XP_CONFIG.speaking_fluency_bonus : 0);
-    setSessionXP(xp);
-    addXp(xp, 'TEF EO exercise');
-    setPhase('results');
+    // Give recognition time to flush final results before analyzing
+    setPendingAnalysis(true);
   };
+
+  // Run analysis after a short delay to let the transcript settle
+  useEffect(() => {
+    if (!pendingAnalysis) return;
+    const timer = setTimeout(() => {
+      const duration = Math.max(1, Math.round((Date.now() - recordingStart) / 1000));
+      const result = analyzeSpeech(transcriptRef.current, confidenceRef.current, duration);
+      setSpeechResult(result);
+      const xp = TEF_XP_CONFIG.speaking_submit + (result.fluencyScore >= 14 ? TEF_XP_CONFIG.speaking_fluency_bonus : 0);
+      setSessionXP(xp);
+      addXp(xp, 'TEF EO exercise');
+      setPhase('results');
+      setPendingAnalysis(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAnalysis]);
 
   const reset = () => {
     setSelectedExercise(null); setSelectedVariant(0); setPhase('listen');
-    setSpeechResult(null); setSessionXP(0); sr.resetTranscript();
+    setSpeechResult(null); setSessionXP(0); sr.resetTranscript(); setPendingAnalysis(false);
   };
 
   if (selectedExercise === null) {

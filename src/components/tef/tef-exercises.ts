@@ -133,7 +133,7 @@ export const eoExercises: TEFSpeakingExercise[] = eoItems.map((item, idx) => ({
   ],
   tipsForNCLC7: [
     'Reformulez avant de répondre sur le fond',
-    'Utilisez des chevilles (alors, voyons, effectivement) pour combler la réflexion',
+    'Utilisez des connecteurs oraux (alors, voyons, effectivement) pour structurer votre réflexion',
     'Relancez l\'interlocuteur avec des questions',
     'Variez les connecteurs : cependant, par ailleurs, en revanche',
     'Ne mémorisez pas un script — entraînez la réaction',

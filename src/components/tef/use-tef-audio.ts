@@ -21,6 +21,10 @@ export function useFrenchTTS() {
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const frVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const voicesReadyRef = useRef(false);
+  const speakingIdRef = useRef<string | null>(null);
+
+  // Keep ref in sync with state to avoid stale closures
+  useEffect(() => { speakingIdRef.current = speakingId; }, [speakingId]);
 
   // Pre-warm French voices
   useEffect(() => {
@@ -37,7 +41,7 @@ export function useFrenchTTS() {
         // France French (fallback)
         'Thomas', 'Google français', 'Microsoft Paul',
         'Microsoft Julie', 'Microsoft Hortense',
-        // Edge
+        // Edge / Android
         'Denise', 'Henri', 'Sylvie',
         // Generic
         'French',
@@ -69,6 +73,7 @@ export function useFrenchTTS() {
 
     pickVoice();
     window.speechSynthesis.onvoiceschanged = pickVoice;
+    // Some browsers need this extra call to trigger onvoiceschanged
     window.speechSynthesis.getVoices();
 
     return () => {
@@ -79,11 +84,11 @@ export function useFrenchTTS() {
   const speak = useCallback((text: string, id: string, rate = 0.9) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
-    // Stop current
+    // Stop current utterance
     window.speechSynthesis.cancel();
 
-    // Toggle off if same
-    if (speakingId === id) {
+    // Toggle off if same id is already speaking
+    if (speakingIdRef.current === id) {
       setSpeakingId(null);
       setIsSpeaking(false);
       return;
@@ -93,16 +98,21 @@ export function useFrenchTTS() {
     setIsSpeaking(true);
 
     const doSpeak = () => {
+      // Android Chrome bug: cancel + immediate speak can fail.
+      // Adding a small delay after cancel helps.
+      window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'fr-FR'; // fr-CA often not available, fr-FR works
       utterance.rate = rate;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
+      // Try to assign a French voice
       if (frVoiceRef.current) {
         utterance.voice = frVoiceRef.current;
       } else {
-        // Last resort attempt
+        // Last resort attempt to pick a voice
         const voices = window.speechSynthesis.getVoices();
         const frVoice =
           voices.find((v) => v.lang === 'fr-CA') ??
@@ -127,21 +137,29 @@ export function useFrenchTTS() {
       };
 
       window.speechSynthesis.speak(utterance);
+
+      // Chrome/Android bug: synthesis can get stuck paused.
+      // Resume periodically to keep it alive.
+      const resumeInterval = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.resume();
+        } else {
+          clearInterval(resumeInterval);
+        }
+      }, 5000);
     };
 
-    if (!voicesReadyRef.current) {
-      setTimeout(doSpeak, 200);
-    } else {
-      setTimeout(doSpeak, 50);
-    }
+    // Give browser time to cancel previous and load voices
+    const delay = voicesReadyRef.current ? 100 : 300;
+    setTimeout(doSpeak, delay);
 
-    // Safety timeout
-    const safetyMs = Math.max(text.length * 120, 8000);
+    // Safety timeout — auto-clear state if TTS hangs
+    const safetyMs = Math.max(text.length * 150, 10000);
     setTimeout(() => {
       setSpeakingId((prev) => (prev === id ? null : prev));
-      setIsSpeaking((prev) => (speakingId === id ? false : prev));
+      setIsSpeaking(false);
     }, safetyMs);
-  }, [speakingId]);
+  }, []);
 
   const stop = useCallback(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -201,6 +219,9 @@ export function useSpeechRecognition() {
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<unknown>(null);
+  // Accumulate final results in a ref to avoid stale closures
+  const finalPartsRef = useRef<string[]>([]);
+  const confidenceAccRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -224,8 +245,12 @@ export function useSpeechRecognition() {
 
     // Stop any existing
     if (recognitionRef.current) {
-      (recognitionRef.current as { stop: () => void }).stop();
+      try { (recognitionRef.current as { stop: () => void }).stop(); } catch { /* ignore */ }
     }
+
+    // Reset accumulators
+    finalPartsRef.current = [];
+    confidenceAccRef.current = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const recognition = new (SpeechRecognition as any)();
@@ -242,21 +267,36 @@ export function useSpeechRecognition() {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalText = '';
+      // Process ONLY new results starting from event.resultIndex.
+      // Each result transitions from interim → final exactly once.
+      // We accumulate final parts in a ref so we never lose them.
       let interimText = '';
 
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          finalText += result[0].transcript;
-          setConfidence(result[0].confidence);
+          // This segment just became final — append it
+          const segmentText = result[0].transcript.trim();
+          if (segmentText) {
+            finalPartsRef.current.push(segmentText);
+            confidenceAccRef.current.push(result[0].confidence);
+          }
         } else {
+          // Still interim
           interimText += result[0].transcript;
         }
       }
 
-      if (finalText) setTranscript(finalText);
+      // Update state: join all final parts with a space
+      const fullFinal = finalPartsRef.current.join(' ');
+      setTranscript(fullFinal);
       setInterimTranscript(interimText);
+
+      // Average confidence of all final segments
+      if (confidenceAccRef.current.length > 0) {
+        const avgConf = confidenceAccRef.current.reduce((a, b) => a + b, 0) / confidenceAccRef.current.length;
+        setConfidence(avgConf);
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -275,12 +315,14 @@ export function useSpeechRecognition() {
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
-      (recognitionRef.current as { stop: () => void }).stop();
+      try { (recognitionRef.current as { stop: () => void }).stop(); } catch { /* ignore */ }
     }
     setIsListening(false);
   }, []);
 
   const resetTranscript = useCallback(() => {
+    finalPartsRef.current = [];
+    confidenceAccRef.current = [];
     setTranscript('');
     setInterimTranscript('');
     setConfidence(0);
@@ -458,6 +500,29 @@ export interface SpeechAnalysis {
   estimatedNCLC: number;
 }
 
+/**
+ * Detect heavy repetition in a transcript.
+ * Returns a ratio 0..1 where 0 = everything is repeated, 1 = all unique.
+ */
+function computeRepetitionPenalty(text: string): { uniqueRatio: number; repeatedWords: string[] } {
+  const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  if (words.length === 0) return { uniqueRatio: 0, repeatedWords: [] };
+
+  const counts = new Map<string, number>();
+  for (const w of words) counts.set(w, (counts.get(w) || 0) + 1);
+
+  const uniqueCount = counts.size;
+  const uniqueRatio = uniqueCount / words.length;
+
+  // Words that appear 3+ times
+  const repeatedWords: string[] = [];
+  counts.forEach((count, word) => {
+    if (count >= 3) repeatedWords.push(word);
+  });
+
+  return { uniqueRatio, repeatedWords };
+}
+
 export function analyzeSpeech(transcript: string, confidence: number, durationSeconds: number): SpeechAnalysis {
   const words = transcript.trim().split(/\s+/).filter(w => w.length > 0);
   const wordCount = words.length;
@@ -471,19 +536,29 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
     }
   }
 
-  // Fluency: based on WPM and confidence
+  // Detect repetition — penalize heavily repeated speech
+  const { uniqueRatio, repeatedWords } = computeRepetitionPenalty(transcript);
+  // If uniqueRatio < 0.3 the speaker is essentially repeating the same words
+  const repetitionPenalty = uniqueRatio < 0.3 ? 0.3 : uniqueRatio < 0.5 ? 0.6 : uniqueRatio < 0.7 ? 0.85 : 1.0;
+
+  // Fluency: based on WPM, confidence, AND repetition penalty
+  // A WPM that's too high (>180) with low unique ratio = garbled/repeated speech
   let fluencyScore = 4;
-  if (wordsPerMinute >= 60) fluencyScore += 4;
-  if (wordsPerMinute >= 90) fluencyScore += 4;
-  if (wordsPerMinute >= 120) fluencyScore += 4;
+  const effectiveWPM = wordsPerMinute > 180 && uniqueRatio < 0.5 ? 60 : wordsPerMinute;
+  if (effectiveWPM >= 60 && effectiveWPM <= 180) fluencyScore += 4;
+  if (effectiveWPM >= 90 && effectiveWPM <= 160) fluencyScore += 4;
+  if (effectiveWPM >= 110 && effectiveWPM <= 150) fluencyScore += 4;
   if (confidence >= 0.7) fluencyScore += 2;
   if (confidence >= 0.85) fluencyScore += 2;
-  fluencyScore = Math.min(fluencyScore, 20);
+  // Apply repetition penalty
+  fluencyScore = Math.round(fluencyScore * repetitionPenalty);
+  fluencyScore = Math.max(2, Math.min(fluencyScore, 20));
 
-  // Content: word count and connectors
+  // Content: unique word count and connectors (not total words — to penalize repetition)
+  const uniqueWordCount = new Set(words.map(w => w.toLowerCase())).size;
   let contentScore = 4;
-  if (wordCount >= 20) contentScore += 4;
-  if (wordCount >= 40) contentScore += 4;
+  if (uniqueWordCount >= 15) contentScore += 4;
+  if (uniqueWordCount >= 30) contentScore += 4;
   if (foundConnectors.length >= 2) contentScore += 4;
   if (foundConnectors.length >= 4) contentScore += 4;
   contentScore = Math.min(contentScore, 20);
@@ -493,7 +568,7 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
   if (transcript.includes('?')) interactionScore += 4;
   if (textLower.includes('c\'est-à-dire') || textLower.includes('autrement dit') || textLower.includes('je veux dire')) interactionScore += 4;
   if (textLower.includes('mais') || textLower.includes('cependant') || textLower.includes('par contre')) interactionScore += 4;
-  if (wordCount >= 30) interactionScore += 4;
+  if (uniqueWordCount >= 20) interactionScore += 4;
   interactionScore = Math.min(interactionScore, 20);
 
   const totalScore = fluencyScore + contentScore + interactionScore;
