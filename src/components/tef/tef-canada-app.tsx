@@ -14,7 +14,8 @@ import type {
   TEFSection, TEFChoice, TEFExerciseAnswer,
 } from './tef-types';
 import { TEF_XP_CONFIG, SECTION_CONFIG, estimateNCLC } from './tef-types';
-import { useFrenchTTS, useSpeechRecognition, analyzeText, analyzeSpeech } from './use-tef-audio';
+import { useFrenchTTS, useSpeechRecognition, analyzeText, analyzeSpeech, useAIEvaluation } from './use-tef-audio';
+import type { AIWritingEvaluation, AISpeakingEvaluation } from './use-tef-audio';
 import { useGamificationStore } from '@/stores/gamification-store';
 import {
   BookOpen, ChevronRight, ChevronDown, Target, Award, FileText,
@@ -945,7 +946,7 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// EE TRAINING (Writing with auto-scoring)
+// EE TRAINING (Writing with AI evaluation)
 // ══════════════════════════════════════════════════════════════════════════
 function EETrainingPanel() {
   const [selectedExercise, setSelectedExercise] = useState<number | null>(null);
@@ -954,30 +955,34 @@ function EETrainingPanel() {
   const [showModel, setShowModel] = useState(false);
   const [sessionXP, setSessionXP] = useState(0);
   const addXp = useGamificationStore(s => s.addXp);
+  const aiEval = useAIEvaluation();
 
   const exercise = selectedExercise !== null ? eeExercises[selectedExercise] : null;
 
-  const submitText = () => {
+  const submitText = async () => {
     if (!exercise) return;
+    // Instant local analysis
     const result = analyzeText(userText, exercise.minWords, exercise.maxWords);
     setAnalysis(result);
     const xp = TEF_XP_CONFIG.writing_submit + Object.values(result.criteriaScores).filter(s => s >= 14).length * TEF_XP_CONFIG.writing_criteria_bonus;
     setSessionXP(xp);
     addXp(xp, 'TEF EE exercise');
+    // Launch AI evaluation in background
+    const section = selectedExercise === 0 ? 'A' : 'B';
+    aiEval.evaluateWriting(userText, exercise.sujet, section as 'A' | 'B', exercise.minWords, exercise.maxWords);
   };
 
-  const reset = () => { setSelectedExercise(null); setUserText(''); setAnalysis(null); setShowModel(false); setSessionXP(0); };
+  const reset = () => { setSelectedExercise(null); setUserText(''); setAnalysis(null); setShowModel(false); setSessionXP(0); aiEval.resetEvaluation(); };
 
   if (selectedExercise === null) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
-        <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">Épreuve</p><h2 className="text-xl font-bold text-navy-900 mb-2">Expression écrite</h2><p className="text-sm text-navy-400 max-w-2xl">Section A (fait divers, 80 mots min) et Section B (argumentation, 200 mots min). Grille à 5 critères.</p></div>
+        <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">Épreuve</p><h2 className="text-xl font-bold text-navy-900 mb-2">Expression écrite</h2><p className="text-sm text-navy-400 max-w-2xl">Section A (fait divers, 80 mots min) et Section B (argumentation, 200 mots min). Grille à 5 critères. Évaluation IA incluse.</p></div>
         {/* Grading grid */}
         <div className="rounded-xl border border-cream-200 bg-white p-5">
           <h3 className="text-base font-semibold text-navy-900 mb-3 flex items-center gap-2"><Award className="w-4 h-4 text-emerald-600" />Grille de correction · 5 critères</h3>
           <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b-2 border-navy-100">{eeGrille.headers.map((h, i) => <th key={i} className="text-left py-2 px-3 text-[11px] font-semibold tracking-wider uppercase text-navy-400">{h}</th>)}</tr></thead><tbody className="divide-y divide-cream-100">{eeGrille.rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={ci} className={`py-2 px-3 ${ci === 0 ? 'font-medium text-navy-800' : 'text-navy-500'} text-sm`}>{cell}</td>)}</tr>)}</tbody></table></div>
         </div>
-        {/* Exercise cards */}
         {eeExercises.map((ex, idx) => (
           <button key={idx} onClick={() => setSelectedExercise(idx)} className="w-full rounded-xl border border-cream-200 bg-white p-5 text-left hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-2">
@@ -985,7 +990,7 @@ function EETrainingPanel() {
               <span className="text-sm font-semibold text-navy-800">{ex.meta}</span>
             </div>
             <p className="text-sm text-navy-500 line-clamp-2">{ex.sujet}</p>
-            <div className="flex items-center gap-2 mt-3 text-xs text-navy-400"><PenTool className="w-3.5 h-3.5" />{ex.minWords}-{ex.maxWords} mots · 5 critères · +{TEF_XP_CONFIG.writing_submit} XP</div>
+            <div className="flex items-center gap-2 mt-3 text-xs text-navy-400"><PenTool className="w-3.5 h-3.5" />{ex.minWords}-{ex.maxWords} mots · 5 critères · Évaluation IA · +{TEF_XP_CONFIG.writing_submit} XP</div>
           </button>
         ))}
       </div>
@@ -998,7 +1003,7 @@ function EETrainingPanel() {
       <div className="rounded-xl border border-cream-200 bg-white p-5">
         <p className="text-xs font-medium text-navy-400 mb-2">{exercise!.meta}</p>
         <h3 className="text-sm font-semibold text-navy-800 mb-4">{exercise!.sujet}</h3>
-        <textarea value={userText} onChange={e => setUserText(e.target.value)} placeholder="Rédigez votre texte ici..." className="w-full min-h-[200px] p-4 rounded-lg border border-cream-200 text-sm text-navy-700 focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-y" disabled={!!analysis} />
+        <textarea value={userText} onChange={e => setUserText(e.target.value)} placeholder="Rédigez votre texte ici…" className="w-full min-h-[200px] p-4 rounded-lg border border-cream-200 text-sm text-navy-700 focus:ring-2 focus:ring-blue-300 focus:border-blue-400 outline-none resize-y" disabled={!!analysis} />
         <div className="flex items-center justify-between mt-3">
           <span className={`text-xs font-medium ${userText.split(/\s+/).filter(w => w).length < exercise!.minWords ? 'text-red-500' : 'text-emerald-600'}`}>
             {userText.split(/\s+/).filter(w => w).length} / {exercise!.minWords} mots min
@@ -1007,35 +1012,105 @@ function EETrainingPanel() {
         </div>
       </div>
 
-      {/* Analysis results */}
       {analysis && (
         <div className="space-y-4">
-          <div className={`rounded-xl p-6 text-center text-white ${analysis.estimatedNCLC >= 7 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
-            <p className="text-4xl font-extrabold">NCLC {analysis.estimatedNCLC}</p>
-            <p className="text-sm opacity-80 mt-1">{analysis.wordCount} mots · {analysis.sentenceCount} phrases · Connecteurs : {analysis.connectorsLevel}</p>
-            <div className="mt-3"><span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/20 text-sm font-bold"><Zap className="h-4 w-4" />+{sessionXP} XP</span></div>
-          </div>
-
-          {/* Criteria breakdown */}
-          <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-3">
-            <h4 className="text-sm font-semibold text-navy-800">Évaluation par critère</h4>
-            {exercise!.criteria.map((c, i) => {
-              const score = Object.values(analysis.criteriaScores)[i] ?? 0;
-              const pct = Math.round((score / c.maxPoints) * 100);
-              return (
-                <div key={c.id} className="space-y-1">
-                  <div className="flex justify-between text-xs"><span className="font-medium text-navy-700">{c.label}</span><span className={`font-bold ${pct >= 70 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{score}/{c.maxPoints}</span></div>
-                  <div className="bg-cream-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full transition-all ${pct >= 70 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} /></div>
-                </div>
-              );
-            })}
-            {analysis.connectorsUsed.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-cream-100">
-                <p className="text-xs font-semibold text-navy-500 mb-2">Connecteurs détectés</p>
-                <div className="flex flex-wrap gap-1.5">{analysis.connectorsUsed.map((c, i) => <span key={i} className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200">{c}</span>)}</div>
+          {/* Score banner (uses AI eval if available, local otherwise) */}
+          {(() => {
+            const nclc = aiEval.writingEval?.estimatedNCLC ?? analysis.estimatedNCLC;
+            const total = aiEval.writingEval?.totalScore ?? Object.values(analysis.criteriaScores).reduce((a, b) => a + b, 0);
+            return (
+              <div className={`rounded-xl p-6 text-center text-white ${nclc >= 7 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
+                <p className="text-4xl font-extrabold">NCLC {nclc}</p>
+                <p className="text-sm opacity-80 mt-1">{analysis.wordCount} mots · {total}/100 pts · Connecteurs : {analysis.connectorsLevel}</p>
+                <div className="mt-3"><span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/20 text-sm font-bold"><Zap className="h-4 w-4" />+{sessionXP} XP</span></div>
               </div>
-            )}
-          </div>
+            );
+          })()}
+
+          {/* AI evaluation loading */}
+          {aiEval.isEvaluating && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex items-center gap-3">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-blue-700 font-medium">Évaluation IA en cours (examinateur certifié TEF)…</p>
+            </div>
+          )}
+
+          {/* AI evaluation results */}
+          {aiEval.writingEval && (
+            <div className="space-y-4">
+              {/* AI criteria scores */}
+              <div className="rounded-xl border border-indigo-200 bg-white p-5 space-y-3">
+                <h4 className="text-sm font-semibold text-navy-800 flex items-center gap-2"><Award className="w-4 h-4 text-indigo-600" />Évaluation IA · 5 critères officiels TEF</h4>
+                {[
+                  { key: 'respectTache', label: 'Respect de la tâche' },
+                  { key: 'organisation', label: 'Organisation' },
+                  { key: 'richesseLexicale', label: 'Richesse lexicale' },
+                  { key: 'grammaire', label: 'Grammaire' },
+                  { key: 'cinquiemeCritere', label: selectedExercise === 0 ? 'Qualité narrative' : 'Qualité argumentative' },
+                ].map(({ key, label }) => {
+                  const s = aiEval.writingEval!.scores[key as keyof typeof aiEval.writingEval.scores];
+                  const pct = Math.round((s.score / s.max) * 100);
+                  return (
+                    <div key={key} className="space-y-1.5">
+                      <div className="flex justify-between text-xs"><span className="font-medium text-navy-700">{label}</span><span className={`font-bold ${pct >= 70 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{s.score}/{s.max}</span></div>
+                      <div className="bg-cream-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full transition-all ${pct >= 70 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} /></div>
+                      <p className="text-xs text-navy-500 italic">{s.feedback}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* AI global feedback */}
+              <div className="rounded-xl border border-cream-200 bg-cream-50 p-5 space-y-3">
+                <p className="text-sm text-navy-700">{aiEval.writingEval.globalFeedback}</p>
+                {aiEval.writingEval.strengths.length > 0 && (
+                  <div><p className="text-xs font-semibold text-emerald-700 mb-1">Points forts</p><ul className="space-y-1">{aiEval.writingEval.strengths.map((s, i) => <li key={i} className="text-sm text-navy-600 flex gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />{s}</li>)}</ul></div>
+                )}
+                {aiEval.writingEval.improvements.length > 0 && (
+                  <div><p className="text-xs font-semibold text-amber-700 mb-1">Axes d&apos;amélioration</p><ul className="space-y-1">{aiEval.writingEval.improvements.map((s, i) => <li key={i} className="text-sm text-navy-600 flex gap-2"><AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />{s}</li>)}</ul></div>
+                )}
+              </div>
+
+              {/* Corrected excerpts */}
+              {aiEval.writingEval.correctedExcerpts.length > 0 && (
+                <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-3">
+                  <h4 className="text-sm font-semibold text-navy-800">Corrections suggérées</h4>
+                  {aiEval.writingEval.correctedExcerpts.map((c, i) => (
+                    <div key={i} className="bg-cream-50 rounded-lg p-3 space-y-1 border border-cream-100">
+                      <p className="text-xs text-red-600 line-through">{c.original}</p>
+                      <p className="text-xs text-emerald-700 font-medium">{c.corrected}</p>
+                      <p className="text-xs text-navy-500 italic">{c.explanation}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* AI error fallback : show local analysis */}
+          {aiEval.evalError && (
+            <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-3">
+              <h4 className="text-sm font-semibold text-navy-800">Évaluation locale (estimation)</h4>
+              {exercise!.criteria.map((c, i) => {
+                const score = Object.values(analysis.criteriaScores)[i] ?? 0;
+                const pct = Math.round((score / c.maxPoints) * 100);
+                return (
+                  <div key={c.id} className="space-y-1">
+                    <div className="flex justify-between text-xs"><span className="font-medium text-navy-700">{c.label}</span><span className={`font-bold ${pct >= 70 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{score}/{c.maxPoints}</span></div>
+                    <div className="bg-cream-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full transition-all ${pct >= 70 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} /></div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Connectors */}
+          {analysis.connectorsUsed.length > 0 && (
+            <div className="rounded-xl border border-cream-200 bg-white p-4">
+              <p className="text-xs font-semibold text-navy-500 mb-2">Connecteurs détectés</p>
+              <div className="flex flex-wrap gap-1.5">{analysis.connectorsUsed.map((c, i) => <span key={i} className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-200">{c}</span>)}</div>
+            </div>
+          )}
 
           {/* Model texts */}
           <button onClick={() => setShowModel(!showModel)} className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-cream-200 bg-white text-sm font-medium text-navy-700 hover:bg-cream-50">
@@ -1056,11 +1131,12 @@ function EETrainingPanel() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// EO TRAINING (Speech Recognition + TTS)
+// EO TRAINING (Speech Recognition + Natural TTS + AI Evaluation)
 // ══════════════════════════════════════════════════════════════════════════
 function EOTrainingPanel() {
   const [selectedExercise, setSelectedExercise] = useState<number | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<number>(0);
+  const [accent, setAccent] = useState<'france' | 'quebec'>('france');
   const [phase, setPhase] = useState<'listen' | 'speak' | 'results'>('listen');
   const [recordingStart, setRecordingStart] = useState(0);
   const [speechResult, setSpeechResult] = useState<ReturnType<typeof analyzeSpeech> | null>(null);
@@ -1068,11 +1144,11 @@ function EOTrainingPanel() {
   const [pendingAnalysis, setPendingAnalysis] = useState(false);
   const tts = useFrenchTTS();
   const sr = useSpeechRecognition();
+  const aiEval = useAIEvaluation();
   const addXp = useGamificationStore(s => s.addXp);
   const transcriptRef = useRef(sr.transcript);
   const confidenceRef = useRef(sr.confidence);
 
-  // Keep refs in sync with latest transcript/confidence
   useEffect(() => { transcriptRef.current = sr.transcript; }, [sr.transcript]);
   useEffect(() => { confidenceRef.current = sr.confidence; }, [sr.confidence]);
 
@@ -1087,11 +1163,9 @@ function EOTrainingPanel() {
 
   const stopAndAnalyze = () => {
     sr.stopListening();
-    // Give recognition time to flush final results before analyzing
     setPendingAnalysis(true);
   };
 
-  // Run analysis after a short delay to let the transcript settle
   useEffect(() => {
     if (!pendingAnalysis) return;
     const timer = setTimeout(() => {
@@ -1103,6 +1177,16 @@ function EOTrainingPanel() {
       addXp(xp, 'TEF EO exercise');
       setPhase('results');
       setPendingAnalysis(false);
+      // Launch AI evaluation in background
+      if (exercise) {
+        const variant = exercise.variants[selectedVariant];
+        aiEval.evaluateSpeaking(
+          transcriptRef.current,
+          exercise.scenario,
+          duration,
+          { type: variant.type, examinerLine: variant.examinerLine, expectedSkill: variant.expectedSkill },
+        );
+      }
     }, 500);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1111,12 +1195,13 @@ function EOTrainingPanel() {
   const reset = () => {
     setSelectedExercise(null); setSelectedVariant(0); setPhase('listen');
     setSpeechResult(null); setSessionXP(0); sr.resetTranscript(); setPendingAnalysis(false);
+    aiEval.resetEvaluation();
   };
 
   if (selectedExercise === null) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
-        <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">Épreuve</p><h2 className="text-xl font-bold text-navy-900 mb-2">Expression orale</h2><p className="text-sm text-navy-400 max-w-2xl">Épreuve interactive de 15 min. Entraînez votre réaction, pas un script mémorisé.</p></div>
+        <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">Épreuve</p><h2 className="text-xl font-bold text-navy-900 mb-2">Expression orale</h2><p className="text-sm text-navy-400 max-w-2xl">Épreuve interactive de 15 min. Voix naturelle (France et Québec). Évaluation IA incluse.</p></div>
         {!sr.isSupported && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -1130,7 +1215,7 @@ function EOTrainingPanel() {
               <span className="text-sm font-semibold text-navy-800">{ex.scenario}</span>
             </div>
             <p className="text-sm text-navy-500 italic">{ex.ttsPrompt}</p>
-            <div className="flex items-center gap-2 mt-3 text-xs text-navy-400"><Mic className="w-3.5 h-3.5" />{ex.variants.length} variantes · +{TEF_XP_CONFIG.speaking_submit} XP</div>
+            <div className="flex items-center gap-2 mt-3 text-xs text-navy-400"><Mic className="w-3.5 h-3.5" />{ex.variants.length} variantes · Évaluation IA · +{TEF_XP_CONFIG.speaking_submit} XP</div>
           </button>
         ))}
       </div>
@@ -1147,19 +1232,27 @@ function EOTrainingPanel() {
         <p className="text-xs font-medium text-navy-400">{exercise!.meta}</p>
         <h3 className="text-sm font-semibold text-navy-800">{exercise!.scenario}</h3>
 
-        {/* Variant selector */}
-        <div className="flex gap-2">{exercise!.variants.map((v, i) => (
-          <button key={i} onClick={() => setSelectedVariant(i)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${i === selectedVariant ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>{v.type}</button>
-        ))}</div>
+        {/* Variant + Accent selectors */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {exercise!.variants.map((v, i) => (
+            <button key={i} onClick={() => setSelectedVariant(i)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${i === selectedVariant ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>{v.type}</button>
+          ))}
+          <span className="text-cream-300 mx-1">|</span>
+          <button onClick={() => setAccent('france')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${accent === 'france' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>🇫🇷 France</button>
+          <button onClick={() => setAccent('quebec')} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${accent === 'quebec' ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-cream-50 text-navy-500 border border-cream-200 hover:bg-cream-100'}`}>🇨🇦 Québec</button>
+        </div>
 
         {/* Examiner prompt */}
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-xs font-semibold text-amber-700 mb-2">L&apos;examinateur dit :</p>
           <p className="text-sm text-navy-700 italic mb-3">{variant.examinerLine}</p>
-          <button onClick={() => tts.speak(variant.examinerLine.replace(/[«»]/g, ''), `eo-${selectedVariant}`, exercise!.ttsSpeed)} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tts.speakingId === `eo-${selectedVariant}` ? 'bg-amber-600 text-white' : 'bg-white text-amber-700 border border-amber-300 hover:bg-amber-100'}`}>
-            {tts.speakingId === `eo-${selectedVariant}` ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            Écouter
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => tts.speak(variant.examinerLine.replace(/[«»]/g, ''), `eo-${selectedVariant}`, exercise!.ttsSpeed ?? 1.0, accent)} className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tts.speakingId === `eo-${selectedVariant}` ? 'bg-amber-600 text-white' : 'bg-white text-amber-700 border border-amber-300 hover:bg-amber-100'}`}>
+              {tts.speakingId === `eo-${selectedVariant}` ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              Écouter {accent === 'france' ? '🇫🇷' : '🇨🇦'}
+            </button>
+            {tts.isSpeaking && <span className="text-xs text-amber-600 animate-pulse">Lecture en cours…</span>}
+          </div>
           <p className="text-xs text-amber-600 mt-2">Compétence testée : {variant.expectedSkill}</p>
         </div>
 
@@ -1178,7 +1271,7 @@ function EOTrainingPanel() {
           <div className="text-center py-4 space-y-4">
             <div className="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
               <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-sm font-medium text-red-700">Enregistrement en cours...</span>
+              <span className="text-sm font-medium text-red-700">Enregistrement en cours…</span>
             </div>
             {sr.interimTranscript && <p className="text-sm text-navy-400 italic">{sr.interimTranscript}</p>}
             {sr.transcript && <p className="text-sm text-navy-600">{sr.transcript}</p>}
@@ -1191,30 +1284,99 @@ function EOTrainingPanel() {
         {/* Results phase */}
         {phase === 'results' && speechResult && (
           <div className="space-y-4">
-            <div className={`rounded-xl p-5 text-center text-white ${speechResult.estimatedNCLC >= 7 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
-              <p className="text-3xl font-extrabold">NCLC {speechResult.estimatedNCLC}</p>
-              <p className="text-sm opacity-80 mt-1">{speechResult.wordCount} mots · {speechResult.wordsPerMinute} mots/min · Confiance : {Math.round(speechResult.confidence * 100)}%</p>
-              <div className="mt-2"><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-sm font-bold"><Zap className="h-3.5 w-3.5" />+{sessionXP} XP</span></div>
-            </div>
+            {/* Score banner (AI or local) */}
+            {(() => {
+              const nclc = aiEval.speakingEval?.estimatedNCLC ?? speechResult.estimatedNCLC;
+              return (
+                <div className={`rounded-xl p-5 text-center text-white ${nclc >= 7 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
+                  <p className="text-3xl font-extrabold">NCLC {nclc}</p>
+                  <p className="text-sm opacity-80 mt-1">{speechResult.wordCount} mots · {speechResult.wordsPerMinute} mots/min · Confiance : {Math.round(speechResult.confidence * 100)}%</p>
+                  <div className="mt-2"><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-sm font-bold"><Zap className="h-3.5 w-3.5" />+{sessionXP} XP</span></div>
+                </div>
+              );
+            })()}
+
             {sr.transcript && (
               <div className="rounded-xl border border-cream-200 bg-cream-50 p-4"><p className="text-xs font-semibold text-navy-500 mb-2">Votre transcription :</p><p className="text-sm text-navy-700">{sr.transcript}</p></div>
             )}
-            <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-3">
-              <h4 className="text-sm font-semibold text-navy-800">Scores détaillés</h4>
-              {[
-                { label: 'Fluidité', score: speechResult.fluencyScore, max: 20 },
-                { label: 'Contenu', score: speechResult.contentScore, max: 20 },
-                { label: 'Interaction', score: speechResult.interactionScore, max: 20 },
-              ].map(({ label, score, max }) => {
-                const pct = Math.round((score / max) * 100);
-                return (
-                  <div key={label} className="space-y-1">
-                    <div className="flex justify-between text-xs"><span className="font-medium text-navy-700">{label}</span><span className={`font-bold ${pct >= 70 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{score}/{max}</span></div>
-                    <div className="bg-cream-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full ${pct >= 70 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} /></div>
+
+            {/* AI evaluation loading */}
+            {aiEval.isEvaluating && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-blue-700 font-medium">Évaluation IA en cours…</p>
+              </div>
+            )}
+
+            {/* AI evaluation results */}
+            {aiEval.speakingEval && (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-indigo-200 bg-white p-5 space-y-3">
+                  <h4 className="text-sm font-semibold text-navy-800 flex items-center gap-2"><Award className="w-4 h-4 text-indigo-600" />Évaluation IA · 5 critères EO</h4>
+                  {[
+                    { key: 'fluidite', label: 'Fluidité et aisance' },
+                    { key: 'richesseLexicale', label: 'Richesse du vocabulaire' },
+                    { key: 'interaction', label: 'Capacité d\'interaction' },
+                    { key: 'connecteurs', label: 'Utilisation de connecteurs' },
+                    { key: 'registre', label: 'Registre de langue' },
+                  ].map(({ key, label }) => {
+                    const s = aiEval.speakingEval!.scores[key as keyof typeof aiEval.speakingEval.scores];
+                    const pct = Math.round((s.score / s.max) * 100);
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <div className="flex justify-between text-xs"><span className="font-medium text-navy-700">{label}</span><span className={`font-bold ${pct >= 70 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{s.score}/{s.max}</span></div>
+                        <div className="bg-cream-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full transition-all ${pct >= 70 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} /></div>
+                        <p className="text-xs text-navy-500 italic">{s.feedback}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="rounded-xl border border-cream-200 bg-cream-50 p-5 space-y-3">
+                  <p className="text-sm text-navy-700">{aiEval.speakingEval.globalFeedback}</p>
+                  {aiEval.speakingEval.strengths.length > 0 && (
+                    <div><p className="text-xs font-semibold text-emerald-700 mb-1">Points forts</p><ul className="space-y-1">{aiEval.speakingEval.strengths.map((s, i) => <li key={i} className="text-sm text-navy-600 flex gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />{s}</li>)}</ul></div>
+                  )}
+                  {aiEval.speakingEval.improvements.length > 0 && (
+                    <div><p className="text-xs font-semibold text-amber-700 mb-1">Axes d&apos;amélioration</p><ul className="space-y-1">{aiEval.speakingEval.improvements.map((s, i) => <li key={i} className="text-sm text-navy-600 flex gap-2"><AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />{s}</li>)}</ul></div>
+                  )}
+                </div>
+
+                {aiEval.speakingEval.suggestedRephrasing.length > 0 && (
+                  <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-3">
+                    <h4 className="text-sm font-semibold text-navy-800">Reformulations suggérées</h4>
+                    {aiEval.speakingEval.suggestedRephrasing.map((r, i) => (
+                      <div key={i} className="bg-cream-50 rounded-lg p-3 space-y-1 border border-cream-100">
+                        <p className="text-xs text-navy-500">{r.original}</p>
+                        <p className="text-xs text-emerald-700 font-medium">→ {r.improved}</p>
+                        <p className="text-xs text-navy-400 italic">{r.why}</p>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </div>
+            )}
+
+            {/* Local scores fallback (always visible as secondary info) */}
+            {!aiEval.speakingEval && !aiEval.isEvaluating && (
+              <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-3">
+                <h4 className="text-sm font-semibold text-navy-800">Scores détaillés (estimation locale)</h4>
+                {[
+                  { label: 'Fluidité', score: speechResult.fluencyScore, max: 20 },
+                  { label: 'Contenu', score: speechResult.contentScore, max: 20 },
+                  { label: 'Interaction', score: speechResult.interactionScore, max: 20 },
+                ].map(({ label, score, max }) => {
+                  const pct = Math.round((score / max) * 100);
+                  return (
+                    <div key={label} className="space-y-1">
+                      <div className="flex justify-between text-xs"><span className="font-medium text-navy-700">{label}</span><span className={`font-bold ${pct >= 70 ? 'text-emerald-600' : pct >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{score}/{max}</span></div>
+                      <div className="bg-cream-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full ${pct >= 70 ? 'bg-emerald-400' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Tips */}
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-xs font-semibold text-blue-700 mb-2">Conseils pour NCLC 7</p>

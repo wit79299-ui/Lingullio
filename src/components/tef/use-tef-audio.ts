@@ -3,126 +3,162 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 /**
- * TEF-specific audio hook.
+ * TEF-specific audio & evaluation hooks.
  *
- * 1. French TTS via SpeechSynthesis (for CO exercises : examiner reads)
- * 2. Speech Recognition via Web Speech API (for EO exercises : learner speaks)
- *
- * Same approach as HSK's useAudioPlayer but for French voices
- * and with added speech recognition capabilities.
+ * 1. French TTS via OpenAI API (primary) with SpeechSynthesis fallback
+ *    Supports France and Quebec accents
+ * 2. Speech Recognition via Web Speech API (for EO exercises)
+ * 3. Text analysis (local, fast) + AI evaluation (server-side, thorough)
+ * 4. Speech analysis (local, fast) + AI evaluation (server-side, thorough)
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
-// FRENCH TTS
+// FRENCH TTS (OpenAI API primary, SpeechSynthesis fallback)
 // ═══════════════════════════════════════════════════════════════════════════
+
+type Accent = 'france' | 'quebec';
 
 export function useFrenchTTS() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  const frVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
-  const voicesReadyRef = useRef(false);
+  const [activeAccent, setActiveAccent] = useState<Accent>('france');
   const speakingIdRef = useRef<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  // Audio cache to avoid re-fetching the same text
+  const cacheRef = useRef<Map<string, string>>(new Map());
 
-  // Keep ref in sync with state to avoid stale closures
+  // Keep ref in sync with state
   useEffect(() => { speakingIdRef.current = speakingId; }, [speakingId]);
 
-  // Pre-warm French voices
+  // Cleanup on unmount
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    const pickVoice = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) return;
-
-      // Prefer high-quality French Canadian voices (TEF Canada context)
-      const preferred = [
-        // Canadian French
-        'Amelie', 'Amélie', 'Google français canadien',
-        // France French (fallback)
-        'Thomas', 'Google français', 'Microsoft Paul',
-        'Microsoft Julie', 'Microsoft Hortense',
-        // Edge / Android
-        'Denise', 'Henri', 'Sylvie',
-        // Generic
-        'French',
-      ];
-
-      let voice: SpeechSynthesisVoice | undefined;
-
-      // Try preferred names
-      for (const name of preferred) {
-        voice = voices.find(
-          (v) => v.name.includes(name) && v.lang.startsWith('fr')
-        );
-        if (voice) break;
-      }
-
-      // Fallback: any French voice, prefer Canadian
-      if (!voice) {
-        voice =
-          voices.find((v) => v.lang === 'fr-CA') ??
-          voices.find((v) => v.lang === 'fr-FR') ??
-          voices.find((v) => v.lang.startsWith('fr'));
-      }
-
-      if (voice) {
-        frVoiceRef.current = voice;
-        voicesReadyRef.current = true;
-      }
-    };
-
-    pickVoice();
-    window.speechSynthesis.onvoiceschanged = pickVoice;
-    // Some browsers need this extra call to trigger onvoiceschanged
-    window.speechSynthesis.getVoices();
-
     return () => {
-      window.speechSynthesis.onvoiceschanged = null;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+      // Revoke cached blob URLs
+      cacheRef.current.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
 
-  const speak = useCallback((text: string, id: string, rate = 0.9) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    // Also cancel any SpeechSynthesis fallback
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setSpeakingId(null);
+    setIsSpeaking(false);
+  }, []);
 
-    // Stop current utterance
-    window.speechSynthesis.cancel();
+  const speak = useCallback(async (text: string, id: string, rate = 1.0, accent: Accent = 'france') => {
+    // Stop whatever is playing
+    stop();
 
-    // Toggle off if same id is already speaking
+    // Toggle off if same id
     if (speakingIdRef.current === id) {
+      return;
+    }
+
+    if (!text || text.trim().length === 0) return;
+
+    setSpeakingId(id);
+    setIsSpeaking(true);
+    setActiveAccent(accent);
+
+    const cacheKey = `${accent}:${rate}:${text.slice(0, 200)}`;
+
+    try {
+      let blobUrl = cacheRef.current.get(cacheKey);
+
+      if (!blobUrl) {
+        // Fetch from OpenAI TTS API
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, accent, speed: rate }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`TTS API error: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        blobUrl = URL.createObjectURL(blob);
+        cacheRef.current.set(cacheKey, blobUrl);
+        abortRef.current = null;
+      }
+
+      // Play audio
+      const audio = new Audio(blobUrl);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setSpeakingId(null);
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        console.warn('[TTS] Audio playback error, falling back to SpeechSynthesis');
+        audioRef.current = null;
+        speakFallback(text, id, rate);
+      };
+
+      await audio.play();
+    } catch (err) {
+      // If fetch was aborted (user stopped), don't fallback
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setSpeakingId(null);
+        setIsSpeaking(false);
+        return;
+      }
+      console.warn('[TTS] API unavailable, falling back to SpeechSynthesis:', err);
+      speakFallback(text, id, rate);
+    }
+  }, [stop]);
+
+  // SpeechSynthesis fallback (when API is unavailable)
+  function speakFallback(text: string, id: string, rate: number) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
       setSpeakingId(null);
       setIsSpeaking(false);
       return;
     }
 
-    setSpeakingId(id);
-    setIsSpeaking(true);
+    window.speechSynthesis.cancel();
 
     const doSpeak = () => {
-      // Android Chrome bug: cancel + immediate speak can fail.
-      // Adding a small delay after cancel helps.
-      window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'fr-FR'; // fr-CA often not available, fr-FR works
+      utterance.lang = 'fr-FR';
       utterance.rate = rate;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
-      // Try to assign a French voice
-      if (frVoiceRef.current) {
-        utterance.voice = frVoiceRef.current;
-      } else {
-        // Last resort attempt to pick a voice
-        const voices = window.speechSynthesis.getVoices();
-        const frVoice =
-          voices.find((v) => v.lang === 'fr-CA') ??
-          voices.find((v) => v.lang === 'fr-FR') ??
-          voices.find((v) => v.lang.startsWith('fr'));
-        if (frVoice) {
-          utterance.voice = frVoice;
-          frVoiceRef.current = frVoice;
-        }
-      }
+      // Try to find a French voice
+      const voices = window.speechSynthesis.getVoices();
+      const frVoice =
+        voices.find((v) => v.lang === 'fr-CA') ??
+        voices.find((v) => v.lang === 'fr-FR') ??
+        voices.find((v) => v.lang.startsWith('fr'));
+      if (frVoice) utterance.voice = frVoice;
 
       utterance.onend = () => {
         setSpeakingId(null);
@@ -130,7 +166,7 @@ export function useFrenchTTS() {
       };
       utterance.onerror = (e) => {
         if (e.error !== 'interrupted' && e.error !== 'canceled') {
-          console.warn('[TEF TTS] SpeechSynthesis error:', e.error);
+          console.warn('[TTS Fallback] SpeechSynthesis error:', e.error);
         }
         setSpeakingId(null);
         setIsSpeaking(false);
@@ -138,8 +174,7 @@ export function useFrenchTTS() {
 
       window.speechSynthesis.speak(utterance);
 
-      // Chrome/Android bug: synthesis can get stuck paused.
-      // Resume periodically to keep it alive.
+      // Chrome bug workaround: resume periodically
       const resumeInterval = setInterval(() => {
         if (window.speechSynthesis.speaking) {
           window.speechSynthesis.resume();
@@ -149,40 +184,23 @@ export function useFrenchTTS() {
       }, 5000);
     };
 
-    // Give browser time to cancel previous and load voices
-    const delay = voicesReadyRef.current ? 100 : 300;
-    setTimeout(doSpeak, delay);
+    setTimeout(doSpeak, 100);
 
-    // Safety timeout : auto-clear state if TTS hangs
+    // Safety timeout
     const safetyMs = Math.max(text.length * 150, 10000);
     setTimeout(() => {
       setSpeakingId((prev) => (prev === id ? null : prev));
       setIsSpeaking(false);
     }, safetyMs);
-  }, []);
+  }
 
-  const stop = useCallback(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    setSpeakingId(null);
-    setIsSpeaking(false);
-  }, []);
-
-  return { isSpeaking, speakingId, speak, stop, hasVoice: voicesReadyRef.current };
+  return { isSpeaking, speakingId, activeAccent, speak, stop };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SPEECH RECOGNITION (for EO : learner speaks French)
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface SpeechRecognitionResult {
-  transcript: string;
-  confidence: number;
-  isFinal: boolean;
-}
-
-// Web Speech API types (not in standard TS lib)
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
   resultIndex: number;
@@ -219,41 +237,38 @@ export function useSpeechRecognition() {
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<unknown>(null);
-  // Accumulate final results in a ref to avoid stale closures
   const finalPartsRef = useRef<string[]>([]);
   const confidenceAccRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const SpeechRecognition =
+    const SR =
       (window as unknown as Record<string, unknown>).SpeechRecognition ||
       (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognition);
+    setIsSupported(!!SR);
   }, []);
 
   const startListening = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    const SpeechRecognition =
+    const SR =
       (window as unknown as Record<string, unknown>).SpeechRecognition ||
       (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
-      setError('Speech recognition not supported in this browser');
+    if (!SR) {
+      setError('La reconnaissance vocale n\'est pas supportée par ce navigateur');
       return;
     }
 
-    // Stop any existing
     if (recognitionRef.current) {
       try { (recognitionRef.current as { stop: () => void }).stop(); } catch { /* ignore */ }
     }
 
-    // Reset accumulators
     finalPartsRef.current = [];
     confidenceAccRef.current = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const recognition = new (SpeechRecognition as any)();
+    const recognition = new (SR as any)();
     recognition.lang = 'fr-FR';
     recognition.interimResults = true;
     recognition.continuous = true;
@@ -267,32 +282,25 @@ export function useSpeechRecognition() {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      // Process ONLY new results starting from event.resultIndex.
-      // Each result transitions from interim → final exactly once.
-      // We accumulate final parts in a ref so we never lose them.
       let interimText = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          // This segment just became final : append it
           const segmentText = result[0].transcript.trim();
           if (segmentText) {
             finalPartsRef.current.push(segmentText);
             confidenceAccRef.current.push(result[0].confidence);
           }
         } else {
-          // Still interim
           interimText += result[0].transcript;
         }
       }
 
-      // Update state: join all final parts with a space
       const fullFinal = finalPartsRef.current.join(' ');
       setTranscript(fullFinal);
       setInterimTranscript(interimText);
 
-      // Average confidence of all final segments
       if (confidenceAccRef.current.length > 0) {
         const avgConf = confidenceAccRef.current.reduce((a, b) => a + b, 0) / confidenceAccRef.current.length;
         setConfidence(avgConf);
@@ -330,20 +338,138 @@ export function useSpeechRecognition() {
   }, []);
 
   return {
-    isListening,
-    transcript,
-    interimTranscript,
-    confidence,
-    error,
-    isSupported,
-    startListening,
-    stopListening,
-    resetTranscript,
+    isListening, transcript, interimTranscript, confidence,
+    error, isSupported, startListening, stopListening, resetTranscript,
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// TEXT ANALYSIS (for EE auto-scoring : no API needed)
+// AI EVALUATION HOOKS (server-side GPT-4o-mini)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface AIWritingEvaluation {
+  scores: {
+    respectTache: { score: number; max: number; feedback: string };
+    organisation: { score: number; max: number; feedback: string };
+    richesseLexicale: { score: number; max: number; feedback: string };
+    grammaire: { score: number; max: number; feedback: string };
+    cinquiemeCritere: { score: number; max: number; feedback: string };
+  };
+  totalScore: number;
+  maxScore: number;
+  estimatedNCLC: number;
+  globalFeedback: string;
+  strengths: string[];
+  improvements: string[];
+  correctedExcerpts: { original: string; corrected: string; explanation: string }[];
+}
+
+export interface AISpeakingEvaluation {
+  scores: {
+    fluidite: { score: number; max: number; feedback: string };
+    richesseLexicale: { score: number; max: number; feedback: string };
+    interaction: { score: number; max: number; feedback: string };
+    connecteurs: { score: number; max: number; feedback: string };
+    registre: { score: number; max: number; feedback: string };
+  };
+  totalScore: number;
+  maxScore: number;
+  estimatedNCLC: number;
+  globalFeedback: string;
+  strengths: string[];
+  improvements: string[];
+  suggestedRephrasing: { original: string; improved: string; why: string }[];
+}
+
+export function useAIEvaluation() {
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [writingEval, setWritingEval] = useState<AIWritingEvaluation | null>(null);
+  const [speakingEval, setSpeakingEval] = useState<AISpeakingEvaluation | null>(null);
+  const [evalError, setEvalError] = useState<string | null>(null);
+
+  const evaluateWriting = useCallback(async (
+    text: string,
+    sujet: string,
+    section: 'A' | 'B',
+    minWords: number,
+    maxWords: number,
+  ) => {
+    setIsEvaluating(true);
+    setEvalError(null);
+    setWritingEval(null);
+
+    try {
+      const res = await fetch('/api/evaluate/writing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, sujet, section, minWords, maxWords }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erreur réseau' }));
+        throw new Error(err.error || `Erreur ${res.status}`);
+      }
+
+      const evaluation: AIWritingEvaluation = await res.json();
+      setWritingEval(evaluation);
+      return evaluation;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erreur d\'évaluation';
+      setEvalError(msg);
+      return null;
+    } finally {
+      setIsEvaluating(false);
+    }
+  }, []);
+
+  const evaluateSpeaking = useCallback(async (
+    transcript: string,
+    scenario: string,
+    durationSeconds: number,
+    variant?: { type: string; examinerLine: string; expectedSkill: string },
+  ) => {
+    setIsEvaluating(true);
+    setEvalError(null);
+    setSpeakingEval(null);
+
+    try {
+      const res = await fetch('/api/evaluate/speaking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript, scenario, durationSeconds, variant }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erreur réseau' }));
+        throw new Error(err.error || `Erreur ${res.status}`);
+      }
+
+      const evaluation: AISpeakingEvaluation = await res.json();
+      setSpeakingEval(evaluation);
+      return evaluation;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erreur d\'évaluation';
+      setEvalError(msg);
+      return null;
+    } finally {
+      setIsEvaluating(false);
+    }
+  }, []);
+
+  const resetEvaluation = useCallback(() => {
+    setWritingEval(null);
+    setSpeakingEval(null);
+    setEvalError(null);
+  }, []);
+
+  return {
+    isEvaluating, writingEval, speakingEval, evalError,
+    evaluateWriting, evaluateSpeaking, resetEvaluation,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TEXT ANALYSIS (local, fast, for EE instant feedback)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface TextAnalysis {
@@ -352,19 +478,18 @@ export interface TextAnalysis {
   avgWordsPerSentence: number;
   connectorsUsed: string[];
   connectorsLevel: 'basic' | 'intermediate' | 'advanced';
-  hasStructure: boolean;         // paragraphs or clear organization
-  repetitionScore: number;       // 0 = many repetitions, 100 = all unique
+  hasStructure: boolean;
+  repetitionScore: number;
   estimatedNCLC: number;
   criteriaScores: {
-    taskCompletion: number;      // /20 - length & relevance
-    organization: number;        // /20 - connectors & structure
-    lexicalRichness: number;     // /20 - vocabulary variety
-    grammar: number;             // /20 - approximated
-    fifthCriterion: number;      // /20 - narrative or argumentative quality
+    taskCompletion: number;
+    organization: number;
+    lexicalRichness: number;
+    grammar: number;
+    fifthCriterion: number;
   };
 }
 
-// French connectors by level
 const CONNECTORS = {
   basic: ['et', 'mais', 'donc', 'car', 'parce que', 'aussi', 'puis', 'alors', 'ensuite', 'enfin'],
   intermediate: ['cependant', 'néanmoins', 'toutefois', 'par ailleurs', 'en revanche', 'de plus', 'en effet', 'ainsi', 'par conséquent', 'en outre', 'd\'une part', 'd\'autre part', 'bien que', 'malgré'],
@@ -388,43 +513,29 @@ export function analyzeText(text: string, minWords: number, maxWords: number): T
   const sentenceCount = sentences.length;
   const avgWordsPerSentence = sentenceCount > 0 ? Math.round(wordCount / sentenceCount) : 0;
 
-  // Connector detection
   const textLower = cleanText.toLowerCase();
   const foundConnectors: string[] = [];
   let connectorLevel: 'basic' | 'intermediate' | 'advanced' = 'basic';
 
   for (const c of CONNECTORS.advanced) {
-    if (textLower.includes(c)) {
-      foundConnectors.push(c);
-      connectorLevel = 'advanced';
-    }
+    if (textLower.includes(c)) { foundConnectors.push(c); connectorLevel = 'advanced'; }
   }
   for (const c of CONNECTORS.intermediate) {
-    if (textLower.includes(c)) {
-      foundConnectors.push(c);
-      if (connectorLevel !== 'advanced') connectorLevel = 'intermediate';
-    }
+    if (textLower.includes(c)) { foundConnectors.push(c); if (connectorLevel !== 'advanced') connectorLevel = 'intermediate'; }
   }
   for (const c of CONNECTORS.basic) {
-    if (textLower.includes(c)) {
-      foundConnectors.push(c);
-    }
+    if (textLower.includes(c)) foundConnectors.push(c);
   }
 
-  // Structure check (paragraphs)
   const hasStructure = cleanText.includes('\n\n') || cleanText.split('\n').length >= 3;
 
-  // Repetition score (unique words ratio)
   const wordsLower = words.map(w => w.toLowerCase().replace(/[^a-zà-ÿ]/g, ''));
-  const uniqueWords = new Set(wordsLower.filter(w => w.length > 3)); // only count meaningful words
+  const uniqueWords = new Set(wordsLower.filter(w => w.length > 3));
   const meaningfulWords = wordsLower.filter(w => w.length > 3);
   const repetitionScore = meaningfulWords.length > 0
     ? Math.round((uniqueWords.size / meaningfulWords.length) * 100)
     : 0;
 
-  // ── Criteria scoring (each /20) ──
-
-  // 1. Task completion: length adherence
   let taskCompletion = 0;
   if (wordCount >= minWords) {
     taskCompletion = 12;
@@ -434,7 +545,6 @@ export function analyzeText(text: string, minWords: number, maxWords: number): T
     taskCompletion = Math.round((wordCount / minWords) * 10);
   }
 
-  // 2. Organization: connectors & structure
   let organization = 4;
   organization += Math.min(foundConnectors.length * 2, 8);
   if (connectorLevel === 'intermediate') organization += 4;
@@ -442,19 +552,16 @@ export function analyzeText(text: string, minWords: number, maxWords: number): T
   if (hasStructure) organization += 2;
   organization = Math.min(organization, 20);
 
-  // 3. Lexical richness: unique words ratio
   let lexicalRichness = Math.round(repetitionScore * 0.2);
   if (uniqueWords.size > 30) lexicalRichness = Math.min(lexicalRichness + 4, 20);
   if (uniqueWords.size > 50) lexicalRichness = Math.min(lexicalRichness + 4, 20);
 
-  // 4. Grammar: approximate by sentence length consistency & basic patterns
-  let grammar = 10; // base score
+  let grammar = 10;
   if (avgWordsPerSentence >= 8 && avgWordsPerSentence <= 25) grammar += 4;
   if (sentenceCount >= 3) grammar += 3;
   if (connectorLevel !== 'basic') grammar += 3;
   grammar = Math.min(grammar, 20);
 
-  // 5. Fifth criterion (narrative/argumentative)
   let fifthCriterion = 4;
   if (foundConnectors.length >= 3) fifthCriterion += 4;
   if (connectorLevel === 'advanced') fifthCriterion += 6;
@@ -465,7 +572,6 @@ export function analyzeText(text: string, minWords: number, maxWords: number): T
   const totalScore = taskCompletion + organization + lexicalRichness + grammar + fifthCriterion;
   const percentage = Math.round((totalScore / 100) * 100);
 
-  // Estimate NCLC from total
   let estimatedNCLC: number;
   if (percentage >= 85) estimatedNCLC = 9;
   else if (percentage >= 70) estimatedNCLC = 8;
@@ -476,34 +582,28 @@ export function analyzeText(text: string, minWords: number, maxWords: number): T
 
   return {
     wordCount, sentenceCount, avgWordsPerSentence,
-    connectorsUsed: foundConnectors,
-    connectorsLevel: connectorLevel,
-    hasStructure, repetitionScore,
-    estimatedNCLC,
+    connectorsUsed: foundConnectors, connectorsLevel: connectorLevel,
+    hasStructure, repetitionScore, estimatedNCLC,
     criteriaScores: { taskCompletion, organization, lexicalRichness, grammar, fifthCriterion },
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SPEECH ANALYSIS (for EO auto-scoring : no API needed)
+// SPEECH ANALYSIS (local, fast, for EO instant feedback)
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface SpeechAnalysis {
   wordCount: number;
-  duration: number;          // estimated seconds
+  duration: number;
   wordsPerMinute: number;
-  confidence: number;        // from recognition API
+  confidence: number;
   connectorsUsed: string[];
-  fluencyScore: number;      // /20
-  contentScore: number;      // /20
-  interactionScore: number;  // /20
+  fluencyScore: number;
+  contentScore: number;
+  interactionScore: number;
   estimatedNCLC: number;
 }
 
-/**
- * Detect heavy repetition in a transcript.
- * Returns a ratio 0..1 where 0 = everything is repeated, 1 = all unique.
- */
 function computeRepetitionPenalty(text: string): { uniqueRatio: number; repeatedWords: string[] } {
   const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
   if (words.length === 0) return { uniqueRatio: 0, repeatedWords: [] };
@@ -511,14 +611,9 @@ function computeRepetitionPenalty(text: string): { uniqueRatio: number; repeated
   const counts = new Map<string, number>();
   for (const w of words) counts.set(w, (counts.get(w) || 0) + 1);
 
-  const uniqueCount = counts.size;
-  const uniqueRatio = uniqueCount / words.length;
-
-  // Words that appear 3+ times
+  const uniqueRatio = counts.size / words.length;
   const repeatedWords: string[] = [];
-  counts.forEach((count, word) => {
-    if (count >= 3) repeatedWords.push(word);
-  });
+  counts.forEach((count, word) => { if (count >= 3) repeatedWords.push(word); });
 
   return { uniqueRatio, repeatedWords };
 }
@@ -536,13 +631,9 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
     }
   }
 
-  // Detect repetition : penalize heavily repeated speech
-  const { uniqueRatio, repeatedWords } = computeRepetitionPenalty(transcript);
-  // If uniqueRatio < 0.3 the speaker is essentially repeating the same words
+  const { uniqueRatio } = computeRepetitionPenalty(transcript);
   const repetitionPenalty = uniqueRatio < 0.3 ? 0.3 : uniqueRatio < 0.5 ? 0.6 : uniqueRatio < 0.7 ? 0.85 : 1.0;
 
-  // Fluency: based on WPM, confidence, AND repetition penalty
-  // A WPM that's too high (>180) with low unique ratio = garbled/repeated speech
   let fluencyScore = 4;
   const effectiveWPM = wordsPerMinute > 180 && uniqueRatio < 0.5 ? 60 : wordsPerMinute;
   if (effectiveWPM >= 60 && effectiveWPM <= 180) fluencyScore += 4;
@@ -550,11 +641,9 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
   if (effectiveWPM >= 110 && effectiveWPM <= 150) fluencyScore += 4;
   if (confidence >= 0.7) fluencyScore += 2;
   if (confidence >= 0.85) fluencyScore += 2;
-  // Apply repetition penalty
   fluencyScore = Math.round(fluencyScore * repetitionPenalty);
   fluencyScore = Math.max(2, Math.min(fluencyScore, 20));
 
-  // Content: unique word count and connectors (not total words : to penalize repetition)
   const uniqueWordCount = new Set(words.map(w => w.toLowerCase())).size;
   let contentScore = 4;
   if (uniqueWordCount >= 15) contentScore += 4;
@@ -563,7 +652,6 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
   if (foundConnectors.length >= 4) contentScore += 4;
   contentScore = Math.min(contentScore, 20);
 
-  // Interaction: presence of questions, rebuttals, reformulations
   let interactionScore = 4;
   if (transcript.includes('?')) interactionScore += 4;
   if (textLower.includes('c\'est-à-dire') || textLower.includes('autrement dit') || textLower.includes('je veux dire')) interactionScore += 4;
@@ -585,7 +673,6 @@ export function analyzeSpeech(transcript: string, confidence: number, durationSe
   return {
     wordCount, duration: durationSeconds, wordsPerMinute, confidence,
     connectorsUsed: foundConnectors,
-    fluencyScore, contentScore, interactionScore,
-    estimatedNCLC,
+    fluencyScore, contentScore, interactionScore, estimatedNCLC,
   };
 }
