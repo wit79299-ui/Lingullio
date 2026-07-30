@@ -53,7 +53,28 @@ export async function middleware(request: NextRequest) {
     return intlResponse;
   }
 
-  // Create Supabase client with request/response cookies
+  // ── Determine route type BEFORE calling Supabase ──
+  // This avoids unnecessary network calls (and potential timeouts) for public routes.
+  const pathname = request.nextUrl.pathname;
+  const cleanPath = getPathnameWithoutLocale(pathname, routing.locales);
+
+  const isProtected = protectedPrefixes.some(
+    (prefix) => cleanPath.startsWith(prefix) || cleanPath === prefix
+  );
+  const isAdmin = adminPrefixes.some(
+    (prefix) => cleanPath.startsWith(prefix) || cleanPath === prefix
+  );
+  const isAuthRoute = authRoutes.some(
+    (route) => cleanPath.startsWith(route) || cleanPath === route
+  );
+
+  // If the route doesn't need auth at all, skip Supabase entirely → fast response
+  const needsSupabase = isProtected || isAdmin || isAuthRoute;
+  if (!needsSupabase) {
+    return intlResponse;
+  }
+
+  // Only create Supabase client when we actually need auth checks
   const supabase = createServerClient(
     supabaseUrl,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -72,24 +93,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session
+  // Refresh session (only for routes that need it)
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
-  const pathname = request.nextUrl.pathname;
-  const cleanPath = getPathnameWithoutLocale(pathname, routing.locales);
-
-  // Check if route is protected
-  const isProtected = protectedPrefixes.some(
-    (prefix) => cleanPath.startsWith(prefix) || cleanPath === prefix
-  );
-  const isAdmin = adminPrefixes.some(
-    (prefix) => cleanPath.startsWith(prefix) || cleanPath === prefix
-  );
-  const isAuthRoute = authRoutes.some(
-    (route) => cleanPath.startsWith(route) || cleanPath === route
-  );
 
   // If no session and trying to access protected/admin route, redirect to login
   if (!session && (isProtected || isAdmin)) {
