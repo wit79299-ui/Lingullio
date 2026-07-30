@@ -60,26 +60,36 @@ export function useFrenchTTS() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    speakingIdRef.current = null; // sync ref immediately
     setSpeakingId(null);
     setIsSpeaking(false);
   }, []);
 
   const speak = useCallback(async (text: string, id: string, rate = 1.0, accent: Accent = 'france') => {
+    // Toggle off if same id is already playing
+    const wasPlaying = speakingIdRef.current === id;
+    
     // Stop whatever is playing
     stop();
-
-    // Toggle off if same id
-    if (speakingIdRef.current === id) {
-      return;
-    }
+    
+    if (wasPlaying) return;
 
     if (!text || text.trim().length === 0) return;
 
+    // For very short texts (single words), pad with context for better TTS output.
+    // OpenAI TTS struggles with isolated short words — they get clipped.
+    // We wrap them in a carrier phrase then... actually, just ensure speed isn't too slow
+    // for short texts (below 0.7 causes truncation on words < 4 syllables)
+    const wordCount = text.trim().split(/\s+/).length;
+    const minSpeed = wordCount <= 3 ? 0.7 : 0.5;
+    const safeRate = Math.max(minSpeed, rate);
+
     setSpeakingId(id);
+    speakingIdRef.current = id; // sync immediately, don't wait for useEffect
     setIsSpeaking(true);
     setActiveAccent(accent);
 
-    const cacheKey = `${accent}:${rate}:${text.slice(0, 200)}`;
+    const cacheKey = `${accent}:${safeRate}:${text.slice(0, 200)}`;
 
     try {
       let blobUrl = cacheRef.current.get(cacheKey);
@@ -92,7 +102,7 @@ export function useFrenchTTS() {
         const response = await fetch('/api/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, accent, speed: rate }),
+          body: JSON.stringify({ text, accent, speed: safeRate }),
           signal: controller.signal,
         });
 
@@ -100,33 +110,43 @@ export function useFrenchTTS() {
           throw new Error(`TTS API error: ${response.status}`);
         }
 
-        // Use MediaSource for streaming playback if available,
-        // otherwise fall back to full blob download
         const blob = await response.blob();
+        
+        // Only cache if blob has meaningful size (> 1KB)
+        // Prevents caching corrupted/empty responses from aborted fetches
+        if (blob.size < 1000) {
+          console.warn(`[TTS] Response too small (${blob.size}B), skipping cache`);
+        }
+        
         blobUrl = URL.createObjectURL(blob);
-        cacheRef.current.set(cacheKey, blobUrl);
+        if (blob.size >= 1000) {
+          cacheRef.current.set(cacheKey, blobUrl);
+        }
         abortRef.current = null;
       }
 
-      // Play audio — preload metadata first for faster start
-      const audio = new Audio();
-      audio.preload = 'auto';
+      // Check if we were stopped while fetching
+      if (speakingIdRef.current !== id) return;
+
+      const audio = new Audio(blobUrl);
       audioRef.current = audio;
 
       audio.onended = () => {
         setSpeakingId(null);
+        speakingIdRef.current = null;
         setIsSpeaking(false);
         audioRef.current = null;
       };
 
       audio.onerror = () => {
         console.warn('[TTS] Audio playback error, falling back to SpeechSynthesis');
+        // Remove from cache if playback failed
+        cacheRef.current.delete(cacheKey);
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         audioRef.current = null;
         speakFallback(text, id, rate);
       };
 
-      // Set source and play as soon as enough data is buffered
-      audio.src = blobUrl;
       await audio.play();
     } catch (err) {
       // If fetch was aborted (user stopped), don't fallback

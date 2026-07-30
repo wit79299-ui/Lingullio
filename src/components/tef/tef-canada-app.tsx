@@ -580,7 +580,7 @@ function LexiqueDictee({ domain }: { domain: LexiqueDomain }) {
   useEffect(() => {
     if (entry && !checked) {
       // Auto-play TTS after a short delay
-      const t = setTimeout(() => tts.speak(entry.term, `dict-${currentIdx}`, 0.8, accent), 500);
+      const t = setTimeout(() => tts.speak(entry.term, `dict-${currentIdx}`, 0.9, accent), 600);
       return () => clearTimeout(t);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
