@@ -20,6 +20,8 @@ import { useFrenchTTS, useSpeechRecognition, analyzeText, analyzeSpeech, useAIEv
 import type { AIWritingEvaluation, AISpeakingEvaluation } from './use-tef-audio';
 import { useGamificationStore } from '@/stores/gamification-store';
 import { useTefLocale, eeGrilleEN, trapExplanationsEN } from './tef-i18n';
+import { useTefProgressStore } from './tef-progress-store';
+import type { TEFSectionKey, SessionRecord } from './tef-progress-store';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import {
   BookOpen, ChevronRight, ChevronDown, Target, Award, FileText,
@@ -34,7 +36,7 @@ import {
 type Section =
   | 'accueil' | 'referentiel' | 'lexique' | 'pieges'
   | 'ce' | 'co' | 'ee' | 'eo'
-  | 'examens' | 'diagnostic' | 'bareme';
+  | 'examens' | 'diagnostic' | 'bareme' | 'historique';
 
 interface NavItem { id: Section; labelKey: string; num: string; icon: React.ReactNode; }
 
@@ -57,6 +59,7 @@ const navGroupsDef: { titleKey: string; items: NavItem[] }[] = [
   { titleKey: 'nav.training', items: [
     { id: 'diagnostic', labelKey: 'nav.diagnostic', num: '→', icon: <Target className="w-4 h-4" /> },
     { id: 'bareme', labelKey: 'nav.bareme', num: '→', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'historique', labelKey: 'nav.historique', num: '→', icon: <TrendingUp className="w-4 h-4" /> },
   ]},
 ];
 
@@ -136,6 +139,7 @@ export function TEFCanadaApp() {
           {activeSection === 'examens' && <MockExamsPanel />}
           {activeSection === 'diagnostic' && <DiagnosticPanel />}
           {activeSection === 'bareme' && <BaremePanel />}
+          {activeSection === 'historique' && <HistoriquePanel />}
         </div>
       </div>
     </div>
@@ -664,8 +668,11 @@ function COTrainingPanel() {
 // ══════════════════════════════════════════════════════════════════════════
 // GAMIFIED QCM SESSION (used by CE and CO)
 // ══════════════════════════════════════════════════════════════════════════
-function GamifiedQCMSession({ exercises, section, title, description, withTTS = false }: {
+function GamifiedQCMSession({ exercises, section, title, description, withTTS = false, onComplete, timeLimit: timeLimitOverride, mockExamId }: {
   exercises: TEFQCMExercise[]; section: TEFSection; title: string; description: string; withTTS?: boolean;
+  onComplete?: (result: { correct: number; total: number; percentage: number; nclcEstimate: number; timeSeconds: number; traps: string[] }) => void;
+  timeLimit?: number; // override time limit in seconds
+  mockExamId?: number; // if this is part of a mock exam
 }) {
   const [phase, setPhase] = useState<'intro' | 'exercise' | 'review' | 'results'>('intro');
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -678,12 +685,14 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
   const [elapsed, setElapsed] = useState(0);
   const [showTranscript, setShowTranscript] = useState(false);
   const addXp = useGamificationStore(s => s.addXp);
+  const addSession = useTefProgressStore(s => s.addSession);
+  const updateMockExamSection = useTefProgressStore(s => s.updateMockExamSection);
   const tts = useFrenchTTS();
   const config = SECTION_CONFIG[section];
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { t, tExp } = useTefLocale();
   const timeLimits: Record<string, number> = { CE: 60 * 60, CO: 40 * 60, EE: 60 * 60, EO: 15 * 60 };
-  const timeLimit = timeLimits[section] || 60 * 60;
+  const timeLimit = timeLimitOverride ?? (timeLimits[section] || 60 * 60);
 
   useEffect(() => {
     if (phase === 'exercise' && startedAt > 0) { timerRef.current = setInterval(() => setElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000); return () => { if (timerRef.current) clearInterval(timerRef.current); }; }
@@ -710,7 +719,25 @@ function GamifiedQCMSession({ exercises, section, title, description, withTTS = 
     setAnswers(prev => [...prev, { exerciseId: current.id, section, isCorrect, pointsEarned: isCorrect ? current.points : 0, pointsMax: current.points, userAnswer: choiceIdx, timeSpent: 0, trapTriggered }]);
   };
 
-  const nextExercise = () => { setCurrentAnswer({}); if (currentIdx + 1 >= exercises.length) { addXp(sessionXP + TEF_XP_CONFIG.session_complete, `TEF ${section} session`); setPhase('results'); } else setCurrentIdx(prev => prev + 1); };
+  const nextExercise = () => {
+    setCurrentAnswer({});
+    if (currentIdx + 1 >= exercises.length) {
+      addXp(sessionXP + TEF_XP_CONFIG.session_complete, `TEF ${section} session`);
+      // Record progress
+      const correct = answers.filter(a => a.isCorrect).length;
+      const total = answers.length;
+      const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+      const nclc = estimateNCLC(section, pct);
+      const timeSeconds = Math.round((Date.now() - startedAt) / 1000);
+      const traps = answers.filter(a => a.trapTriggered).map(a => a.trapTriggered!);
+      addSession({ type: mockExamId ? 'mock' : 'training', mockExamId, section: section as TEFSectionKey, correct, total, percentage: pct, nclcEstimate: nclc, timeSeconds, trapsTriggered: traps });
+      if (mockExamId) {
+        updateMockExamSection(mockExamId, section as TEFSectionKey, { correct, total, percentage: pct, nclcEstimate: nclc, timeSeconds });
+      }
+      onComplete?.({ correct, total, percentage: pct, nclcEstimate: nclc, timeSeconds, traps });
+      setPhase('results');
+    } else setCurrentIdx(prev => prev + 1);
+  };
   const allCurrentAnswered = current ? Object.keys(currentAnswer).length >= current.questions.length : false;
 
   // Intro
@@ -1256,23 +1283,29 @@ function MockExamsPanel() {
   const [selectedExam, setSelectedExam] = useState<ConvertedMockExam | null>(null);
   const [selectedSection, setSelectedSection] = useState<'CE' | 'CO' | 'EE' | 'EO' | null>(null);
   const { t } = useTefLocale();
+  const getMockExamResult = useTefProgressStore(s => s.getMockExamResult);
+  const sectionTimeLimits: Record<string, number> = { CE: 60 * 60, CO: 40 * 60, EE: 60 * 60, EO: 15 * 60 };
 
-  // If a section is selected within an exam, render the appropriate training component
+  const handleSectionComplete = () => {
+    setSelectedSection(null); // back to exam detail after completing a section
+  };
+
+  // Section view within an exam
   if (selectedExam && selectedSection) {
-    const back = () => { setSelectedSection(null); };
     return (
       <div className="space-y-4 animate-in fade-in duration-300">
-        <button onClick={back} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
-          <ArrowLeft className="w-4 h-4" /> {t('mock.backToList')}
+        <button onClick={() => setSelectedSection(null)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+          <ArrowLeft className="w-4 h-4" /> {t('mock.backToExam')}
         </button>
         <div className="px-3 py-2 rounded-lg bg-blue-50 text-sm font-medium text-blue-800 flex items-center gap-2">
           <ClipboardList className="w-4 h-4" /> {selectedExam.label} — {selectedSection}
+          <span className="ml-auto text-xs opacity-60">{t('mock.timeAllowed')}: {Math.floor(sectionTimeLimits[selectedSection] / 60)} min</span>
         </div>
         {selectedSection === 'CE' && (
-          <GamifiedQCMSession exercises={selectedExam.ce} section="CE" title={`${selectedExam.label} · CE`} description={t('ce.description')} />
+          <GamifiedQCMSession exercises={selectedExam.ce} section="CE" title={`${selectedExam.label} · CE`} description={t('ce.description')} mockExamId={selectedExam.id} timeLimit={sectionTimeLimits.CE} onComplete={handleSectionComplete} />
         )}
         {selectedSection === 'CO' && (
-          <GamifiedQCMSession exercises={selectedExam.co} section="CO" title={`${selectedExam.label} · CO`} description={t('co.description')} withTTS />
+          <GamifiedQCMSession exercises={selectedExam.co} section="CO" title={`${selectedExam.label} · CO`} description={t('co.description')} withTTS mockExamId={selectedExam.id} timeLimit={sectionTimeLimits.CO} onComplete={handleSectionComplete} />
         )}
         {selectedSection === 'EE' && (
           <MockEESession exercises={selectedExam.ee} examLabel={selectedExam.label} />
@@ -1284,6 +1317,97 @@ function MockExamsPanel() {
     );
   }
 
+  // Exam detail view (show sections + scores)
+  if (selectedExam) {
+    const result = getMockExamResult(selectedExam.id);
+    const allSections: { key: 'CE' | 'CO' | 'EE' | 'EO'; icon: React.ReactNode; color: string; borderColor: string; time: number }[] = [
+      { key: 'CE', icon: <FileText className="w-5 h-5" />, color: 'text-red-600', borderColor: 'border-red-200', time: 60 },
+      { key: 'CO', icon: <Headphones className="w-5 h-5" />, color: 'text-sky-600', borderColor: 'border-sky-200', time: 40 },
+      { key: 'EE', icon: <PenTool className="w-5 h-5" />, color: 'text-green-600', borderColor: 'border-green-200', time: 60 },
+      { key: 'EO', icon: <MessageCircle className="w-5 h-5" />, color: 'text-amber-600', borderColor: 'border-amber-200', time: 15 },
+    ];
+    const completedCount = result?.completedSections.length ?? 0;
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <button onClick={() => setSelectedExam(null)} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+          <ArrowLeft className="w-4 h-4" /> {t('mock.backToList')}
+        </button>
+
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-700 font-mono text-lg font-bold">{selectedExam.id}</span>
+          <div>
+            <h2 className="text-xl font-bold text-navy-900">{selectedExam.label}</h2>
+            <p className="text-xs text-navy-400">{completedCount}/4 {t('mock.sectionsCompleted')} · {t('mock.totalTime')}: 2h55</p>
+          </div>
+        </div>
+
+        {/* Overall NCLC summary */}
+        {result && completedCount > 0 && (
+          <div className={`rounded-xl p-5 ${result.overallNCLC ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200'}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${result.overallNCLC ? 'text-white/70' : 'text-navy-400'}`}>{t('mock.overallNCLC')}</p>
+                {result.overallNCLC ? (
+                  <p className="text-4xl font-extrabold mt-1">NCLC {result.overallNCLC}</p>
+                ) : (
+                  <p className={`text-sm mt-1 ${result.overallNCLC ? 'text-white/80' : 'text-navy-500'}`}>{t('mock.completeAll4')}</p>
+                )}
+              </div>
+              <div className="flex gap-3">
+                {allSections.map(({ key }) => {
+                  const sectionResult = result.sections[key];
+                  return (
+                    <div key={key} className="text-center">
+                      <p className={`text-[10px] font-bold ${result.overallNCLC ? 'text-white/60' : 'text-navy-400'}`}>{key}</p>
+                      <p className={`text-lg font-bold ${result.overallNCLC ? 'text-white' : sectionResult ? 'text-navy-900' : 'text-navy-300'}`}>
+                        {sectionResult ? sectionResult.nclcEstimate : '—'}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Section cards */}
+        <div className="grid gap-3">
+          {allSections.map(({ key, icon, color, borderColor, time }) => {
+            const sectionResult = result?.sections[key];
+            const isDone = result?.completedSections.includes(key);
+            return (
+              <div key={key} className={`rounded-xl border ${borderColor} bg-white p-4 flex items-center gap-4`}>
+                <div className={`${color}`}>{icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-navy-900">{key}</p>
+                    <span className="text-[10px] text-navy-400">{time} min</span>
+                    {isDone && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                  </div>
+                  {sectionResult ? (
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-sm text-navy-600">{sectionResult.correct}/{sectionResult.total} ({sectionResult.percentage}%)</span>
+                      <span className="text-sm font-bold text-blue-700">NCLC {sectionResult.nclcEstimate}</span>
+                      <span className="text-xs text-navy-400">{Math.floor(sectionResult.timeSeconds / 60)}:{(sectionResult.timeSeconds % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-navy-400 mt-0.5">{t('mock.notStarted')}</p>
+                  )}
+                </div>
+                <button onClick={() => setSelectedSection(key)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isDone ? 'bg-cream-50 text-navy-600 border border-cream-200 hover:bg-cream-100' : 'bg-navy-800 text-white hover:bg-navy-700'}`}>
+                  {isDone ? t('mock.redo') : t('mock.startSection')}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Exam list
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
@@ -1293,31 +1417,33 @@ function MockExamsPanel() {
       </div>
 
       <div className="grid gap-4">
-        {convertedMockExams.map((exam) => (
-          <div key={exam.id} className="rounded-xl border border-cream-200 bg-white p-5 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-navy-900 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-mono text-sm font-bold">{exam.id}</span>
-                {exam.label}
-              </h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {([
-                { key: 'CE' as const, icon: <FileText className="w-4 h-4" />, count: exam.ce.length, unit: t('mock.exercises'), color: 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' },
-                { key: 'CO' as const, icon: <Headphones className="w-4 h-4" />, count: exam.co.length, unit: t('mock.exercises'), color: 'text-sky-600 bg-sky-50 border-sky-200 hover:bg-sky-100' },
-                { key: 'EE' as const, icon: <PenTool className="w-4 h-4" />, count: exam.ee.length, unit: t('mock.subjects'), color: 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100' },
-                { key: 'EO' as const, icon: <MessageCircle className="w-4 h-4" />, count: exam.eo.length, unit: t('mock.scenarios'), color: 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100' },
-              ]).map(({ key, icon, count, unit, color }) => (
-                <button key={key} onClick={() => { setSelectedExam(exam); setSelectedSection(key); }}
-                  className={`flex flex-col items-center gap-1 px-3 py-3 rounded-lg border text-sm font-medium transition-all cursor-pointer ${color}`}>
-                  {icon}
-                  <span className="font-bold">{key}</span>
-                  <span className="text-[10px] opacity-70">{count} {unit}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+        {convertedMockExams.map((exam) => {
+          const result = getMockExamResult(exam.id);
+          const completedCount = result?.completedSections.length ?? 0;
+          return (
+            <button key={exam.id} onClick={() => setSelectedExam(exam)}
+              className="w-full text-left rounded-xl border border-cream-200 bg-white p-5 hover:shadow-md hover:border-blue-200 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-700 font-mono text-lg font-bold">{exam.id}</span>
+                  <div>
+                    <h3 className="text-base font-bold text-navy-900">{exam.label}</h3>
+                    <p className="text-xs text-navy-400">
+                      {completedCount > 0 ? `${completedCount}/4 ${t('mock.sectionsCompleted')}` : t('mock.notStarted')}
+                      {result?.overallNCLC && <span className="ml-2 font-bold text-emerald-600">NCLC {result.overallNCLC}</span>}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {['CE', 'CO', 'EE', 'EO'].map((s) => (
+                    <span key={s} className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${result?.completedSections.includes(s as TEFSectionKey) ? 'bg-emerald-100 text-emerald-700' : 'bg-cream-100 text-navy-400'}`}>{s.charAt(0)}</span>
+                  ))}
+                  <ChevronRight className="w-4 h-4 text-navy-300 ml-1" />
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1530,6 +1656,149 @@ function DiagnosticPanel() {
           </div>
         );
       })()}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HISTORIQUE DE PROGRESSION
+// ══════════════════════════════════════════════════════════════════════════
+function HistoriquePanel() {
+  const { t } = useTefLocale();
+  const sessions = useTefProgressStore(s => s.sessions);
+  const getBestNCLC = useTefProgressStore(s => s.getBestNCLC);
+  const getAverageNCLC = useTefProgressStore(s => s.getAverageNCLC);
+  const clearHistory = useTefProgressStore(s => s.clearHistory);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const sectionKeys: TEFSectionKey[] = ['CE', 'CO', 'EE', 'EO'];
+  const sectionIcons: Record<string, React.ReactNode> = {
+    CE: <FileText className="w-4 h-4" />, CO: <Headphones className="w-4 h-4" />,
+    EE: <PenTool className="w-4 h-4" />, EO: <MessageCircle className="w-4 h-4" />,
+  };
+  const sectionColors: Record<string, string> = {
+    CE: 'text-red-600 bg-red-50', CO: 'text-sky-600 bg-sky-50',
+    EE: 'text-green-600 bg-green-50', EO: 'text-amber-600 bg-amber-50',
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div>
+        <p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">{t('hist.title')}</p>
+        <h2 className="text-xl font-bold text-navy-900 mb-2">{t('hist.title')}</h2>
+        <p className="text-sm text-navy-400 leading-relaxed max-w-2xl">{t('hist.subtitle')}</p>
+      </div>
+
+      {sessions.length === 0 ? (
+        <div className="rounded-xl border border-cream-200 bg-white p-10 text-center">
+          <TrendingUp className="w-12 h-12 text-navy-200 mx-auto mb-3" />
+          <p className="text-sm text-navy-400">{t('hist.noHistory')}</p>
+        </div>
+      ) : (
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-xl border border-cream-200 bg-white p-4 text-center">
+              <p className="text-3xl font-extrabold text-navy-900">{sessions.length}</p>
+              <p className="text-[10px] font-semibold tracking-wider uppercase text-navy-400 mt-1">{t('hist.totalSessions')}</p>
+            </div>
+            {sectionKeys.filter(s => s === 'CE' || s === 'CO').map(s => (
+              <div key={s} className="rounded-xl border border-cream-200 bg-white p-4 text-center">
+                <p className="text-3xl font-extrabold text-blue-700">{getBestNCLC(s) || '—'}</p>
+                <p className="text-[10px] font-semibold tracking-wider uppercase text-navy-400 mt-1">{t('hist.bestNCLC')} {s}</p>
+              </div>
+            ))}
+            <div className="rounded-xl border border-cream-200 bg-white p-4 text-center">
+              <p className="text-3xl font-extrabold text-emerald-600">{getAverageNCLC('CE') || '—'}</p>
+              <p className="text-[10px] font-semibold tracking-wider uppercase text-navy-400 mt-1">{t('hist.avgNCLC')}</p>
+            </div>
+          </div>
+
+          {/* Section stats */}
+          <div className="rounded-xl border border-cream-200 bg-white p-5">
+            <h3 className="text-base font-semibold text-navy-900 mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-blue-600" /> {t('hist.sectionStats')}</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {sectionKeys.map(s => {
+                const sectionSessions = sessions.filter(ss => ss.section === s);
+                const best = getBestNCLC(s);
+                const avg = getAverageNCLC(s);
+                const lastPct = sectionSessions[0]?.percentage;
+                return (
+                  <div key={s} className={`rounded-lg p-3 ${sectionColors[s]}`}>
+                    <div className="flex items-center gap-2 mb-2">{sectionIcons[s]}<span className="font-bold text-sm">{s}</span></div>
+                    <p className="text-2xl font-extrabold">{best || '—'}</p>
+                    <p className="text-[10px] opacity-70">{t('hist.bestNCLC')}</p>
+                    <div className="mt-2 space-y-0.5 text-[11px]">
+                      <p>Moy: <strong>{avg || '—'}</strong></p>
+                      <p>{sectionSessions.length} session{sectionSessions.length !== 1 ? 's' : ''}</p>
+                      {lastPct !== undefined && <p>{t('hist.recentSessions')}: {lastPct}%</p>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* NCLC Progress chart (simple text-based) */}
+          <div className="rounded-xl border border-cream-200 bg-white p-5">
+            <h3 className="text-base font-semibold text-navy-900 mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-blue-600" /> {t('hist.nclcProgress')}</h3>
+            <div className="space-y-2">
+              {sectionKeys.map(s => {
+                const sectionSessions = sessions.filter(ss => ss.section === s).slice(0, 10).reverse();
+                if (sectionSessions.length === 0) return null;
+                return (
+                  <div key={s} className="flex items-center gap-3">
+                    <span className="w-8 text-xs font-bold text-navy-600">{s}</span>
+                    <div className="flex-1 flex items-end gap-1 h-8">
+                      {sectionSessions.map((ss, i) => {
+                        const h = Math.max(8, (ss.nclcEstimate / 12) * 100);
+                        const color = ss.nclcEstimate >= 7 ? 'bg-emerald-400' : ss.nclcEstimate >= 5 ? 'bg-amber-400' : 'bg-red-400';
+                        return (
+                          <div key={i} className={`${color} rounded-sm w-full transition-all`} style={{ height: `${h}%` }} title={`NCLC ${ss.nclcEstimate} (${ss.percentage}%)`} />
+                        );
+                      })}
+                    </div>
+                    <span className="text-xs font-mono text-navy-500 w-6 text-right">{sectionSessions[sectionSessions.length - 1]?.nclcEstimate}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-navy-400 mt-2 text-center">← {t('hist.recentSessions')} →</p>
+          </div>
+
+          {/* Recent sessions list */}
+          <div className="rounded-xl border border-cream-200 bg-white p-5">
+            <h3 className="text-base font-semibold text-navy-900 mb-4">{t('hist.recentSessions')}</h3>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {sessions.slice(0, 30).map((s) => (
+                <div key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-cream-50 text-sm">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${sectionColors[s.section]}`}>{s.section}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${s.type === 'mock' ? 'bg-blue-100 text-blue-700' : 'bg-cream-200 text-navy-600'}`}>
+                    {s.type === 'mock' ? `${t('hist.mock')} #${s.mockExamId}` : t('hist.training')}
+                  </span>
+                  <span className="text-navy-600 font-medium">{s.correct}/{s.total}</span>
+                  <span className="text-navy-400">({s.percentage}%)</span>
+                  <span className="font-bold text-blue-700">NCLC {s.nclcEstimate}</span>
+                  <span className="text-xs text-navy-400 ml-auto">{new Date(s.date).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Clear history */}
+          <div className="text-center">
+            {showClearConfirm ? (
+              <div className="inline-flex items-center gap-2">
+                <span className="text-xs text-red-600">{t('hist.clearConfirm')}</span>
+                <button onClick={() => { clearHistory(); setShowClearConfirm(false); }} className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700">OK</button>
+                <button onClick={() => setShowClearConfirm(false)} className="px-3 py-1.5 rounded-lg bg-cream-100 text-navy-600 text-xs font-medium hover:bg-cream-200">{t('mock.backToList')}</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowClearConfirm(true)} className="text-xs text-red-500 hover:text-red-700 font-medium">{t('hist.clearHistory')}</button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
