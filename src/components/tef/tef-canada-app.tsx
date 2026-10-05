@@ -11,6 +11,10 @@ import {
   convertedMockExams,
 } from './tef-exercises';
 import type { ConvertedMockExam } from './tef-exercises';
+import { createAdaptiveState, updateAdaptiveState, pickNextExercise, getAdaptiveLabel } from './tef-adaptive-engine';
+import type { AdaptiveState } from './tef-adaptive-engine';
+import { lessons } from './tef-lessons';
+import type { Lesson } from './tef-lessons';
 import type {
   TEFQCMExercise, TEFWritingExercise, TEFSpeakingExercise,
   TEFSection, TEFChoice, TEFExerciseAnswer,
@@ -34,7 +38,7 @@ import {
 
 // ── Navigation ──
 type Section =
-  | 'accueil' | 'referentiel' | 'lexique' | 'pieges'
+  | 'accueil' | 'referentiel' | 'lexique' | 'pieges' | 'lecons'
   | 'ce' | 'co' | 'ee' | 'eo'
   | 'examens' | 'diagnostic' | 'bareme' | 'historique';
 
@@ -46,6 +50,7 @@ const navGroupsDef: { titleKey: string; items: NavItem[] }[] = [
     { id: 'referentiel', labelKey: 'nav.referentiel', num: '01', icon: <BookMarked className="w-4 h-4" /> },
     { id: 'lexique', labelKey: 'nav.lexique', num: '02', icon: <BookOpen className="w-4 h-4" /> },
     { id: 'pieges', labelKey: 'nav.pieges', num: '03', icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: 'lecons', labelKey: 'nav.lecons', num: '04', icon: <GraduationCap className="w-4 h-4" /> },
   ]},
   { titleKey: 'nav.exams', items: [
     { id: 'ce', labelKey: 'nav.ce', num: 'CE', icon: <FileText className="w-4 h-4" /> },
@@ -132,6 +137,7 @@ export function TEFCanadaApp() {
           {activeSection === 'referentiel' && <ReferentielPanel />}
           {activeSection === 'lexique' && <LexiquePanel />}
           {activeSection === 'pieges' && <PiegesPanel />}
+          {activeSection === 'lecons' && <LeconsPanel />}
           {activeSection === 'ce' && <CETrainingPanel />}
           {activeSection === 'co' && <COTrainingPanel />}
           {activeSection === 'ee' && <EETrainingPanel />}
@@ -657,12 +663,304 @@ function PiegesPanel() {
 // ══════════════════════════════════════════════════════════════════════════
 function CETrainingPanel() {
   const { t } = useTefLocale();
-  return <GamifiedQCMSession exercises={ceExercises} section="CE" title={t('ce.title')} description={t('ce.description')} />;
+  const [mode, setMode] = useState<'choose' | 'sequential' | 'adaptive'>('choose');
+  if (mode === 'sequential') return <GamifiedQCMSession exercises={ceExercises} section="CE" title={t('ce.title')} description={t('ce.description')} />;
+  if (mode === 'adaptive') return <AdaptiveQCMSession pool={ceExercises} section="CE" withTTS={false} onBack={() => setMode('choose')} />;
+  return <TrainingModeChooser section="CE" onChoose={setMode} exerciseCount={ceExercises.length} />;
 }
 
 function COTrainingPanel() {
   const { t } = useTefLocale();
-  return <GamifiedQCMSession exercises={coExercises} section="CO" title={t('co.title')} description={t('co.description')} withTTS />;
+  const [mode, setMode] = useState<'choose' | 'sequential' | 'adaptive'>('choose');
+  if (mode === 'sequential') return <GamifiedQCMSession exercises={coExercises} section="CO" title={t('co.title')} description={t('co.description')} withTTS />;
+  if (mode === 'adaptive') return <AdaptiveQCMSession pool={coExercises} section="CO" withTTS onBack={() => setMode('choose')} />;
+  return <TrainingModeChooser section="CO" onChoose={setMode} exerciseCount={coExercises.length} />;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// TRAINING MODE CHOOSER
+// ══════════════════════════════════════════════════════════════════════════
+function TrainingModeChooser({ section, onChoose, exerciseCount }: { section: TEFSection; onChoose: (mode: 'sequential' | 'adaptive') => void; exerciseCount: number }) {
+  const { t, locale } = useTefLocale();
+  const config = SECTION_CONFIG[section];
+  const getBestNCLC = useTefProgressStore(s => s.getBestNCLC);
+  const best = getBestNCLC(section as TEFSectionKey);
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">{t('qcm.section')}</p><h2 className="text-xl font-bold text-navy-900 mb-2">{t(`section.${section}`)}</h2></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <button onClick={() => onChoose('adaptive')} className="text-left rounded-xl border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 hover:shadow-lg transition-all">
+          <div className="flex items-center gap-2 mb-2"><Sparkles className="w-5 h-5 text-blue-600" /><span className="font-bold text-navy-900">{t('adapt.title')}</span></div>
+          <p className="text-sm text-navy-500 mb-3">{t('adapt.desc')}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">{t('adapt.recommended')}</span>
+            {best > 0 && <span className="text-xs text-navy-400">{t('adapt.startAt')} NCLC {best}</span>}
+          </div>
+        </button>
+        <button onClick={() => onChoose('sequential')} className="text-left rounded-xl border border-cream-200 bg-white p-5 hover:shadow-md transition-all">
+          <div className="flex items-center gap-2 mb-2"><Layers className="w-5 h-5 text-navy-500" /><span className="font-bold text-navy-900">{t('adapt.seqTitle')}</span></div>
+          <p className="text-sm text-navy-500 mb-3">{t('adapt.seqDesc')}</p>
+          <span className="text-xs text-navy-400">{exerciseCount} {t('mock.exercises')}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ADAPTIVE QCM SESSION
+// ══════════════════════════════════════════════════════════════════════════
+function AdaptiveQCMSession({ pool, section, withTTS, onBack }: { pool: TEFQCMExercise[]; section: TEFSection; withTTS?: boolean; onBack: () => void }) {
+  const getBestNCLC = useTefProgressStore(s => s.getBestNCLC);
+  const addSession = useTefProgressStore(s => s.addSession);
+  const addXp = useGamificationStore(s => s.addXp);
+  const { t, tExp, locale } = useTefLocale();
+  const tts = useFrenchTTS();
+  const [accent, setAccent] = useState<'france' | 'quebec'>('france');
+
+  const startNCLC = getBestNCLC(section as TEFSectionKey) || 6;
+  const [adaptState, setAdaptState] = useState<AdaptiveState>(() => createAdaptiveState(startNCLC));
+  const [currentExercise, setCurrentExercise] = useState<TEFQCMExercise | null>(() => pickNextExercise(createAdaptiveState(startNCLC), pool));
+  const [currentAnswer, setCurrentAnswer] = useState<Record<number, number>>({});
+  const [exerciseCount, setExerciseCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [sessionXP, setSessionXP] = useState(0);
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [phase, setPhase] = useState<'exercise' | 'results'>('exercise');
+  const maxExercises = 15;
+
+  const adaptiveLabel = getAdaptiveLabel(adaptState.currentNCLC);
+  const levelLabel = locale === 'en' ? adaptiveLabel.labelEN : adaptiveLabel.label;
+
+  const handleAnswer = (qIdx: number, choiceIdx: number) => {
+    if (currentAnswer[qIdx] !== undefined || !currentExercise) return;
+    setCurrentAnswer(prev => ({ ...prev, [qIdx]: choiceIdx }));
+    const q = currentExercise.questions[qIdx];
+    const isCorrect = choiceIdx === q.correctIndex;
+    const trapHit = !isCorrect && !!q.choices[choiceIdx]?.piege;
+    if (isCorrect) setCorrectCount(c => c + 1);
+    const xp = isCorrect ? (withTTS ? TEF_XP_CONFIG.listening_correct : TEF_XP_CONFIG.qcm_correct) : (withTTS ? TEF_XP_CONFIG.listening_incorrect : TEF_XP_CONFIG.qcm_incorrect);
+    setSessionXP(prev => prev + xp);
+    // Update adaptive state
+    const newState = updateAdaptiveState(adaptState, currentExercise.id, currentExercise.nclcTarget, isCorrect, trapHit);
+    setAdaptState(newState);
+  };
+
+  const nextExercise = () => {
+    const count = exerciseCount + 1;
+    setExerciseCount(count);
+    setCurrentAnswer({});
+    setShowTranscript(false);
+    if (count >= maxExercises) {
+      const pct = Math.round((correctCount / maxExercises) * 100);
+      const nclc = Math.round(adaptState.currentNCLC);
+      addXp(sessionXP + TEF_XP_CONFIG.session_complete, `TEF ${section} adaptive`);
+      addSession({ type: 'training', section: section as TEFSectionKey, correct: correctCount, total: maxExercises, percentage: pct, nclcEstimate: nclc, timeSeconds: 0, trapsTriggered: adaptState.history.filter(h => h.trapHit).map(() => 'trap') });
+      setPhase('results');
+    } else {
+      const next = pickNextExercise(adaptState, pool);
+      setCurrentExercise(next);
+    }
+  };
+
+  const allAnswered = currentExercise ? Object.keys(currentAnswer).length >= currentExercise.questions.length : false;
+
+  if (phase === 'results') {
+    const nclc = Math.round(adaptState.currentNCLC);
+    const pct = Math.round((correctCount / maxExercises) * 100);
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <div className={`rounded-xl overflow-hidden ${pct >= 60 ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-orange-400 to-red-500'} px-6 py-10 text-white text-center`}>
+          {pct >= 60 ? <Trophy className="h-14 w-14 mx-auto mb-3" /> : <Target className="h-14 w-14 mx-auto mb-3" />}
+          <p className="text-5xl font-extrabold">{correctCount}<span className="text-2xl opacity-70">/{maxExercises}</span></p>
+          <p className="text-xl font-semibold mt-2">NCLC {nclc}</p>
+          <p className="text-sm opacity-80 mt-1">{pct}% · {t('adapt.title')}</p>
+          <div className="mt-3"><span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-sm font-bold"><Zap className="h-4 w-4" />+{sessionXP + TEF_XP_CONFIG.session_complete} XP</span></div>
+        </div>
+        <div className="rounded-xl border border-cream-200 bg-white p-5">
+          <p className="text-sm text-navy-700">{t('adapt.nclcEvolution')}</p>
+          <div className="flex items-end gap-1 h-12 mt-3">
+            {adaptState.history.map((h, i) => {
+              const ht = Math.max(15, (h.nclc / 10) * 100);
+              return <div key={i} className={`w-full rounded-sm ${h.correct ? 'bg-emerald-400' : 'bg-red-400'}`} style={{ height: `${ht}%` }} title={`NCLC ${h.nclc} — ${h.correct ? '✓' : '✗'}`} />;
+            })}
+          </div>
+          <p className="text-[10px] text-navy-400 mt-1 text-center">NCLC {startNCLC} → {nclc}</p>
+        </div>
+        <button onClick={onBack} className="w-full px-6 py-3 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 transition-colors flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> {t('qcm.restart')}</button>
+      </div>
+    );
+  }
+
+  if (!currentExercise) return <div className="text-center py-10 text-navy-400">{t('adapt.noMore')}</div>;
+  const config = SECTION_CONFIG[section];
+
+  return (
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <div className="flex items-center gap-3 flex-wrap">
+        <button onClick={onBack} className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"><ArrowLeft className="w-4 h-4" /></button>
+        <div className="flex-1 bg-cream-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${((exerciseCount + 1) / maxExercises) * 100}%` }} /></div>
+        <span className="text-xs font-medium text-navy-400">{exerciseCount + 1}/{maxExercises}</span>
+        <span className={`text-xs px-2 py-1 rounded-full font-bold ${adaptiveLabel.color}`}>NCLC {Math.round(adaptState.currentNCLC)} · {levelLabel}</span>
+        <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 border border-amber-200"><Zap className="w-3 h-3 text-amber-600" /><span className="text-xs font-bold text-amber-700">{sessionXP}</span></div>
+      </div>
+
+      <div className="rounded-xl border border-cream-200 bg-white p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-navy-400">{currentExercise.meta}</p>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold">NCLC {currentExercise.nclcTarget}</span>
+        </div>
+
+        {withTTS && currentExercise.ttsText && (
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <div className="flex items-center gap-3">
+              <button onClick={() => tts.speak(currentExercise.ttsText!, currentExercise.id, currentExercise.ttsSpeed, accent)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${tts.speakingId === currentExercise.id ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-100'}`}>
+                {tts.speakingId === currentExercise.id ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+              <p className="text-sm text-navy-600">{t('qcm.listenThenAnswer')}</p>
+              <div className="ml-auto flex gap-1">
+                <button onClick={() => setAccent('france')} className={`px-2 py-1 rounded text-[10px] font-medium ${accent === 'france' ? 'bg-blue-200 text-blue-700' : 'text-navy-400'}`}>🇫🇷</button>
+                <button onClick={() => setAccent('quebec')} className={`px-2 py-1 rounded text-[10px] font-medium ${accent === 'quebec' ? 'bg-blue-200 text-blue-700' : 'text-navy-400'}`}>🇨🇦</button>
+              </div>
+            </div>
+            {allAnswered && (
+              <div className="mt-2">
+                <button onClick={() => setShowTranscript(!showTranscript)} className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                  {showTranscript ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  {showTranscript ? t('qcm.hideTranscript') : t('qcm.showTranscript')}
+                </button>
+                {showTranscript && <p className="mt-2 text-sm text-navy-700 italic whitespace-pre-line">{currentExercise.stimulus}</p>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!withTTS && currentExercise.stimulus && (
+          <div className="bg-cream-50 border-l-[3px] border-navy-300 px-4 py-3 text-sm text-navy-700 leading-relaxed italic whitespace-pre-line">{currentExercise.stimulus}</div>
+        )}
+
+        {currentExercise.questions.map((q, qIdx) => {
+          const answered = currentAnswer[qIdx] !== undefined;
+          const chosenIdx = currentAnswer[qIdx];
+          const isCorrect = chosenIdx === q.correctIndex;
+          return (
+            <div key={qIdx} className="space-y-2">
+              <p className="text-sm font-semibold text-navy-800">{q.prompt}</p>
+              <div className="space-y-1.5">
+                {q.choices.map((c: TEFChoice, ci: number) => {
+                  let cls = 'w-full text-left px-4 py-2.5 rounded-lg border text-sm transition-all ';
+                  if (!answered) cls += 'border-cream-200 bg-white hover:border-navy-300 hover:bg-cream-50 cursor-pointer';
+                  else if (ci === q.correctIndex) cls += 'border-emerald-300 bg-emerald-50 text-emerald-800 font-medium';
+                  else if (ci === chosenIdx) cls += 'border-red-300 bg-red-50 text-red-700';
+                  else cls += 'border-cream-100 bg-cream-50/50 text-navy-300';
+                  return (
+                    <button key={ci} onClick={() => handleAnswer(qIdx, ci)} disabled={answered} className={cls}>
+                      <div className={`flex items-center gap-2 ${c.img ? 'flex-col sm:flex-row' : ''}`}>
+                        {answered && ci === q.correctIndex && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
+                        {answered && ci === chosenIdx && ci !== q.correctIndex && <XCircle className="w-4 h-4 text-red-500 shrink-0" />}
+                        {c.img && <img src={c.img} alt={c.text} className="w-24 h-18 sm:w-28 sm:h-20 object-cover rounded-md border border-cream-200 shrink-0" loading="lazy" />}
+                        <span>{c.text}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {answered && (
+                <div className={`px-4 py-3 rounded-lg text-sm ${isCorrect ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}>
+                  {isCorrect ? (
+                    <p className="text-emerald-700"><strong>{t('qcm.goodAnswer')}</strong> {q.choices[q.correctIndex].explanation ? tExp(q.choices[q.correctIndex].explanation!) : ''}</p>
+                  ) : (
+                    <div>
+                      {q.choices[chosenIdx!]?.piege && <p className="font-mono text-xs font-bold text-red-600 mb-1">{q.choices[chosenIdx!].piege}</p>}
+                      <p className="text-red-700">{q.choices[chosenIdx!]?.explanation ? tExp(q.choices[chosenIdx!].explanation!) : t('qcm.wrongDefault')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {allAnswered && (
+          <button onClick={nextExercise} className="w-full px-6 py-3 rounded-xl bg-navy-800 text-white font-semibold text-sm hover:bg-navy-700 transition-colors flex items-center justify-center gap-2">
+            {exerciseCount + 1 >= maxExercises ? t('qcm.seeResults') : t('qcm.nextExercise')} <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// LEÇONS PANEL
+// ══════════════════════════════════════════════════════════════════════════
+function LeconsPanel() {
+  const { t, locale } = useTefLocale();
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  if (selectedLesson) {
+    const step = selectedLesson.steps[currentStep];
+    const stepIcon = { theory: <BookOpen className="w-4 h-4" />, tip: <Sparkles className="w-4 h-4" />, example: <Eye className="w-4 h-4" />, warning: <AlertTriangle className="w-4 h-4" />, practice: <Target className="w-4 h-4" /> };
+    const stepColor = { theory: 'bg-blue-50 border-blue-200 text-blue-800', tip: 'bg-emerald-50 border-emerald-200 text-emerald-800', example: 'bg-indigo-50 border-indigo-200 text-indigo-800', warning: 'bg-red-50 border-red-200 text-red-800', practice: 'bg-amber-50 border-amber-200 text-amber-800' };
+    return (
+      <div className="space-y-4 animate-in fade-in duration-300">
+        <button onClick={() => { setSelectedLesson(null); setCurrentStep(0); }} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"><ArrowLeft className="w-4 h-4" /> {t('mock.backToList')}</button>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-cream-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${((currentStep + 1) / selectedLesson.steps.length) * 100}%` }} /></div>
+          <span className="text-xs font-medium text-navy-400">{currentStep + 1}/{selectedLesson.steps.length}</span>
+        </div>
+        <div className={`rounded-xl border p-6 ${stepColor[step.type]}`}>
+          <div className="flex items-center gap-2 mb-3">
+            {stepIcon[step.type]}
+            <span className="text-xs font-bold uppercase tracking-wider">{step.type}</span>
+          </div>
+          <h3 className="text-lg font-bold mb-4">{locale === 'en' ? step.titleEN : step.title}</h3>
+          <div className="text-sm leading-relaxed whitespace-pre-line">{locale === 'en' ? step.contentEN : step.content}</div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0} className="flex-1 px-4 py-3 rounded-xl border border-cream-200 bg-white text-sm font-medium text-navy-600 hover:bg-cream-50 disabled:opacity-30 flex items-center justify-center gap-2"><ArrowLeft className="w-4 h-4" /> {t('adapt.prev')}</button>
+          {currentStep < selectedLesson.steps.length - 1 ? (
+            <button onClick={() => setCurrentStep(currentStep + 1)} className="flex-1 px-4 py-3 rounded-xl bg-navy-800 text-white text-sm font-medium hover:bg-navy-700 flex items-center justify-center gap-2">{t('adapt.next')} <ArrowRight className="w-4 h-4" /></button>
+          ) : (
+            <button onClick={() => { setSelectedLesson(null); setCurrentStep(0); }} className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 flex items-center justify-center gap-2"><CheckCircle2 className="w-4 h-4" /> {t('adapt.done')}</button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const sectionLessons: Record<string, Lesson[]> = { CE: [], CO: [], EE: [], EO: [] };
+  lessons.forEach(l => sectionLessons[l.section]?.push(l));
+  const sectionIcons: Record<string, React.ReactNode> = { CE: <FileText className="w-5 h-5" />, CO: <Headphones className="w-5 h-5" />, EE: <PenTool className="w-5 h-5" />, EO: <MessageCircle className="w-5 h-5" /> };
+  const sectionColors: Record<string, string> = { CE: 'border-red-200', CO: 'border-sky-200', EE: 'border-green-200', EO: 'border-amber-200' };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div><p className="text-[11px] font-semibold tracking-wider uppercase text-navy-300 mb-1">{t('lesson.foundation')}</p><h2 className="text-xl font-bold text-navy-900 mb-2">{t('lesson.title')}</h2><p className="text-sm text-navy-400 leading-relaxed max-w-2xl">{t('lesson.subtitle')}</p></div>
+      {['CE', 'CO', 'EE', 'EO'].map(sec => (
+        <div key={sec}>
+          <div className="flex items-center gap-2 mb-3">{sectionIcons[sec]}<h3 className="text-base font-bold text-navy-900">{t(`section.${sec}`)}</h3></div>
+          <div className="grid gap-2">
+            {sectionLessons[sec].map(lesson => (
+              <button key={lesson.id} onClick={() => setSelectedLesson(lesson)} className={`w-full text-left rounded-xl border ${sectionColors[sec]} bg-white p-4 hover:shadow-md transition-all`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-sm text-navy-900">{locale === 'en' ? lesson.titleEN : lesson.title}</p>
+                    <p className="text-xs text-navy-400 mt-0.5">{locale === 'en' ? lesson.descriptionEN : lesson.description}</p>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold">NCLC {lesson.nclcRange}</span>
+                    <p className="text-[10px] text-navy-400 mt-1">{lesson.duration}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1073,6 +1371,8 @@ function EETrainingPanel() {
 // EO TRAINING (Speech Recognition + Natural TTS + AI Evaluation)
 // ══════════════════════════════════════════════════════════════════════════
 function EOTrainingPanel() {
+  const [mode, setMode] = useState<'list' | 'practice' | 'dialogue'>('list');
+  const [dialogueExercise, setDialogueExercise] = useState<number | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<number | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<number>(0);
   const [accent, setAccent] = useState<'france' | 'quebec'>('france');
@@ -1116,6 +1416,11 @@ function EOTrainingPanel() {
 
   const reset = () => { setSelectedExercise(null); setSelectedVariant(0); setPhase('listen'); setSpeechResult(null); setSessionXP(0); sr.resetTranscript(); setPendingAnalysis(false); aiEval.resetEvaluation(); };
 
+  // Interactive dialogue mode
+  if (mode === 'dialogue' && dialogueExercise !== null) {
+    return <EOInteractiveDialogue exercise={eoExercises[dialogueExercise]} onBack={() => { setMode('list'); setDialogueExercise(null); }} />;
+  }
+
   if (selectedExercise === null) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
@@ -1127,14 +1432,17 @@ function EOTrainingPanel() {
           </div>
         )}
         {eoExercises.map((ex, idx) => (
-          <button key={idx} onClick={() => { setSelectedExercise(idx); setPhase('listen'); }} className="w-full rounded-xl border border-cream-200 bg-white p-5 text-left hover:shadow-md transition-shadow">
+          <div key={idx} className="rounded-xl border border-cream-200 bg-white p-5 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-2">
               <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-amber-100 text-amber-700">EO</span>
               <span className="text-sm font-semibold text-navy-800">{ex.scenario}</span>
             </div>
             <p className="text-sm text-navy-500 italic">{ex.ttsPrompt}</p>
-            <div className="flex items-center gap-2 mt-3 text-xs text-navy-400"><Mic className="w-3.5 h-3.5" />{ex.variants.length} {t('eo.variants')} · +{TEF_XP_CONFIG.speaking_submit} XP</div>
-          </button>
+            <div className="flex items-center gap-2 mt-3">
+              <button onClick={() => { setSelectedExercise(idx); setPhase('listen'); }} className="px-3 py-1.5 rounded-lg bg-navy-800 text-white text-xs font-medium hover:bg-navy-700 flex items-center gap-1.5"><Mic className="w-3.5 h-3.5" /> {t('eo.practiceMode')}</button>
+              <button onClick={() => { setDialogueExercise(idx); setMode('dialogue'); }} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> {t('eo.dialogueMode')}</button>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -1586,6 +1894,161 @@ function MockEOSession({ exercises, examLabel }: { exercises: TEFSpeakingExercis
             <p className="mt-2 text-sm text-navy-700 bg-white rounded p-2 border border-cream-200">{recognition.transcript}</p>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// EO INTERACTIVE DIALOGUE (AI Examiner)
+// ══════════════════════════════════════════════════════════════════════════
+function EOInteractiveDialogue({ exercise, onBack }: { exercise: TEFSpeakingExercise; onBack: () => void }) {
+  const { t, locale } = useTefLocale();
+  const tts = useFrenchTTS();
+  const sr = useSpeechRecognition();
+  const [history, setHistory] = useState<{ role: 'candidate' | 'examiner'; text: string }[]>([]);
+  const [turnNumber, setTurnNumber] = useState(0);
+  const [isThinking, setIsThinking] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
+  const [finalScore, setFinalScore] = useState<{ fluency: number; vocabulary: number; interaction: number; connectors: number; register: number; comment: string } | null>(null);
+  const [feedbackHint, setFeedbackHint] = useState<string | null>(null);
+  const [inputText, setInputText] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const sectionType = exercise.scenario.includes('Section A') || exercise.meta.includes('Section A') ? 'A' : 'B';
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history]);
+
+  // Use speech recognition transcript as input
+  useEffect(() => {
+    if (sr.transcript && !sr.isListening) {
+      setInputText(sr.transcript);
+    }
+  }, [sr.transcript, sr.isListening]);
+
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isThinking || isFinished) return;
+    const candidateText = text.trim();
+    setInputText('');
+    sr.resetTranscript();
+    const newHistory = [...history, { role: 'candidate' as const, text: candidateText }];
+    setHistory(newHistory);
+    setIsThinking(true);
+    setFeedbackHint(null);
+    const turn = turnNumber + 1;
+    setTurnNumber(turn);
+
+    try {
+      const res = await fetch('/api/evaluate/eo-dialogue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario: exercise.scenario, section: sectionType, history: newHistory, candidateText, turnNumber: turn }),
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      setHistory(prev => [...prev, { role: 'examiner', text: data.examinerReply }]);
+      if (data.feedbackHint) setFeedbackHint(data.feedbackHint);
+      if (data.interimScore) setFinalScore(data.interimScore);
+      if (data.shouldEnd) setIsFinished(true);
+      // TTS: read examiner reply
+      tts.speak(data.examinerReply, `eo-dialogue-${turn}`);
+    } catch {
+      setHistory(prev => [...prev, { role: 'examiner', text: 'Excusez-moi, pouvez-vous répéter ?' }]);
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  const maxTurns = sectionType === 'A' ? 5 : 8;
+
+  return (
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <button onClick={onBack} className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium"><ArrowLeft className="w-4 h-4" /> {t('eo.backToScenarios')}</button>
+
+      <div className="rounded-xl border border-cream-200 bg-white overflow-hidden">
+        {/* Header */}
+        <div className="px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4" /><span className="font-bold text-sm">{t('eo.dialogueMode')}</span></div>
+            <span className="text-xs opacity-70">{t('eo.turn')} {turnNumber}/{maxTurns} · {sectionType === 'A' ? t('eo.sectionA') : t('eo.sectionB')}</span>
+          </div>
+          <p className="text-xs opacity-80 mt-1">{exercise.scenario}</p>
+        </div>
+
+        {/* Chat area */}
+        <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto bg-cream-50/50">
+          {/* Opening line */}
+          <div className="flex justify-start">
+            <div className="bg-blue-100 text-blue-900 rounded-xl rounded-tl-none px-4 py-2.5 max-w-[80%]">
+              <p className="text-[10px] font-bold text-blue-600 mb-1">{t('eo.youStart')}</p>
+              <p className="text-sm italic">{exercise.ttsPrompt}</p>
+            </div>
+          </div>
+
+          {history.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === 'candidate' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`rounded-xl px-4 py-2.5 max-w-[80%] ${msg.role === 'candidate' ? 'bg-navy-800 text-white rounded-tr-none' : 'bg-white border border-cream-200 text-navy-800 rounded-tl-none'}`}>
+                <p className={`text-[10px] font-bold mb-0.5 ${msg.role === 'candidate' ? 'text-navy-300' : 'text-blue-600'}`}>
+                  {msg.role === 'candidate' ? t('eo.you') : t('eo.examiner')}
+                </p>
+                <p className="text-sm">{msg.text}</p>
+              </div>
+            </div>
+          ))}
+
+          {isThinking && (
+            <div className="flex justify-start"><div className="bg-white border border-cream-200 rounded-xl rounded-tl-none px-4 py-2.5"><p className="text-sm text-navy-400 animate-pulse">...</p></div></div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Feedback hint */}
+        {feedbackHint && !isFinished && (
+          <div className="px-4 py-2 bg-emerald-50 border-t border-emerald-200">
+            <p className="text-xs text-emerald-700 flex items-center gap-1"><Sparkles className="w-3 h-3" /> {feedbackHint}</p>
+          </div>
+        )}
+
+        {/* Input area */}
+        {!isFinished ? (
+          <div className="p-3 border-t border-cream-200 bg-white">
+            <div className="flex gap-2">
+              <button onClick={() => sr.isListening ? sr.stopListening() : sr.startListening()}
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${sr.isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-navy-100 text-navy-600 hover:bg-navy-200'}`}>
+                {sr.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+              <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(inputText); }}
+                placeholder={sr.isListening ? t('eo.listening') : t('eo.typeOrSpeak')}
+                className="flex-1 px-3 py-2 border border-cream-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none" />
+              <button onClick={() => sendMessage(inputText)} disabled={!inputText.trim() || isThinking}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-30 shrink-0">
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 border-t border-cream-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <p className="text-sm font-semibold text-emerald-800 mb-2 flex items-center gap-2"><Trophy className="w-4 h-4" /> {t('eo.dialogueComplete')}</p>
+            {finalScore && (
+              <div className="grid grid-cols-5 gap-2 mb-3">
+                {[
+                  { k: 'fluency', l: t('eo.scoreFluency') },
+                  { k: 'vocabulary', l: t('eo.scoreVocab') },
+                  { k: 'interaction', l: t('eo.scoreInteraction') },
+                  { k: 'connectors', l: t('eo.scoreConnectors') },
+                  { k: 'register', l: t('eo.scoreRegister') },
+                ].map(({ k, l }) => (
+                  <div key={k} className="text-center">
+                    <p className="text-lg font-bold text-emerald-700">{(finalScore as unknown as Record<string, number>)[k]}/5</p>
+                    <p className="text-[9px] text-navy-500">{l}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {finalScore?.comment && <p className="text-sm text-navy-600 italic">{finalScore.comment}</p>}
+            <button onClick={onBack} className="mt-3 w-full px-4 py-2.5 rounded-lg bg-navy-800 text-white text-sm font-medium hover:bg-navy-700 flex items-center justify-center gap-2"><RotateCcw className="w-4 h-4" /> {t('eo.backToScenarios')}</button>
+          </div>
+        )}
       </div>
     </div>
   );

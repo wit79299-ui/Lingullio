@@ -308,6 +308,43 @@ const dictionaries: Record<TefLocale, Record<string, string>> = {
     'hist.nclcProgress': 'Progression NCLC',
     'hist.sectionStats': 'Statistiques par épreuve',
 
+    // ── Adaptive ──
+    'adapt.title': 'Mode adaptatif',
+    'adapt.desc': 'L\'IA ajuste la difficulté selon vos réponses. 15 exercices ciblés sur votre niveau.',
+    'adapt.recommended': 'Recommandé',
+    'adapt.startAt': 'Départ estimé :',
+    'adapt.seqTitle': 'Mode séquentiel',
+    'adapt.seqDesc': 'Tous les exercices dans l\'ordre, du plus simple au plus complexe.',
+    'adapt.nclcEvolution': 'Évolution de votre NCLC pendant la session :',
+    'adapt.noMore': 'Plus d\'exercices disponibles à ce niveau.',
+    'adapt.prev': 'Précédent',
+    'adapt.next': 'Suivant',
+    'adapt.done': 'Terminé',
+
+    // ── Lessons ──
+    'nav.lecons': 'Leçons',
+    'lesson.foundation': 'Cours',
+    'lesson.title': 'Leçons de préparation',
+    'lesson.subtitle': 'Stratégies, méthodologies et techniques pour chaque épreuve du TEF.',
+
+    // ── EO Dialogue ──
+    'eo.dialogueMode': 'Dialogue IA',
+    'eo.practiceMode': 'Pratique guidée',
+    'eo.turn': 'Tour',
+    'eo.sectionA': 'Section A',
+    'eo.sectionB': 'Section B',
+    'eo.youStart': 'Votre réplique d\'ouverture',
+    'eo.you': 'Vous',
+    'eo.examiner': 'Examinateur',
+    'eo.listening': 'Écoute en cours...',
+    'eo.typeOrSpeak': 'Tapez ou parlez votre réponse...',
+    'eo.dialogueComplete': 'Dialogue terminé',
+    'eo.scoreFluency': 'Fluidité',
+    'eo.scoreVocab': 'Vocabulaire',
+    'eo.scoreInteraction': 'Interaction',
+    'eo.scoreConnectors': 'Connecteurs',
+    'eo.scoreRegister': 'Registre',
+
     // ── Section labels (from SECTION_CONFIG) ──
     'section.CE': 'Compréhension écrite',
     'section.CO': 'Compréhension orale',
@@ -615,6 +652,43 @@ const dictionaries: Record<TefLocale, Record<string, string>> = {
     'hist.clearConfirm': 'Are you sure? This action cannot be undone.',
     'hist.nclcProgress': 'NCLC Progress',
     'hist.sectionStats': 'Stats by section',
+
+    // ── Adaptive ──
+    'adapt.title': 'Adaptive Mode',
+    'adapt.desc': 'AI adjusts difficulty based on your answers. 15 exercises targeted to your level.',
+    'adapt.recommended': 'Recommended',
+    'adapt.startAt': 'Estimated start:',
+    'adapt.seqTitle': 'Sequential Mode',
+    'adapt.seqDesc': 'All exercises in order, from simplest to most complex.',
+    'adapt.nclcEvolution': 'Your NCLC evolution during the session:',
+    'adapt.noMore': 'No more exercises available at this level.',
+    'adapt.prev': 'Previous',
+    'adapt.next': 'Next',
+    'adapt.done': 'Done',
+
+    // ── Lessons ──
+    'nav.lecons': 'Lessons',
+    'lesson.foundation': 'Courses',
+    'lesson.title': 'Preparation Lessons',
+    'lesson.subtitle': 'Strategies, methodologies and techniques for each TEF section.',
+
+    // ── EO Dialogue ──
+    'eo.dialogueMode': 'AI Dialogue',
+    'eo.practiceMode': 'Guided Practice',
+    'eo.turn': 'Turn',
+    'eo.sectionA': 'Section A',
+    'eo.sectionB': 'Section B',
+    'eo.youStart': 'Your opening line',
+    'eo.you': 'You',
+    'eo.examiner': 'Examiner',
+    'eo.listening': 'Listening...',
+    'eo.typeOrSpeak': 'Type or speak your response...',
+    'eo.dialogueComplete': 'Dialogue complete',
+    'eo.scoreFluency': 'Fluency',
+    'eo.scoreVocab': 'Vocabulary',
+    'eo.scoreInteraction': 'Interaction',
+    'eo.scoreConnectors': 'Connectors',
+    'eo.scoreRegister': 'Register',
 
     // ── Section labels (from SECTION_CONFIG) ──
     'section.CE': 'Reading Comprehension',
