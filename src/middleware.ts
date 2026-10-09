@@ -36,7 +36,18 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
-  if (isDemoMode) {
+  // Preview mode: allow read-only access with ?preview=lingullio2025
+  const previewParam = request.nextUrl.searchParams.get('preview');
+  if (previewParam === 'lingullio2025') {
+    // Set a cookie so subsequent navigation doesn't need the param
+    const response = intlResponse;
+    response.cookies.set('lingullio_preview', '1', { maxAge: 60 * 60 * 2, path: '/' }); // 2 hours
+    return response;
+  }
+  // Check preview cookie for subsequent pages
+  const hasPreviewCookie = request.cookies.get('lingullio_preview')?.value === '1';
+
+  if (isDemoMode || hasPreviewCookie) {
     return intlResponse;
   }
 
